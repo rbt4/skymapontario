@@ -3,128 +3,126 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-  <meta name="theme-color" content="#04070c">
+  <meta name="theme-color" content="#07101a">
   <meta name="color-scheme" content="dark">
-  <title>SkyMap Ontario — Live Map</title>
-  <meta name="description" content="Live Ontario rain radar, smoke forecasts, AQHI, wildfire hotspots and weather alerts.">
+  <title>SkyMap Ontario — Live Ontario Conditions</title>
+  <meta name="description" content="Live Ontario rain radar, smoke forecasts, AQHI observations, wildfire hotspots and weather alerts.">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3ynhP9uD1OZGGp1hWj1jPI0YQp7a0=" crossorigin="" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css'">
+  <link rel="stylesheet" href="vendor/leaflet.css">
   <link rel="stylesheet" href="app-base.css">
   <link rel="stylesheet" href="app-responsive.css">
 </head>
 <body data-mode="rain">
-  <a class="skip-link" href="#controls">Skip to map controls</a>
-  <div id="map" role="application" aria-label="Interactive Ontario environmental map"></div>
-  <div class="map-vignette" aria-hidden="true"></div>
-  <div class="map-grid" aria-hidden="true"></div>
+  <a class="skip-link" href="#layer-dock">Skip to map layers</a>
+  <main id="map" aria-label="Interactive map of Ontario environmental conditions"></main>
+  <div class="map-shade" aria-hidden="true"></div>
 
-  <header class="topbar">
-    <button class="brand-chip glass" type="button" data-open="about" aria-label="About SkyMap Ontario">
+  <header class="app-header">
+    <button class="brand surface" type="button" data-open="info-sheet" aria-label="About SkyMap Ontario">
       <img src="icon.svg" alt="">
       <span><b>skymap <em>ontario</em></b><small><i class="live-dot"></i><span id="connection-label">CONNECTING</span></small></span>
     </button>
-    <button class="place-chip glass" id="place-button" type="button" aria-haspopup="dialog" aria-controls="place-sheet">
-      <span class="place-pin">⌖</span><span><small>VIEWING</small><b id="place-label">Ontario</b></span><i>⌄</i>
+
+    <button class="place surface" id="place-button" type="button" aria-haspopup="dialog" aria-controls="place-sheet">
+      <i aria-hidden="true">⌖</i><span><small>VIEWING</small><b id="place-label">Ontario</b></span><em aria-hidden="true">⌄</em>
     </button>
-    <div class="top-actions">
-      <button class="icon-button glass" id="locate-button" type="button" aria-label="Use my location" title="Use my location">◎</button>
-      <button class="icon-button glass" id="share-button" type="button" aria-label="Share current view" title="Share current view">↗</button>
-      <button class="icon-button glass" id="menu-button" type="button" aria-label="Open settings and information" aria-controls="info-sheet">•••</button>
+
+    <div class="header-actions">
+      <button class="round-button surface" id="locate-button" type="button" aria-label="Use my location" title="Use my location">◎</button>
+      <button class="round-button surface" id="share-button" type="button" aria-label="Share this map" title="Share this map">↗</button>
+      <button class="round-button surface" id="menu-button" type="button" aria-label="Open map information" aria-controls="info-sheet">•••</button>
     </div>
   </header>
 
-  <nav class="mode-rail glass" id="controls" aria-label="Map layers">
-    <button class="mode-button active" data-mode="rain" type="button"><span class="mode-icon rain">◒</span><b>Rain</b><small>Radar</small></button>
-    <button class="mode-button" data-mode="smoke" type="button"><span class="mode-icon smoke">≈</span><b>Smoke</b><small>Forecast</small></button>
-    <button class="mode-button" data-mode="air" type="button"><span class="mode-icon air">◎</span><b>Air</b><small>AQHI</small></button>
-    <button class="mode-button" data-mode="fire" type="button"><span class="mode-icon fire">◆</span><b>Fires</b><small>Hotspots</small></button>
-    <button class="mode-button" data-mode="alerts" type="button"><span class="mode-icon alerts">!</span><b>Alerts</b><small>Ontario</small><i class="alert-count" id="mode-alert-count" hidden>0</i></button>
+  <nav class="layer-dock surface" id="layer-dock" aria-label="Live data layers">
+    <button class="layer-button active" type="button" data-mode="rain"><i class="rain" aria-hidden="true">◒</i><span><b>Rain</b><small>Radar</small></span></button>
+    <button class="layer-button" type="button" data-mode="smoke"><i class="smoke" aria-hidden="true">≈</i><span><b>Smoke</b><small>Forecast</small></span></button>
+    <button class="layer-button" type="button" data-mode="air"><i class="air" aria-hidden="true">◎</i><span><b>Air</b><small>AQHI</small></span></button>
+    <button class="layer-button" type="button" data-mode="fire"><i class="fire" aria-hidden="true">◆</i><span><b>Fires</b><small>Hotspots</small></span></button>
+    <button class="layer-button" type="button" data-mode="alerts"><i class="alerts" aria-hidden="true">!</i><span><b>Alerts</b><small>Ontario</small></span><em class="count-badge" id="alert-badge" hidden>0</em></button>
   </nav>
 
-  <aside class="info-panel glass" id="desktop-info" aria-label="Current layer information">
-    <div class="panel-head">
-      <div><small id="mode-kicker">RAIN RADAR</small><h1 id="mode-title">What is moving across Ontario</h1></div>
-      <button class="panel-close" type="button" data-collapse-panel aria-label="Collapse information panel">×</button>
+  <aside class="insight-panel surface" id="insight-panel" aria-labelledby="mode-title">
+    <div class="insight-head">
+      <div><small id="mode-kicker">LIVE RAIN RADAR</small><h1 id="mode-title">See what is moving your way.</h1></div>
+      <button id="panel-close" type="button" aria-label="Collapse information panel">×</button>
     </div>
-    <div class="status-line"><i id="status-dot"></i><span id="status-text">Loading live data…</span><time id="updated-time">—</time></div>
-    <div class="legend-card" id="legend-card">
-      <div class="legend-title"><span id="legend-name">Precipitation rate</span><small id="legend-unit">mm/h</small></div>
-      <div class="legend-bar rain-legend" id="legend-bar"></div>
-      <div class="legend-labels" id="legend-labels"><span>Light</span><span>Moderate</span><span>Heavy</span></div>
+
+    <div class="feed-status" data-state="loading" id="feed-status">
+      <i aria-hidden="true"></i>
+      <span><b id="status-text">Connecting to the radar…</b><small id="status-detail">Official public data</small></span>
+      <time id="updated-time">—</time>
     </div>
-    <section class="aq-card" id="aq-card">
-      <div class="aq-value" id="aq-value">—</div>
-      <div><small>AIR QUALITY HEALTH INDEX</small><b id="aq-risk">Finding nearest station…</b><span id="aq-station">Ontario</span></div>
+
+    <section class="primary-card" id="primary-card">
+      <div class="primary-value" id="primary-value">—</div>
+      <div><small id="primary-label">NEAREST AQHI</small><b id="primary-title">Finding a station…</b><span id="primary-detail">Ontario</span></div>
     </section>
-    <section class="alerts-card" id="alerts-card">
-      <div class="card-title"><span><i></i>Active Ontario alerts</span><b id="alert-total">—</b></div>
-      <div id="alert-list" class="alert-list"><p>Checking current warnings, watches and advisories…</p></div>
-      <a href="https://weather.gc.ca/warnings/index_e.html?prov=on" target="_blank" rel="noopener noreferrer">Official Environment Canada alerts ↗</a>
+
+    <section class="legend-card" id="legend-card">
+      <div><span id="legend-title">Precipitation rate</span><small id="legend-unit">mm/h</small></div>
+      <i class="legend rain" id="legend-bar"></i>
+      <p id="legend-labels"><span>Light</span><span>Moderate</span><span>Heavy</span></p>
     </section>
-    <div class="source-row"><span>Source</span><a id="source-link" href="https://eccc-msc.github.io/open-data/" target="_blank" rel="noopener noreferrer">Environment Canada GeoMet ↗</a></div>
-    <div class="support-mini">
-      <div class="mini-mark">4</div><div><b>Enjoying the map?</b><span>Support maintenance without ads.</span></div><a href="https://ko-fi.com/rbt4dev" target="_blank" rel="noopener noreferrer">☕ Support</a>
-    </div>
+
+    <section class="activity-card">
+      <div class="activity-head"><span id="activity-title">Ontario now</span><b id="activity-count">LIVE</b></div>
+      <div class="activity-list" id="activity-list"><p>Loading current conditions…</p></div>
+    </section>
+
+    <div class="source-line"><span>Source</span><a id="source-link" href="https://eccc-msc.github.io/open-data/" target="_blank" rel="noopener noreferrer">Environment Canada ↗</a></div>
+    <p class="data-note" id="data-note">Radar frames are observations and can be delayed.</p>
   </aside>
 
-  <button class="panel-restore glass" id="panel-restore" type="button" hidden>Info</button>
+  <button class="panel-restore surface" id="panel-restore" type="button" hidden><span id="restore-label">Rain</span><i>⌃</i></button>
 
-  <section class="timeline-panel glass" id="timeline-panel" aria-label="Weather timeline">
-    <div class="timeline-top">
-      <button class="play-button" id="play-button" type="button" aria-label="Play animation"><span>▶</span></button>
-      <div class="timeline-readout"><small id="relative-time">LATEST</small><b id="absolute-time">Loading timeline…</b></div>
-      <button class="refresh-button" id="refresh-button" type="button" aria-label="Refresh data">↻ <span>Refresh</span></button>
+  <section class="timeline surface" id="timeline" aria-label="Layer timeline">
+    <button class="play" id="play-button" type="button" aria-label="Play animation">▶</button>
+    <div class="time-copy"><small id="relative-time">LATEST</small><b id="absolute-time">Finding available frames…</b></div>
+    <div class="range">
+      <div class="range-line"><i id="range-progress"></i><em id="now-marker"></em></div>
+      <input id="time-slider" type="range" min="0" max="0" value="0" step="1" aria-label="Weather frame">
+      <div><span id="range-start">—</span><span id="range-end">—</span></div>
     </div>
-    <div class="range-wrap">
-      <div class="range-track"><div class="range-progress" id="range-progress"></div><i class="now-marker" id="now-marker"></i></div>
-      <input id="time-slider" type="range" min="0" max="0" value="0" step="1" aria-label="Weather frame time">
-    </div>
-    <div class="range-labels"><span id="range-start">—</span><span class="now-label">NOW</span><span id="range-end">—</span></div>
+    <button class="refresh" id="refresh-button" type="button" aria-label="Refresh this layer">↻<span>Refresh</span></button>
   </section>
 
-  <div class="mobile-summary glass" id="mobile-summary">
-    <button type="button" id="mobile-summary-button" aria-controls="info-sheet"><span><small id="mobile-kicker">RAIN RADAR</small><b id="mobile-story">Loading live map…</b></span><i>⌃</i></button>
-  </div>
+  <button class="mobile-peek surface" id="mobile-peek" type="button" aria-controls="info-sheet">
+    <span><small id="mobile-kicker">LIVE RAIN RADAR</small><b id="mobile-story">Connecting to official data…</b></span><i>⌃</i>
+  </button>
 
   <div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
 
   <section class="sheet" id="place-sheet" role="dialog" aria-modal="true" aria-labelledby="place-title" hidden>
-    <div class="sheet-handle"></div>
-    <div class="sheet-head"><div><small>QUICK LOCATIONS</small><h2 id="place-title">Jump across Ontario</h2></div><button type="button" data-close-sheet aria-label="Close">×</button></div>
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <div class="sheet-head"><div><small>QUICK LOCATIONS</small><h2 id="place-title">Jump across Ontario</h2></div><button type="button" data-close aria-label="Close location picker">×</button></div>
     <div class="place-grid" id="place-grid"></div>
   </section>
 
-  <section class="sheet info-sheet" id="info-sheet" role="dialog" aria-modal="true" aria-labelledby="info-title" hidden>
-    <div class="sheet-handle"></div>
-    <div class="sheet-head"><div><small id="sheet-kicker">SKYMAP ONTARIO</small><h2 id="info-title">Map details</h2></div><button type="button" data-close-sheet aria-label="Close">×</button></div>
-    <div class="sheet-content">
-      <section class="mobile-data-card"><div class="status-line"><i id="sheet-status-dot"></i><span id="sheet-status-text">Loading live data…</span><time id="sheet-updated-time">—</time></div><div id="sheet-mode-copy" class="sheet-mode-copy">Live environmental data across Ontario.</div></section>
-      <section class="mobile-aq-card"><div class="aq-value" id="sheet-aq-value">—</div><div><small>AQHI</small><b id="sheet-aq-risk">Finding nearest station…</b><span id="sheet-aq-station">Ontario</span></div></section>
-      <section class="mobile-alert-card"><div class="card-title"><span><i></i>Active alerts</span><b id="sheet-alert-total">—</b></div><div id="sheet-alert-list" class="alert-list"><p>Checking Ontario alerts…</p></div></section>
-      <div class="sheet-options">
-        <button type="button" id="install-button" hidden><span>＋</span><div><b>Install browser app</b><small>Add SkyMap Ontario to your home screen</small></div></button>
-        <button type="button" id="opacity-button"><span>◐</span><div><b>Layer opacity</b><small><input id="opacity-slider" type="range" min="25" max="100" value="82" aria-label="Layer opacity"></small></div></button>
-        <a href="../" target="_top"><span>⌂</span><div><b>Product website</b><small>About, sources and Android download</small></div></a>
-      </div>
-      <div class="support-sheet-card">
-        <div class="support-sheet-mark">4</div><div><small>INDEPENDENT PROJECT</small><b>Help keep the live feeds maintained.</b><p>No ads, subscriptions or support popups interrupt the map.</p></div><a href="https://ko-fi.com/rbt4dev" target="_blank" rel="noopener noreferrer">☕ Support on Ko-fi</a>
-      </div>
-      <p class="disclaimer">SkyMap Ontario is independent and not an official government app. Data can be delayed or unavailable. Satellite hotspots are thermal detections, not confirmed fire boundaries. Follow official emergency instructions.</p>
+  <section class="sheet info-sheet" id="info-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" hidden>
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <div class="sheet-head"><div><small>SKYMAP ONTARIO 4.3</small><h2 id="sheet-title">Live map details</h2></div><button type="button" data-close aria-label="Close map information">×</button></div>
+    <div class="sheet-body">
+      <div class="sheet-live"><i></i><span><b id="sheet-status">Connecting to public data…</b><small id="sheet-updated">Official source</small></span></div>
+      <div class="sheet-section"><small>CURRENT VIEW</small><h3 id="sheet-mode-title">Rain radar</h3><p id="sheet-mode-copy">Recent precipitation observations across Ontario.</p></div>
+      <label class="opacity-control"><span><b>Layer opacity</b><small>Adjust the environmental overlay</small></span><input id="opacity-slider" type="range" min="25" max="100" value="82"></label>
+      <button class="sheet-action" id="install-button" type="button" hidden><span>＋</span><div><b>Install browser app</b><small>Add SkyMap to your home screen</small></div></button>
+      <a class="sheet-action" href="../" target="_top"><span>⌂</span><div><b>Product website</b><small>Android download, sources and project notes</small></div></a>
+      <a class="support-card" href="https://ko-fi.com/rbt4dev" target="_blank" rel="noopener noreferrer"><span>☕</span><div><small>INDEPENDENT &amp; AD-FREE</small><b>Support SkyMap Ontario</b><p>Optional support helps keep the public-data connections maintained.</p></div><i>↗</i></a>
+      <p class="disclaimer">SkyMap Ontario is independent and not an official government app. Public data can be delayed or unavailable. Satellite hotspots are thermal detections, not confirmed fire boundaries. Follow official emergency instructions.</p>
     </div>
   </section>
 
   <div class="loading-screen" id="loading-screen" role="status" aria-live="polite">
-    <img src="icon.svg" alt="">
-    <div class="loader-rings" aria-hidden="true"><i></i><i></i><i></i></div>
-    <b>SkyMap Ontario</b><span id="loading-message">Starting the live map…</span>
+    <div class="loading-mark"><img src="icon.svg" alt=""><i></i></div>
+    <b>SkyMap Ontario</b><span id="loading-message">Preparing the live map…</span>
   </div>
 
-  <div class="error-banner" id="error-banner" role="alert" hidden><span id="error-message">Something went wrong.</span><button type="button" id="error-retry">Retry</button></div>
+  <div class="error-banner" id="error-banner" role="alert" hidden><span><b id="error-title">A feed did not respond</b><small id="error-message">Try again in a moment.</small></span><button id="error-retry" type="button">Retry</button></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="app-core.js" defer></script>
-  <script src="app-ui.js" defer></script>
-  <script src="app-patch.js" defer></script>
+  <script src="vendor/leaflet.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

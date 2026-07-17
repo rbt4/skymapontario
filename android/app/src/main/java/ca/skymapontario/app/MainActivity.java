@@ -24,11 +24,11 @@ public final class MainActivity extends Activity {
     @Override @SuppressLint("SetJavaScriptEnabled")
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        getWindow().setStatusBarColor(Color.rgb(4, 7, 12));
-        getWindow().setNavigationBarColor(Color.rgb(4, 7, 12));
+        getWindow().setStatusBarColor(Color.rgb(7, 16, 26));
+        getWindow().setNavigationBarColor(Color.rgb(7, 16, 26));
 
         webView = new WebView(this);
-        webView.setBackgroundColor(Color.rgb(4, 7, 12));
+        webView.setBackgroundColor(Color.rgb(7, 16, 26));
         webView.setOverScrollMode(WebView.OVER_SCROLL_NEVER);
         webView.setVerticalScrollBarEnabled(false);
         webView.setHorizontalScrollBarEnabled(false);
@@ -44,7 +44,7 @@ public final class MainActivity extends Activity {
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setMediaPlaybackRequiresUserGesture(true);
-        settings.setUserAgentString(settings.getUserAgentString() + " SkyMapOntario/4.2");
+        settings.setUserAgentString(settings.getUserAgentString() + " SkyMapOntario/4.3");
 
         webView.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {

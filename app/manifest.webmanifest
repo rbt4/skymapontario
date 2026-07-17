@@ -7,8 +7,8 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#04070c",
-  "theme_color": "#04070c",
+  "background_color": "#07101a",
+  "theme_color": "#07101a",
   "categories": ["weather", "utilities", "travel"],
   "icons": [
     {"src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
