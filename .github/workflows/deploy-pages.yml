@@ -74,7 +74,8 @@ jobs:
         run: |
           mkdir -p release
           cp android/app/build/outputs/apk/debug/android-app-debug.apk release/SkyMap-Ontario-v4.3.apk
-          sha256sum release/SkyMap-Ontario-v4.3.apk > release/SkyMap-Ontario-v4.3.apk.sha256
+          cd release
+          sha256sum SkyMap-Ontario-v4.3.apk > SkyMap-Ontario-v4.3.apk.sha256
       - uses: actions/upload-artifact@v4
         with:
           name: SkyMap-Ontario-v4.3
