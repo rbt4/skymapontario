@@ -1,17 +1,168 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#06111d">
-<title>SkyMap Ontario — Live Rain, Smoke, Air & Fire</title><meta name="description" content="See live rain, smoke, air quality, wildfire hotspots and weather alerts across Ontario in one living map.">
-<link rel="canonical" href="https://rbt4.github.io/skymapontario/"><meta property="og:type" content="website"><meta property="og:title" content="SkyMap Ontario — Live Rain, Smoke, Air & Fire"><meta property="og:description" content="One living map for Ontario rain, smoke, air quality, wildfire hotspots and alerts."><meta property="og:image" content="assets/skymap-ontario-mark.svg"><meta name="twitter:card" content="summary_large_image">
-<link rel="manifest" href="app/manifest.webmanifest"><link rel="icon" href="assets/skymap-ontario-mark.svg"><link rel="apple-touch-icon" href="assets/skymap-ontario-mark.svg">
-<style>
-:root{--night:#06111d;--night2:#03080e;--cyan:#61dcff;--green:#4ce7a6;--lime:#d9ff7c;--text:#f4f8fb;--muted:#9bb0c0;--line:rgba(255,255,255,.10);--glass:rgba(8,20,31,.68)}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--night2);color:var(--text);font-family:Inter,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}a{color:inherit;text-decoration:none}button{font:inherit}.noise{position:fixed;inset:0;pointer-events:none;z-index:20;opacity:.025;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E")}.aurora{position:absolute;inset:-20% -10% auto;height:780px;overflow:hidden;pointer-events:none}.aurora:before,.aurora:after{content:"";position:absolute;width:900px;height:500px;border-radius:50%;filter:blur(100px);opacity:.25;animation:drift 13s ease-in-out infinite alternate}.aurora:before{background:var(--cyan);left:-180px;top:-300px}.aurora:after{background:var(--green);right:-280px;top:-220px;animation-delay:-6s}@keyframes drift{to{transform:translate3d(120px,65px,0) rotate(8deg);opacity:.38}}.wrap{width:min(1180px,calc(100% - 36px));margin:auto}.nav{position:fixed;z-index:30;top:12px;left:50%;transform:translateX(-50%);width:min(1120px,calc(100% - 24px));height:64px;padding:0 13px 0 16px;border:1px solid var(--line);border-radius:22px;background:rgba(4,13,21,.72);backdrop-filter:blur(22px) saturate(1.35);display:flex;align-items:center;justify-content:space-between;box-shadow:0 20px 60px rgba(0,0,0,.25)}.logo{display:flex;align-items:center;gap:10px}.logo img{width:42px;height:42px}.logo b{font-size:1.05rem;letter-spacing:-.045em}.logo b em{font-style:normal;background:linear-gradient(90deg,var(--cyan),var(--green));-webkit-background-clip:text;color:transparent}.logo small{display:block;color:#6f889b;font-size:.5rem;letter-spacing:.15em;margin-top:2px}.navlinks{display:flex;align-items:center;gap:6px}.navlinks a{font-size:.72rem;font-weight:800;color:#afc0cc;padding:10px 12px;border-radius:12px}.navlinks a:hover{background:rgba(255,255,255,.06);color:#fff}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:14px;padding:13px 17px;font-weight:900;font-size:.82rem;border:1px solid var(--line);transition:.2s transform,.2s border-color,.2s background;cursor:pointer}.btn:hover{transform:translateY(-2px);border-color:rgba(97,220,255,.4)}.btn.primary{background:linear-gradient(135deg,var(--cyan),var(--green));border:0;color:#04131b;box-shadow:0 14px 36px rgba(56,211,201,.18)}.btn.ghost{background:rgba(255,255,255,.045)}.hero{position:relative;min-height:920px;padding:154px 0 100px;display:grid;grid-template-columns:1.02fr .98fr;gap:72px;align-items:center}.eyebrow{display:inline-flex;align-items:center;gap:9px;padding:8px 11px;border:1px solid rgba(97,220,255,.2);border-radius:999px;background:rgba(97,220,255,.055);font-size:.62rem;font-weight:900;letter-spacing:.12em;color:#bfeeff}.eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 15px var(--lime)}h1{font-size:clamp(4rem,8.3vw,7.2rem);line-height:.86;margin:28px 0 27px;letter-spacing:-.082em;max-width:760px}h1 span{display:block;background:linear-gradient(95deg,var(--cyan),var(--green) 60%,var(--lime));-webkit-background-clip:text;color:transparent}.lede{font-size:clamp(1.05rem,1.7vw,1.28rem);line-height:1.62;color:#a8bdcb;max-width:640px}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px}.trust{display:flex;flex-wrap:wrap;gap:14px;margin-top:26px;color:#6f8798;font-size:.66rem;font-weight:800}.trust span{display:flex;align-items:center;gap:7px}.trust i{width:5px;height:5px;border-radius:50%;background:#466175}.device-wrap{position:relative;min-height:680px;display:grid;place-items:center}.orbit{position:absolute;width:640px;height:640px;border:1px solid rgba(97,220,255,.10);border-radius:50%;animation:spin 45s linear infinite}.orbit:before,.orbit:after{content:"";position:absolute;border-radius:50%;background:var(--cyan);box-shadow:0 0 22px var(--cyan)}.orbit:before{width:7px;height:7px;top:88px;left:85px}.orbit:after{width:5px;height:5px;right:46px;bottom:162px;background:var(--lime);box-shadow:0 0 20px var(--lime)}@keyframes spin{to{transform:rotate(360deg)}}.phone{position:relative;width:min(390px,86vw);height:760px;border:1px solid rgba(255,255,255,.14);border-radius:48px;padding:10px;background:#02060a;box-shadow:0 55px 120px rgba(0,0,0,.64),0 0 90px rgba(67,217,231,.10);transform:rotate(2deg)}.phone:before{content:"";position:absolute;z-index:3;top:17px;left:50%;transform:translateX(-50%);width:112px;height:26px;border-radius:18px;background:#02060a}.screen{position:relative;height:100%;overflow:hidden;border-radius:38px;background:radial-gradient(circle at 35% 15%,#16384d 0,#07131e 30%,#03070b 72%)}.maplines{position:absolute;inset:0;opacity:.44;background-image:linear-gradient(26deg,transparent 48%,rgba(97,220,255,.10) 49%,transparent 51%),linear-gradient(102deg,transparent 48%,rgba(76,231,166,.08) 49%,transparent 51%);background-size:120px 90px,170px 130px}.radar{position:absolute;left:-100px;top:130px;width:560px;height:560px;border-radius:50%;background:conic-gradient(from 160deg,transparent 0 58%,rgba(97,220,255,.24) 66%,transparent 74%);filter:blur(1px);animation:sweep 7s linear infinite}.radar:after{content:"";position:absolute;inset:70px;border-radius:50%;border:1px solid rgba(97,220,255,.20);box-shadow:0 0 0 70px rgba(97,220,255,.03),0 0 0 140px rgba(97,220,255,.02)}@keyframes sweep{to{transform:rotate(360deg)}}.appbar{position:absolute;z-index:2;top:22px;left:15px;right:15px;display:flex;justify-content:space-between;align-items:flex-start}.appbrand,.aq{border:1px solid rgba(255,255,255,.1);background:rgba(5,16,25,.72);backdrop-filter:blur(15px);border-radius:16px;padding:10px 12px}.appbrand b{font-size:.9rem}.appbrand b em{font-style:normal;color:var(--cyan)}.appbrand small{display:block;font-size:.46rem;color:#7d95a7;margin-top:3px}.aq{display:flex;align-items:center;gap:8px}.aq i{display:grid;place-items:center;width:35px;height:35px;border-radius:50%;border:3px solid var(--green);font-style:normal;font-weight:900}.aq span{font-size:.55rem;color:#90a7b8}.dock{position:absolute;z-index:2;left:10px;right:10px;bottom:10px;border:1px solid rgba(255,255,255,.1);border-radius:25px;background:rgba(5,14,22,.88);backdrop-filter:blur(22px);padding:17px}.story{font-weight:850;font-size:.95rem}.story em{font-style:normal;color:var(--cyan)}.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:14px 0;background:rgba(255,255,255,.04);padding:4px;border-radius:13px}.tabs span{text-align:center;padding:9px 2px;border-radius:10px;font-size:.56rem;color:#8197a8;font-weight:850}.tabs span:first-child{background:var(--cyan);color:#05131b}.timeline{height:6px;border-radius:10px;background:linear-gradient(90deg,var(--cyan) 0 62%,rgba(255,255,255,.08) 62%);margin:20px 0 16px;position:relative}.timeline:after{content:"";position:absolute;width:19px;height:19px;left:60%;top:50%;transform:translate(-50%,-50%);border-radius:50%;background:#fff;box-shadow:0 0 0 5px rgba(97,220,255,.18)}.times{display:flex;justify-content:space-between;color:#708797;font-size:.5rem}.features{padding:105px 0}.section-head{max-width:760px;margin-bottom:50px}.kicker{font-size:.63rem;letter-spacing:.19em;font-weight:900;color:var(--cyan);text-transform:uppercase}.section-head h2{font-size:clamp(2.5rem,5vw,4.6rem);letter-spacing:-.065em;line-height:.98;margin:16px 0}.section-head p{color:#91a8b8;font-size:1rem;line-height:1.6}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.card{min-height:245px;padding:22px;border:1px solid var(--line);border-radius:23px;background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.015));position:relative;overflow:hidden}.card:before{content:"";position:absolute;width:160px;height:160px;right:-60px;top:-80px;border-radius:50%;background:var(--accent);filter:blur(60px);opacity:.18}.card .icon{font-size:1.45rem}.card h3{font-size:1rem;margin:55px 0 10px}.card p{color:#8199aa;font-size:.78rem;line-height:1.55;margin:0}.live-section{padding:90px 0 120px}.live-shell{display:grid;grid-template-columns:.38fr .62fr;border:1px solid var(--line);border-radius:32px;overflow:hidden;background:#03080e;min-height:760px;box-shadow:0 50px 120px rgba(0,0,0,.35)}.live-copy{padding:46px;display:flex;flex-direction:column;justify-content:space-between;background:radial-gradient(circle at 20% 15%,rgba(97,220,255,.10),transparent 45%)}.live-copy h2{font-size:3.1rem;line-height:.95;letter-spacing:-.065em;margin:16px 0}.live-copy p{color:#91a9ba;line-height:1.62}.live-copy ul{list-style:none;padding:0;margin:24px 0}.live-copy li{padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:.76rem;color:#adc0cd;display:flex;justify-content:space-between}.live-copy li span{color:#698397}.live-frame{position:relative;background:#02060a}.live-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}.support{padding:110px 0}.support-box{position:relative;overflow:hidden;border:1px solid rgba(97,220,255,.18);border-radius:34px;padding:70px;background:radial-gradient(circle at 5% 0,rgba(97,220,255,.15),transparent 38%),radial-gradient(circle at 100% 100%,rgba(76,231,166,.12),transparent 38%),#07131d;display:grid;grid-template-columns:1fr auto;gap:40px;align-items:center}.support-box h2{font-size:clamp(2.3rem,4.5vw,4rem);line-height:1;letter-spacing:-.06em;margin:0 0 17px}.support-box p{max-width:670px;color:#97adbc;line-height:1.6}.sources{padding:80px 0 120px}.source-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.source{border:1px solid var(--line);border-radius:20px;padding:22px}.source b{display:block;margin-bottom:8px}.source p{margin:0;color:#8197a8;font-size:.75rem;line-height:1.55}.source a{display:inline-block;color:var(--cyan);font-size:.68rem;font-weight:900;margin-top:13px}.footer{border-top:1px solid var(--line);padding:38px 0 50px;color:#728a9c;font-size:.67rem}.footrow{display:flex;justify-content:space-between;gap:30px;align-items:flex-start}.footlinks{display:flex;gap:18px;flex-wrap:wrap}.disclaimer{max-width:690px;line-height:1.55;margin-top:18px;color:#61798a}@media(max-width:980px){.hero{grid-template-columns:1fr;padding-top:140px;text-align:center}.hero .lede,.hero h1{margin-left:auto;margin-right:auto}.actions,.trust{justify-content:center}.device-wrap{min-height:700px}.grid{grid-template-columns:repeat(2,1fr)}.grid .card:last-child{grid-column:1/-1}.live-shell{grid-template-columns:1fr;min-height:1080px}.live-copy{min-height:380px}.live-frame{min-height:700px}.support-box{grid-template-columns:1fr}.source-grid{grid-template-columns:1fr}.footrow{display:block}.footlinks{margin-top:16px}}@media(max-width:680px){.navlinks a:not(.navcta){display:none}.hero{min-height:auto;padding-bottom:50px}.hero h1{font-size:4rem}.device-wrap{transform:scale(.86);margin:-45px 0}.grid{grid-template-columns:1fr}.grid .card:last-child{grid-column:auto}.card{min-height:205px}.live-shell{border-radius:24px}.live-copy{padding:30px}.live-frame{min-height:760px}.support-box{padding:38px 26px}.phone{height:720px}.orbit{width:520px;height:520px}.wrap{width:min(100% - 24px,1180px)}}@media(prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important}}
-</style></head><body><div class="noise"></div><div class="aurora"></div>
-<nav class="nav"><a class="logo" href="#top"><img src="assets/skymap-ontario-mark.svg" alt=""><span><b>skymap <em>ontario</em></b><small>WEATHER • AIR • FIRE</small></span></a><div class="navlinks"><a href="#features">Features</a><a href="#live">Live map</a><a href="#sources">Data</a><a href="privacy.html">Privacy</a><a class="btn primary navcta" href="app/">Open map</a></div></nav>
-<main id="top"><section class="hero wrap"><div><div class="eyebrow"><i></i> LIVE ACROSS ONTARIO</div><h1>The province,<span>alive.</span></h1><p class="lede">Rain. Smoke. Air quality. Wildfire hotspots. Weather alerts. SkyMap Ontario turns scattered public data into one cinematic, useful map built for the entire province.</p><div class="actions"><a class="btn primary" href="app/">Open the live map ↗</a><a class="btn ghost" href="download/SkyMap-Ontario-v4.1-WOW.apk" download>Download Android APK</a><a class="btn ghost" href="https://ko-fi.com/rbt4dev" target="_blank" rel="noopener">☕ Support the project</a></div><div class="trust"><span><i></i>No account required</span><span><i></i>Open public data</span><span><i></i>Independent—not a government app</span></div></div>
-<div class="device-wrap" aria-label="SkyMap Ontario app preview"><div class="orbit"></div><div class="phone"><div class="screen"><div class="maplines"></div><div class="radar"></div><div class="appbar"><div class="appbrand"><b>skymap <em>ontario</em></b><small>10:42 a.m. • LIVE</small></div><div class="aq"><i>3</i><span>Air quality<br>low risk</span></div></div><div class="dock"><div class="story">Rain moving east across <em>Southern Ontario</em></div><div class="tabs"><span>RAIN</span><span>SMOKE</span><span>AIR</span><span>FIRES</span></div><div class="times"><span>2 H AGO</span><span>RIGHT NOW</span><span>+3 H</span></div><div class="timeline"></div><div class="times"><span>PAST</span><span>LIVE</span><span>FORECAST</span></div></div></div></div></div></section>
-<section class="features wrap" id="features"><div class="section-head"><div class="kicker">One living map</div><h2>Five views. One living map.</h2><p>SkyMap Ontario is not another generic weather app. It is a province-scale situational picture designed to answer “what is happening around me—and what is moving toward me?”</p></div><div class="grid"><article class="card" style="--accent:#61dcff"><div class="icon">🌧</div><h3>Rain in motion</h3><p>Scrub through recent radar and the near-term forecast instead of staring at a frozen snapshot.</p></article><article class="card" style="--accent:#ff9768"><div class="icon">🔥</div><h3>Smoke forecast</h3><p>See modelled smoke and particulate movement across Ontario before the sky visibly changes.</p></article><article class="card" style="--accent:#4ce7a6"><div class="icon">🍃</div><h3>Air quality</h3><p>Nearby AQHI observations and forecasts, translated into plain risk language.</p></article><article class="card" style="--accent:#ff5e52"><div class="icon">◉</div><h3>Wildfire hotspots</h3><p>Recent satellite heat detections from NRCan CWFIS—clearly labelled as detections, not fire boundaries.</p></article><article class="card" style="--accent:#ffd06b"><div class="icon">⚠</div><h3>Ontario alerts</h3><p>Active Environment Canada warnings, watches and advisories surfaced in one province-wide pulse.</p></article></div></section>
-<section class="live-section wrap" id="live"><div class="live-shell"><div class="live-copy"><div><div class="kicker">Use it now</div><h2>The live map runs instantly in your browser.</h2><p>Explore the live Ontario map here, install it as a web app, or download the Android APK for a dedicated full-screen experience.</p><ul><li>Province presets <span>16 locations</span></li><li>Saved view <span>On-device</span></li><li>Animation <span>Past → forecast</span></li><li>Data refresh <span>Automatic + manual</span></li></ul></div><div class="actions"><a class="btn primary" href="app/">Open live map</a><a class="btn ghost" href="download/SkyMap-Ontario-v4.1-WOW.apk" download>Get Android APK</a></div></div><div class="live-frame"><iframe src="app/" title="SkyMap Ontario live map" loading="lazy"></iframe></div></div></section>
-<section class="support wrap" id="support"><div class="support-box"><div><div class="kicker">Independent by design</div><h2>Help keep SkyMap Ontario growing.</h2><p>The core app is free. Support helps cover the unglamorous work: maintaining public-data connections, testing Android builds, improving accessibility and adding genuinely useful Ontario layers without turning the app into an ad wall.</p></div><a class="btn primary" href="https://ko-fi.com/rbt4dev" target="_blank" rel="noopener">☕ Support on Ko-fi</a></div></section>
-<section class="sources wrap" id="sources"><div class="section-head"><div class="kicker">Transparent data</div><h2>Public sources. Clear attribution.</h2><p>SkyMap Ontario presents open and publicly available data; it does not claim to replace official emergency information.</p></div><div class="source-grid"><article class="source"><b>Environment and Climate Change Canada</b><p>MSC GeoMet weather radar, model products, AQHI and Environment Canada alert information.</p><a href="https://www.canada.ca/en/environment-climate-change/services/weather-general-tools-resources/weather-tools-specialized-data/msc-geomet-api-geospatial-web-services.html" target="_blank" rel="noopener">Official GeoMet information ↗</a></article><article class="source"><b>Natural Resources Canada</b><p>Canadian Wildland Fire Information System satellite hotspot information and related fire products.</p><a href="https://cwfis.cfs.nrcan.gc.ca/" target="_blank" rel="noopener">Official CWFIS site ↗</a></article><article class="source"><b>Ontario 511</b><p>Ontario road conditions, events, construction, cameras and public traveller information.</p><a href="https://511on.ca/" target="_blank" rel="noopener">Official Ontario 511 ↗</a></article></div></section></main>
-<footer class="footer"><div class="wrap"><div class="footrow"><a class="logo" href="#top"><img src="assets/skymap-ontario-mark.svg" alt=""><span><b>skymap <em>ontario</em></b><small>BUILT BY RBT4</small></span></a><div class="footlinks"><a href="app/">Live map</a><a href="privacy.html">Privacy</a><a href="https://ko-fi.com/rbt4dev" target="_blank" rel="noopener">Ko-fi</a><a href="https://github.com/rbt4/skymapontario" target="_blank" rel="noopener">GitHub</a></div></div><div class="disclaimer">SkyMap Ontario is an independent application and is not affiliated with or endorsed by the Government of Ontario or the Government of Canada. Data can be delayed, preliminary or unavailable. Satellite hotspots are not confirmed fire perimeters. For emergencies and official instructions, use government sources and local authorities.</div></div></footer>
-</body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#050a12">
+  <meta name="color-scheme" content="dark">
+  <title>SkyMap Ontario — Rain, Smoke, Air & Fire</title>
+  <meta name="description" content="Explore live Ontario rain radar, smoke forecasts, air quality, wildfire hotspots and weather alerts in one responsive map.">
+  <link rel="canonical" href="https://rbt4.github.io/skymapontario/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="SkyMap Ontario — One living map">
+  <meta property="og:description" content="Rain, smoke, air quality, wildfire hotspots and alerts across Ontario.">
+  <meta property="og:url" content="https://rbt4.github.io/skymapontario/">
+  <meta property="og:image" content="https://rbt4.github.io/skymapontario/assets/skymap-ontario-mark.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="assets/skymap-ontario-mark.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/skymap-ontario-mark.svg">
+  <link rel="manifest" href="app/manifest.webmanifest">
+  <script>document.documentElement.classList.add('js')</script>
+  <link rel="stylesheet" href="assets/site-base.css">
+  <link rel="stylesheet" href="assets/site-responsive.css">
+  <script src="assets/site.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="site-noise" aria-hidden="true"></div>
+  <div class="site-aurora" aria-hidden="true"><i></i><i></i></div>
+
+  <header class="nav-shell" data-nav>
+    <nav class="nav" aria-label="Main navigation">
+      <a class="wordmark" href="#top" aria-label="SkyMap Ontario home">
+        <img src="assets/skymap-ontario-mark.svg" alt="">
+        <span><b>skymap <em>ontario</em></b><small>LIVE PUBLIC DATA</small></span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-menu" data-nav-toggle>
+        <span></span><span></span><span></span><span class="sr-only">Open menu</span>
+      </button>
+      <div class="nav-menu" id="nav-menu" data-nav-menu>
+        <a href="#views">Views</a>
+        <a href="#demo">Live demo</a>
+        <a href="#sources">Sources</a>
+        <a class="nav-support" href="#support">Support</a>
+        <a class="nav-primary" href="app/">Open map <span aria-hidden="true">↗</span></a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero section" id="top">
+      <div class="hero-copy reveal">
+        <div class="eyebrow"><span class="live-dot"></span> LIVE ACROSS ONTARIO</div>
+        <h1>See what’s moving <span>your way.</span></h1>
+        <p class="hero-lede">SkyMap Ontario turns scattered public weather and environmental feeds into one fast, visual map—built for a five-second check or a deeper look.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="demo/">Try the live demo <span aria-hidden="true">↗</span></a>
+          <a class="button button-secondary" href="app/">Open full-screen map</a>
+          <a class="button button-quiet" href="download/SkyMap-Ontario-v4.2.apk" download>Android APK</a>
+        </div>
+        <div class="trust-row" aria-label="Product benefits">
+          <span>No account</span><span>No ads</span><span>Open public data</span><span>Works on mobile and desktop</span>
+        </div>
+      </div>
+
+      <div class="hero-visual reveal" aria-label="SkyMap Ontario interface preview">
+        <div class="orbit orbit-one" aria-hidden="true"></div>
+        <div class="orbit orbit-two" aria-hidden="true"></div>
+        <div class="browser-card">
+          <div class="browser-bar"><i></i><i></i><i></i><div>rbt4.github.io/skymapontario</div></div>
+          <div class="preview-map">
+            <div class="preview-grid"></div>
+            <div class="preview-radar"></div>
+            <div class="preview-rain"></div>
+            <div class="preview-hotspots"></div>
+            <div class="preview-top">
+              <div class="preview-brand"><b>skymap <em>ontario</em></b><small>LIVE</small></div>
+              <div class="preview-aq"><strong>3</strong><span>AQHI<br>low risk</span></div>
+            </div>
+            <div class="preview-panel">
+              <div class="preview-story"><span>Rain</span> moving east across Southern Ontario</div>
+              <div class="preview-tabs"><b>RAIN</b><span>SMOKE</span><span>AIR</span><span>FIRES</span></div>
+              <div class="preview-time"><span>2 H AGO</span><strong>RIGHT NOW</strong><span>+3 H</span></div>
+              <div class="preview-track"><i></i></div>
+            </div>
+          </div>
+        </div>
+        <div class="floating-stat stat-one"><span>RADAR</span><b>6 min</b><small>update cycle</small></div>
+        <div class="floating-stat stat-two"><span>ONTARIO</span><b>16</b><small>quick locations</small></div>
+      </div>
+    </section>
+
+    <section class="signal-strip" aria-label="Map data views">
+      <div><i class="rain"></i><span>Rain radar</span></div>
+      <div><i class="smoke"></i><span>Smoke forecast</span></div>
+      <div><i class="air"></i><span>Air quality</span></div>
+      <div><i class="fire"></i><span>Wildfire hotspots</span></div>
+      <div><i class="alert"></i><span>Weather alerts</span></div>
+    </section>
+
+    <section class="section views" id="views">
+      <div class="section-heading reveal">
+        <div class="kicker">ONE LIVING MAP</div>
+        <h2>The useful layers.<br><span>None of the dashboard clutter.</span></h2>
+        <p>Every view has one job. Switch layers, move through time and get back to your day.</p>
+      </div>
+      <div class="view-grid">
+        <article class="view-card reveal" style="--accent:#43d7ff"><div class="view-icon">01</div><div><h3>Rain in motion</h3><p>Recent radar frames and near-term movement, with a real timeline instead of a decorative progress bar.</p></div><span>RADAR</span></article>
+        <article class="view-card reveal" style="--accent:#ff9367"><div class="view-icon">02</div><div><h3>Smoke forecast</h3><p>Modelled wildfire-smoke concentration across Ontario, clearly labelled as forecast data.</p></div><span>FORECAST</span></article>
+        <article class="view-card reveal" style="--accent:#4ce7a6"><div class="view-icon">03</div><div><h3>Air quality</h3><p>Nearby AQHI readings with plain-language risk levels and the reporting station shown.</p></div><span>AQHI</span></article>
+        <article class="view-card reveal" style="--accent:#ff6257"><div class="view-icon">04</div><div><h3>Fire hotspots</h3><p>Recent satellite heat detections—not misleading fire boundaries or guessed incident sizes.</p></div><span>NRCan</span></article>
+        <article class="view-card reveal" style="--accent:#ffd06b"><div class="view-icon">05</div><div><h3>Active alerts</h3><p>Ontario warnings, watches and advisories surfaced without replacing official instructions.</p></div><span>ALERTS</span></article>
+      </div>
+    </section>
+
+    <section class="section demo-section" id="demo">
+      <div class="demo-heading reveal">
+        <div><div class="kicker">USE IT HERE</div><h2>A real browser app.<br><span>Not a video pretending to be one.</span></h2></div>
+        <div class="demo-actions"><a class="button button-secondary" href="demo/">Dedicated demo link</a><a class="button button-primary" href="app/">Open full screen ↗</a></div>
+      </div>
+      <div class="demo-frame-shell reveal">
+        <div class="demo-frame-bar">
+          <div class="demo-dots"><i></i><i></i><i></i></div>
+          <div class="demo-url">rbt4.github.io/skymapontario/app/</div>
+          <a href="app/" aria-label="Open map in a new page">↗</a>
+        </div>
+        <iframe src="app/?embed=1" title="Interactive SkyMap Ontario demo" loading="lazy" allow="geolocation; fullscreen"></iframe>
+      </div>
+      <p class="demo-note">Tip: drag the map, choose a city, switch layers and use the rain timeline. On a phone, open the dedicated demo for the full viewport.</p>
+    </section>
+
+    <section class="section support-section" id="support">
+      <div class="support-card reveal">
+        <div class="support-brand" aria-hidden="true"><div class="rbt4-mark">4</div><div class="coffee-orbit"><span>☕</span></div></div>
+        <div class="support-copy">
+          <div class="kicker gold">INDEPENDENT BY DESIGN</div>
+          <h2>Help keep SkyMap Ontario useful.</h2>
+          <p>There is no company behind this and no ad network watching the map. Support helps cover maintenance, testing and the unglamorous work of keeping public-data connections from quietly breaking.</p>
+          <div class="support-proof"><span>Free core app</span><span>No subscription</span><span>No ad wall</span></div>
+        </div>
+        <div class="support-action">
+          <a class="kofi-button" href="https://ko-fi.com/rbt4dev" target="_blank" rel="noopener noreferrer">
+            <span class="cup">☕</span><span><b>Support this project</b><small>Open Ko-fi · rbt4dev</small></span><i aria-hidden="true">↗</i>
+          </a>
+          <small class="support-fine">Optional. The map remains free either way.</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="section sources" id="sources">
+      <div class="section-heading compact reveal"><div class="kicker">TRANSPARENT DATA</div><h2>Public sources.<br><span>Clear limits.</span></h2></div>
+      <div class="source-grid">
+        <article class="source-card reveal"><span>ECCC</span><h3>Weather and air</h3><p>Radar, smoke-model, AQHI and weather-alert information from Environment and Climate Change Canada.</p><a href="https://eccc-msc.github.io/open-data/" target="_blank" rel="noopener noreferrer">Open-data documentation ↗</a></article>
+        <article class="source-card reveal"><span>NRCan</span><h3>Wildfire hotspots</h3><p>Satellite-detected thermal anomalies from the Canadian Wildland Fire Information System.</p><a href="https://cwfis.cfs.nrcan.gc.ca/" target="_blank" rel="noopener noreferrer">CWFIS ↗</a></article>
+        <article class="source-card reveal"><span>MAP</span><h3>Base mapping</h3><p>Map tiles and labels are provided through CARTO and OpenStreetMap contributors.</p><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">Map attribution ↗</a></article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-main">
+      <a class="wordmark" href="#top"><img src="assets/skymap-ontario-mark.svg" alt=""><span><b>skymap <em>ontario</em></b><small>BUILT BY RBT4</small></span></a>
+      <div class="footer-links"><a href="demo/">Live demo</a><a href="app/">Full map</a><a href="privacy.html">Privacy</a><a href="https://ko-fi.com/rbt4dev" target="_blank" rel="noopener noreferrer">Ko-fi</a><a href="https://github.com/rbt4/skymapontario" target="_blank" rel="noopener noreferrer">GitHub</a></div>
+    </div>
+    <p>SkyMap Ontario is independent and is not affiliated with or endorsed by the Government of Ontario or the Government of Canada. Data can be delayed, preliminary or unavailable. Satellite hotspots are detections, not confirmed fire perimeters. Follow official instructions during emergencies.</p>
+    <div class="footer-bottom"><span>© <span data-year></span> RBT4</span><span>Made in Ontario</span></div>
+  </footer>
+</body>
+</html>
