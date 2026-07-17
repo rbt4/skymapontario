@@ -1,1 +1,129 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#04070c"><title>SkyMap Ontario</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="../assets/skymap-ontario-mark.svg"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><style>:root{--bg:#04070c;--glass:rgba(5,13,21,.78);--line:rgba(255,255,255,.11);--text:#f3f7fa;--dim:#93a9b9;--cyan:#42d7ff;--green:#49e5aa;--orange:#ff875a;--red:#ff5e52}*{box-sizing:border-box}html,body,#map{height:100%;margin:0;background:var(--bg);font-family:Inter,Segoe UI,system-ui,sans-serif;color:var(--text)}body{overflow:hidden}.leaflet-control-zoom{display:none}.top{position:fixed;z-index:700;top:max(12px,env(safe-area-inset-top));left:12px;right:12px;display:flex;justify-content:space-between;gap:10px;pointer-events:none}.glass{background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(20px);box-shadow:0 14px 42px rgba(0,0,0,.42)}.brand{pointer-events:auto;padding:12px 15px;border-radius:18px}.brand b{font-size:1rem;letter-spacing:-.04em}.brand em{font-style:normal;color:var(--cyan)}.brand small{display:block;color:var(--dim);font-size:.58rem;margin-top:3px}.status{pointer-events:auto;padding:9px 12px;border-radius:18px;text-align:right}.status b{display:block;font-size:.75rem}.status span{color:var(--dim);font-size:.58rem}.panel{position:fixed;z-index:700;left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));max-width:900px;margin:auto;border-radius:24px;padding:12px;background:rgba(4,12,20,.91);border:1px solid var(--line);backdrop-filter:blur(24px);box-shadow:0 18px 55px rgba(0,0,0,.55)}.modes{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.mode{border:0;border-radius:13px;padding:12px 5px;background:rgba(255,255,255,.055);color:var(--dim);font-weight:800;font-size:.72rem}.mode.active{background:var(--accent,var(--cyan));color:#04131a}.readout{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:12px 4px 6px}.story{font-weight:800;font-size:.96rem}.meta{font-size:.62rem;color:var(--dim);text-align:right}.places{display:flex;gap:7px;overflow:auto;padding:5px 2px 2px;scrollbar-width:none}.place{border:1px solid var(--line);background:rgba(255,255,255,.045);color:#b8c7d1;padding:8px 11px;border-radius:999px;white-space:nowrap;font-size:.66rem;font-weight:750}.place.active{border-color:var(--cyan);color:#fff}.alert{display:none;margin-top:8px;padding:9px 11px;border-radius:13px;background:rgba(255,94,82,.12);border:1px solid rgba(255,94,82,.35);font-size:.68rem}.alert.show{display:block}.sheet{position:fixed;z-index:800;top:88px;right:12px;width:min(330px,calc(100% - 24px));border-radius:20px;padding:15px}.aqnum{font-size:2.1rem;font-weight:900;color:var(--green)}.aqcopy{color:var(--dim);font-size:.68rem;line-height:1.45}.actions{display:flex;gap:7px;margin-top:12px}.actions a,.actions button{flex:1;text-align:center;border:1px solid var(--line);border-radius:12px;padding:9px;background:rgba(255,255,255,.05);color:#dbe7ee;font-size:.64rem;font-weight:800;text-decoration:none}.pulse{width:7px;height:7px;border-radius:50%;display:inline-block;background:#ffd06b;box-shadow:0 0 0 0 rgba(255,208,107,.5);animation:p 2s infinite}@keyframes p{70%{box-shadow:0 0 0 8px rgba(255,208,107,0)}}@media(max-width:650px){.sheet{top:94px;width:210px}.sheet .actions{display:none}.story{font-size:.82rem}.mode{font-size:.62rem;padding:11px 2px}}</style></head><body><div id="map"></div><div class="top"><div class="brand glass"><b>skymap <em>ontario</em></b><small><span class="pulse"></span> LIVE PUBLIC DATA</small></div><div class="status glass"><b id="time">Loading…</b><span id="feed">Connecting to Ontario feeds</span></div></div><aside class="sheet glass"><div class="aqnum" id="aq">—</div><b id="aqrisk">Air quality</b><div class="aqcopy" id="aqstation">Finding the nearest Ontario station…</div><div class="actions"><button id="locate">Use my location</button><a href="https://ko-fi.com/rbt4dev" target="_blank" rel="noopener">Support</a></div></aside><section class="panel"><div class="modes"><button class="mode active" data-mode="rain" style="--accent:#42d7ff">RAIN</button><button class="mode" data-mode="smoke" style="--accent:#ff875a">SMOKE</button><button class="mode" data-mode="air" style="--accent:#49e5aa">AIR</button><button class="mode" data-mode="fire" style="--accent:#ff5e52">FIRES</button></div><div class="readout"><div class="story" id="story">Live rain across Ontario</div><div class="meta" id="meta">Environment Canada<br>updated live</div></div><div class="places" id="places"></div><div class="alert" id="alert"></div></section><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script>(()=>{const GEOMET='https://geo.weather.gc.ca/geomet',API='https://api.weather.gc.ca',CWFIS='https://geoserver.cwfif.nrcan.gc.ca/geoserver/public/wms';const cfg={rain:{url:GEOMET,layer:'RADAR_1KM_RRAI',story:'Live rain across Ontario',meta:'Environment Canada radar'},smoke:{url:GEOMET,layer:'RAQDPS.Sfc_PM2.5-WildfireSmokePlume',story:'Modelled wildfire smoke across Ontario',meta:'ECCC smoke model'},air:{url:GEOMET,layer:'AQHI-OBS',story:'Observed air quality health index',meta:'Ontario AQHI observations'},fire:{url:CWFIS,layer:'public:hotspots_24h',story:'Satellite heat detections from the last 24 hours',meta:'NRCan CWFIS · not confirmed fire boundaries'}};const cities={Ontario:[49.6,-84.3,5],Toronto:[43.653,-79.383,8],Ottawa:[45.421,-75.697,8],Hamilton:[43.255,-79.871,9],Niagara:[43.09,-79.08,9],London:[42.984,-81.245,8],Windsor:[42.314,-83.036,8],Sudbury:[46.491,-80.993,8],ThunderBay:[48.381,-89.247,8],Kenora:[49.768,-94.49,8]};const map=L.map('map',{zoomControl:false,attributionControl:false}).setView([49.6,-84.3],5);L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',{maxZoom:13}).addTo(map);map.createPane('weather');map.getPane('weather').style.zIndex=350;map.createPane('labels');map.getPane('labels').style.zIndex=500;L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',{pane:'labels',maxZoom:13}).addTo(map);let layer,mode='rain';function setMode(m){mode=m;document.querySelectorAll('.mode').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));if(layer)map.removeLayer(layer);const c=cfg[m];layer=L.tileLayer.wms(c.url,{layers:c.layer,format:'image/png',transparent:true,pane:'weather',opacity:m==='fire'?1:.82,version:'1.3.0'}).addTo(map);story.textContent=c.story;meta.innerHTML=c.meta+'<br>'+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});localStorage.setItem('skymap.mode',m)}document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));const places=document.getElementById('places');Object.entries(cities).forEach(([name,v])=>{const b=document.createElement('button');b.className='place'+(name==='Ontario'?' active':'');b.textContent=name.replace('ThunderBay','Thunder Bay');b.onclick=()=>{document.querySelectorAll('.place').forEach(x=>x.classList.remove('active'));b.classList.add('active');map.flyTo([v[0],v[1]],v[2],{duration:1.2});loadAQ(v[0],v[1])};places.appendChild(b)});const risk=v=>v<=3?['Low risk','#49e5aa']:v<=6?['Moderate risk','#ffd06b']:v<=10?['High risk','#ff875a']:['Very high risk','#ff5e52'];async function loadAQ(lat=map.getCenter().lat,lon=map.getCenter().lng){try{const r=await fetch(`${API}/collections/aqhi-observations-realtime/items?f=json&latest=true&bbox=-95.2,41.5,-74,57.2&limit=200`),j=await r.json();const list=(j.features||[]).filter(f=>f.geometry&&f.properties?.aqhi!=null).map(f=>({v:+f.properties.aqhi,n:f.properties.location_name_en||'Ontario station',lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0]})).sort((a,b)=>(a.lat-lat)**2+(a.lon-lon)**2-(b.lat-lat)**2-(b.lon-lon)**2);if(!list.length)throw 0;const x=list[0],rsk=risk(x.v);aq.textContent=x.v>10?'10+':x.v;aq.style.color=rsk[1];aqrisk.textContent=rsk[0];aqstation.textContent=x.n+' · nearest to your view'}catch(e){aq.textContent='—';aqrisk.textContent='AQHI unavailable';aqstation.textContent='The live AQHI feed could not be reached.'}}async function alerts(){try{const r=await fetch(`${API}/collections/weather-alerts/items?f=json&province=ON&limit=250`),j=await r.json(),n=(j.features||[]).length;if(n){alert.classList.add('show');alert.textContent=`⚠ ${n} active Ontario weather alert${n===1?'':'s'} — check official instructions.`}}catch(e){}}locate.onclick=()=>navigator.geolocation?.getCurrentPosition(p=>{map.flyTo([p.coords.latitude,p.coords.longitude],9);loadAQ(p.coords.latitude,p.coords.longitude)});setInterval(()=>time.textContent=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}),1000);feed.textContent='Weather · air · fire';setMode(localStorage.getItem('skymap.mode')||'rain');loadAQ();alerts();})();</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#04070c">
+  <meta name="color-scheme" content="dark">
+  <title>SkyMap Ontario — Live Map</title>
+  <meta name="description" content="Live Ontario rain radar, smoke forecasts, AQHI, wildfire hotspots and weather alerts.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3ynhP9uD1OZGGp1hWj1jPI0YQp7a0=" crossorigin="" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css'">
+  <link rel="stylesheet" href="app-base.css">
+  <link rel="stylesheet" href="app-responsive.css">
+</head>
+<body data-mode="rain">
+  <a class="skip-link" href="#controls">Skip to map controls</a>
+  <div id="map" role="application" aria-label="Interactive Ontario environmental map"></div>
+  <div class="map-vignette" aria-hidden="true"></div>
+  <div class="map-grid" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <button class="brand-chip glass" type="button" data-open="about" aria-label="About SkyMap Ontario">
+      <img src="icon.svg" alt="">
+      <span><b>skymap <em>ontario</em></b><small><i class="live-dot"></i><span id="connection-label">CONNECTING</span></small></span>
+    </button>
+    <button class="place-chip glass" id="place-button" type="button" aria-haspopup="dialog" aria-controls="place-sheet">
+      <span class="place-pin">⌖</span><span><small>VIEWING</small><b id="place-label">Ontario</b></span><i>⌄</i>
+    </button>
+    <div class="top-actions">
+      <button class="icon-button glass" id="locate-button" type="button" aria-label="Use my location" title="Use my location">◎</button>
+      <button class="icon-button glass" id="share-button" type="button" aria-label="Share current view" title="Share current view">↗</button>
+      <button class="icon-button glass" id="menu-button" type="button" aria-label="Open settings and information" aria-controls="info-sheet">•••</button>
+    </div>
+  </header>
+
+  <nav class="mode-rail glass" id="controls" aria-label="Map layers">
+    <button class="mode-button active" data-mode="rain" type="button"><span class="mode-icon rain">◒</span><b>Rain</b><small>Radar</small></button>
+    <button class="mode-button" data-mode="smoke" type="button"><span class="mode-icon smoke">≈</span><b>Smoke</b><small>Forecast</small></button>
+    <button class="mode-button" data-mode="air" type="button"><span class="mode-icon air">◎</span><b>Air</b><small>AQHI</small></button>
+    <button class="mode-button" data-mode="fire" type="button"><span class="mode-icon fire">◆</span><b>Fires</b><small>Hotspots</small></button>
+    <button class="mode-button" data-mode="alerts" type="button"><span class="mode-icon alerts">!</span><b>Alerts</b><small>Ontario</small><i class="alert-count" id="mode-alert-count" hidden>0</i></button>
+  </nav>
+
+  <aside class="info-panel glass" id="desktop-info" aria-label="Current layer information">
+    <div class="panel-head">
+      <div><small id="mode-kicker">RAIN RADAR</small><h1 id="mode-title">What is moving across Ontario</h1></div>
+      <button class="panel-close" type="button" data-collapse-panel aria-label="Collapse information panel">×</button>
+    </div>
+    <div class="status-line"><i id="status-dot"></i><span id="status-text">Loading live data…</span><time id="updated-time">—</time></div>
+    <div class="legend-card" id="legend-card">
+      <div class="legend-title"><span id="legend-name">Precipitation rate</span><small id="legend-unit">mm/h</small></div>
+      <div class="legend-bar rain-legend" id="legend-bar"></div>
+      <div class="legend-labels" id="legend-labels"><span>Light</span><span>Moderate</span><span>Heavy</span></div>
+    </div>
+    <section class="aq-card" id="aq-card">
+      <div class="aq-value" id="aq-value">—</div>
+      <div><small>AIR QUALITY HEALTH INDEX</small><b id="aq-risk">Finding nearest station…</b><span id="aq-station">Ontario</span></div>
+    </section>
+    <section class="alerts-card" id="alerts-card">
+      <div class="card-title"><span><i></i>Active Ontario alerts</span><b id="alert-total">—</b></div>
+      <div id="alert-list" class="alert-list"><p>Checking current warnings, watches and advisories…</p></div>
+      <a href="https://weather.gc.ca/warnings/index_e.html?prov=on" target="_blank" rel="noopener noreferrer">Official Environment Canada alerts ↗</a>
+    </section>
+    <div class="source-row"><span>Source</span><a id="source-link" href="https://eccc-msc.github.io/open-data/" target="_blank" rel="noopener noreferrer">Environment Canada GeoMet ↗</a></div>
+    <div class="support-mini">
+      <div class="mini-mark">4</div><div><b>Enjoying the map?</b><span>Support maintenance without ads.</span></div><a href="https://ko-fi.com/rbt4dev" target="_blank" rel="noopener noreferrer">☕ Support</a>
+    </div>
+  </aside>
+
+  <button class="panel-restore glass" id="panel-restore" type="button" hidden>Info</button>
+
+  <section class="timeline-panel glass" id="timeline-panel" aria-label="Weather timeline">
+    <div class="timeline-top">
+      <button class="play-button" id="play-button" type="button" aria-label="Play animation"><span>▶</span></button>
+      <div class="timeline-readout"><small id="relative-time">LATEST</small><b id="absolute-time">Loading timeline…</b></div>
+      <button class="refresh-button" id="refresh-button" type="button" aria-label="Refresh data">↻ <span>Refresh</span></button>
+    </div>
+    <div class="range-wrap">
+      <div class="range-track"><div class="range-progress" id="range-progress"></div><i class="now-marker" id="now-marker"></i></div>
+      <input id="time-slider" type="range" min="0" max="0" value="0" step="1" aria-label="Weather frame time">
+    </div>
+    <div class="range-labels"><span id="range-start">—</span><span class="now-label">NOW</span><span id="range-end">—</span></div>
+  </section>
+
+  <div class="mobile-summary glass" id="mobile-summary">
+    <button type="button" id="mobile-summary-button" aria-controls="info-sheet"><span><small id="mobile-kicker">RAIN RADAR</small><b id="mobile-story">Loading live map…</b></span><i>⌃</i></button>
+  </div>
+
+  <div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
+
+  <section class="sheet" id="place-sheet" role="dialog" aria-modal="true" aria-labelledby="place-title" hidden>
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><small>QUICK LOCATIONS</small><h2 id="place-title">Jump across Ontario</h2></div><button type="button" data-close-sheet aria-label="Close">×</button></div>
+    <div class="place-grid" id="place-grid"></div>
+  </section>
+
+  <section class="sheet info-sheet" id="info-sheet" role="dialog" aria-modal="true" aria-labelledby="info-title" hidden>
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><small id="sheet-kicker">SKYMAP ONTARIO</small><h2 id="info-title">Map details</h2></div><button type="button" data-close-sheet aria-label="Close">×</button></div>
+    <div class="sheet-content">
+      <section class="mobile-data-card"><div class="status-line"><i id="sheet-status-dot"></i><span id="sheet-status-text">Loading live data…</span><time id="sheet-updated-time">—</time></div><div id="sheet-mode-copy" class="sheet-mode-copy">Live environmental data across Ontario.</div></section>
+      <section class="mobile-aq-card"><div class="aq-value" id="sheet-aq-value">—</div><div><small>AQHI</small><b id="sheet-aq-risk">Finding nearest station…</b><span id="sheet-aq-station">Ontario</span></div></section>
+      <section class="mobile-alert-card"><div class="card-title"><span><i></i>Active alerts</span><b id="sheet-alert-total">—</b></div><div id="sheet-alert-list" class="alert-list"><p>Checking Ontario alerts…</p></div></section>
+      <div class="sheet-options">
+        <button type="button" id="install-button" hidden><span>＋</span><div><b>Install browser app</b><small>Add SkyMap Ontario to your home screen</small></div></button>
+        <button type="button" id="opacity-button"><span>◐</span><div><b>Layer opacity</b><small><input id="opacity-slider" type="range" min="25" max="100" value="82" aria-label="Layer opacity"></small></div></button>
+        <a href="../" target="_top"><span>⌂</span><div><b>Product website</b><small>About, sources and Android download</small></div></a>
+      </div>
+      <div class="support-sheet-card">
+        <div class="support-sheet-mark">4</div><div><small>INDEPENDENT PROJECT</small><b>Help keep the live feeds maintained.</b><p>No ads, subscriptions or support popups interrupt the map.</p></div><a href="https://ko-fi.com/rbt4dev" target="_blank" rel="noopener noreferrer">☕ Support on Ko-fi</a>
+      </div>
+      <p class="disclaimer">SkyMap Ontario is independent and not an official government app. Data can be delayed or unavailable. Satellite hotspots are thermal detections, not confirmed fire boundaries. Follow official emergency instructions.</p>
+    </div>
+  </section>
+
+  <div class="loading-screen" id="loading-screen" role="status" aria-live="polite">
+    <img src="icon.svg" alt="">
+    <div class="loader-rings" aria-hidden="true"><i></i><i></i><i></i></div>
+    <b>SkyMap Ontario</b><span id="loading-message">Starting the live map…</span>
+  </div>
+
+  <div class="error-banner" id="error-banner" role="alert" hidden><span id="error-message">Something went wrong.</span><button type="button" id="error-retry">Retry</button></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="app-core.js" defer></script>
+  <script src="app-ui.js" defer></script>
+</body>
+</html>
