@@ -1,0 +1,1 @@
+-keepclassmembers class ca.skymapontario.app.MainActivity$NativeBridge { public *; }
