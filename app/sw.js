@@ -1,5 +1,5 @@
-const CACHE = 'skymap-ontario-v4.2';
-const SHELL = ['./', './index.html', './app-base.css', './app-responsive.css', './app-core.js', './app-ui.js', './manifest.webmanifest', './icon.svg'];
+const CACHE = 'skymap-ontario-v4.2.1';
+const SHELL = ['./', './index.html', './app-base.css', './app-responsive.css', './app-core.js', './app-ui.js', './app-patch.js', './manifest.webmanifest', './icon.svg'];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting())));
 self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', event => {
