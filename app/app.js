@@ -461,11 +461,12 @@
   function createWmsLayer(config, token, options = {}) {
     const layerId = options.layerId || config.wms.layer;
     const style = layerId === config.wms.futureLayer ? config.wms.futureStyle || '' : config.wms.style;
-    const layer = L.tileLayer.wms(config.wms.url, {
+    const wmsOptions = {
       layers: layerId, styles: style, format: 'image/png', transparent: true, version: '1.3.0',
-      time: options.time ? formatWmsTime(options.time) : undefined,
       pane: 'weather', opacity: options.hidden ? 0 : state.opacity * config.wms.opacity, tileSize: 256, updateWhenIdle: false, updateWhenZooming: false, keepBuffer: 2
-    });
+    };
+    if (options.time) wmsOptions.time = formatWmsTime(options.time);
+    const layer = L.tileLayer.wms(config.wms.url, wmsOptions);
     layer._skyLayerId = layerId;
     let loaded = 0;
     let failed = 0;
@@ -496,12 +497,15 @@
   async function loadTimeFrames(config, token) {
     try {
       const layerIds = [config.wms.layer, config.wms.futureLayer].filter(Boolean);
-      const responses = await Promise.all(layerIds.map(layerId => {
+      const responses = await Promise.allSettled(layerIds.map(layerId => {
         const url = `${config.wms.url}?service=WMS&version=1.3.0&request=GetCapabilities&layer=${encodeURIComponent(layerId)}&_=${Date.now()}`;
         return fetchResponse(url, {}, 18000, 2).then(response => response.text());
       }));
       if (token !== state.modeToken) return;
-      const parsed = responses.map(xmlText => {
+      if (responses[0].status !== 'fulfilled') throw responses[0].reason || new Error('Primary timeline unavailable');
+      const parsed = responses.map(result => {
+        if (result.status !== 'fulfilled') return [];
+        const xmlText = result.value;
         const xml = new DOMParser().parseFromString(xmlText, 'application/xml');
         if (xml.querySelector('parsererror')) throw new Error('Invalid capabilities document');
         const dimensions = [...xml.getElementsByTagName('Dimension')];
@@ -557,7 +561,7 @@
     const next = createWmsLayer(config, state.modeToken, { layerId: frameMeta.layerId, time: state.currentFrame, hidden: true });
     state.pendingLayer = next;
     next.once('load', () => {
-      if (state.pendingLayer !== next || state.modeToken !== Number(next._skyToken || state.modeToken)) return;
+      if (state.pendingLayer !== next || state.modeToken !== next._skyToken) return;
       state.pendingLayer = null;
       state.layer = next;
       requestAnimationFrame(() => {
@@ -603,9 +607,9 @@
       if (!state.playing) return;
       if (state.frameIndex >= state.frames.length - 1) return stopPlayback();
       applyFrame(state.frameIndex + 1, false);
-      state.frameTimer = setTimeout(advance, state.mode === 'rain' ? 1550 : 1850);
+      state.frameTimer = setTimeout(advance, state.mode === 'rain' ? 1900 : 2300);
     };
-    state.frameTimer = setTimeout(advance, state.mode === 'rain' ? 1550 : 1850);
+    state.frameTimer = setTimeout(advance, state.mode === 'rain' ? 1900 : 2300);
   }
 
   function stopPlayback() {
