@@ -27,6 +27,7 @@ jobs:
           node --check assets/site.js
           node --check app/app-core.js
           node --check app/app-ui.js
+          node --check app/app-patch.js
           node --check app/sw.js
       - name: Check required files
         run: |
@@ -37,6 +38,7 @@ jobs:
           test -f app/app-responsive.css
           test -f app/app-core.js
           test -f app/app-ui.js
+          test -f app/app-patch.js
           test -f privacy.html
 
   build-and-deploy:
