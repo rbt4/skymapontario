@@ -1,4 +1,4 @@
-const CACHE = 'skymap-ontario-v4.3.0';
+const CACHE = 'skymap-ontario-v4.3.1';
 const SHELL = [
   './', './index.html', './app-base.css', './app-responsive.css', './app.js',
   './vendor/leaflet.css', './vendor/leaflet.js', './manifest.webmanifest', './icon.svg'

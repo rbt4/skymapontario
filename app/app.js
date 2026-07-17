@@ -211,8 +211,8 @@
     DOM.source.textContent = `${config.source} ↗`;
     DOM.source.href = config.sourceUrl;
     DOM.dataNote.textContent = config.note;
-    DOM.timeline.classList.toggle('hidden', !config.timed);
-    DOM.mobilePeek.classList.toggle('hidden', config.timed);
+    DOM.timeline.hidden = !config.timed;
+    DOM.mobilePeek.hidden = config.timed;
     updatePrimaryForMode();
     renderActivity();
   }
@@ -581,7 +581,7 @@
       button.type = 'button'; button.className = `place-option${name === state.place ? ' active' : ''}`;
       button.innerHTML = `<b>${escapeHtml(name)}</b><span>${escapeHtml(region)}</span>`;
       button.addEventListener('click', () => {
-        state.place = name; writeStorage('skymap.place', name); DOM.placeLabel.textContent = name;
+        state.place = name; writeStorage('skymap.place', name); DOM.placeLabel.textContent = name; DOM.placeButton.setAttribute('aria-label', `Choose map location, currently ${name}`);
         all('.place-option').forEach(item => item.classList.toggle('active', item === button));
         closeSheets(); state.map.flyTo([lat, lng], zoom, { duration: 1.05 }); showToast(`Viewing ${name}`);
       });
@@ -604,7 +604,7 @@
     if (!navigator.geolocation) return showError('Location is unavailable', 'This browser does not provide location access.', false);
     DOM.locate.textContent = '…';
     navigator.geolocation.getCurrentPosition(position => {
-      DOM.locate.textContent = '◎'; state.place = 'My location'; DOM.placeLabel.textContent = 'My location';
+      DOM.locate.textContent = '◎'; state.place = 'My location'; DOM.placeLabel.textContent = 'My location'; DOM.placeButton.setAttribute('aria-label', 'Choose map location, currently My location');
       state.map.flyTo([position.coords.latitude, position.coords.longitude], 9, { duration: 1.05 }); showToast('Centred on your location');
     }, error => {
       DOM.locate.textContent = '◎';
@@ -664,6 +664,7 @@
       initMap();
       const savedPlace = PLACES.find(place => place[0] === state.place);
       DOM.placeLabel.textContent = savedPlace?.[0] || state.place;
+      DOM.placeButton.setAttribute('aria-label', `Choose map location, currently ${savedPlace?.[0] || state.place}`);
       updateModeUI(state.mode);
       DOM.loadingMessage.textContent = 'Connecting to official Ontario data…';
       const background = Promise.allSettled([
