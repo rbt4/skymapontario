@@ -4,12 +4,15 @@
 
 SkyMap Ontario started as a simple Toronto radar idea and grew into an independent province-wide public-data app. The product stays focused on one thing: helping people quickly see what is happening around them and what is moving their way.
 
-## Live app
+## Use SkyMap Ontario
 
-- Website: `https://rbt4.github.io/skymapontario/`
-- Browser app: `https://rbt4.github.io/skymapontario/app/`
+- Product website: `https://rbt4.github.io/skymapontario/`
+- Dedicated live demo: `https://rbt4.github.io/skymapontario/demo/`
+- Direct browser app: `https://rbt4.github.io/skymapontario/app/`
 - Android APK: [`download/SkyMap-Ontario-v4.1-WOW.apk`](download/SkyMap-Ontario-v4.1-WOW.apk)
 - Support: `https://ko-fi.com/rbt4dev`
+
+The browser version is responsive and intended for laptops, tablets and mobile browsers. No account or Android installation is required.
 
 ## Map views
 
@@ -29,11 +32,13 @@ Satellite hotspots are thermal detections, not confirmed fire boundaries. Data c
 ## Repository structure
 
 - `index.html` — product website
-- `app/` — installable progressive web app
-- `assets/` — brand and social assets
-- `download/` — signed Android APK
+- `demo/` — easy-to-share live demo entry point
+- `app/` — responsive progressive web app
+- `android/` — reusable Android wrapper project
+- `assets/` — brand assets
+- `download/` — generated Android APK on the deployed Pages site
 - `privacy.html` — plain-language privacy information
-- `.github/workflows/deploy-pages.yml` — GitHub Pages deployment
+- `.github/workflows/deploy-pages.yml` — APK build and GitHub Pages deployment
 
 ## Built by RBT4
 
