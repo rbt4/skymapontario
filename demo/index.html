@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#04070c">
+  <title>SkyMap Ontario — Live Demo</title>
+  <meta name="description" content="Use SkyMap Ontario directly in your laptop or mobile browser. Explore live rain, smoke, air quality, wildfire hotspots and Ontario weather alerts.">
+  <link rel="canonical" href="https://rbt4.github.io/skymapontario/demo/">
+  <link rel="icon" href="../assets/skymap-ontario-mark.svg">
+  <style>
+    *{box-sizing:border-box}html,body{height:100%;margin:0;background:#04070c;color:#f3f7fa;font-family:Inter,"Segoe UI",system-ui,sans-serif}body{display:grid;place-items:center;overflow:hidden}.shell{text-align:center;padding:28px}.mark{width:72px;height:72px;margin-bottom:18px}.eyebrow{font-size:.68rem;letter-spacing:.16em;color:#61dcff;font-weight:850}.title{font-size:clamp(2rem,7vw,4rem);letter-spacing:-.055em;margin:12px 0}.copy{color:#93a9b9;line-height:1.6;max-width:520px;margin:0 auto 22px}.button{display:inline-flex;align-items:center;justify-content:center;padding:13px 18px;border-radius:14px;background:linear-gradient(135deg,#61dcff,#4ce7a6);color:#04131b;font-weight:900;text-decoration:none}.fine{font-size:.7rem;color:#61798a;margin-top:18px}</style>
+  <meta http-equiv="refresh" content="1;url=../app/">
+  <script>
+    const destination = '../app/' + location.search + location.hash;
+    window.setTimeout(() => location.replace(destination), 120);
+  </script>
+</head>
+<body>
+  <main class="shell">
+    <img class="mark" src="../assets/skymap-ontario-mark.svg" alt="SkyMap Ontario">
+    <div class="eyebrow">LIVE BROWSER APP</div>
+    <h1 class="title">Opening SkyMap Ontario…</h1>
+    <p class="copy">The full map works directly in modern laptop and mobile browsers. No APK or account is required.</p>
+    <a class="button" href="../app/">Open the live map</a>
+    <div class="fine">Rain · smoke · air quality · fires · alerts</div>
+  </main>
+</body>
+</html>
