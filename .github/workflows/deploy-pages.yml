@@ -1,4 +1,4 @@
-name: Deploy SkyMap Ontario
+name: Build Android and deploy SkyMap Ontario
 
 on:
   push:
@@ -15,24 +15,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  build-and-deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Reconstruct Android APK
-        run: |
-          mkdir -p download
-          if compgen -G "artifacts/apk.part*" > /dev/null; then
-            cat artifacts/apk.part* | base64 --decode > download/SkyMap-Ontario-v4.1-WOW.apk
-          fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Build installable Android APK
+        run: gradle :android-app:assembleDebug --stacktrace
+
       - name: Prepare Pages artifact
         run: |
           rm -rf _site
-          mkdir _site
-          rsync -a --exclude '.git' --exclude '.github' --exclude 'artifacts' --exclude '_site' ./ _site/
+          mkdir -p _site/download
+          rsync -a --exclude '.git' --exclude '.github' --exclude 'android' --exclude 'build.gradle' --exclude 'settings.gradle' --exclude 'gradle.properties' --exclude '_site' ./ _site/
+          cp android/app/build/outputs/apk/debug/android-app-debug.apk _site/download/SkyMap-Ontario-v4.1-WOW.apk
+          sha256sum _site/download/SkyMap-Ontario-v4.1-WOW.apk > _site/download/SkyMap-Ontario-v4.1-WOW.apk.sha256
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
