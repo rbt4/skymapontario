@@ -9,9 +9,9 @@
 }
 
 @media (max-width: 960px) {
-  .insight-panel { width: 316px; padding: 18px; }
+  .insight-panel { width: 330px; padding: 18px; }
   .insight-head h1 { font-size: 21px; }
-  .timeline { right: 355px; grid-template-columns: 42px 110px minmax(120px, 1fr) auto; }
+  .timeline { right: 370px; grid-template-columns: 42px 116px minmax(120px, 1fr) auto; }
   .refresh span { display: none; }
   body.embed .insight-panel { display: none; }
   body.embed .timeline { right: 18px; }
@@ -45,7 +45,17 @@
   .time-copy b { font-size: 9px; }
   .range > div:last-child { font-size: 7px; }
   .refresh { width: 34px; height: 34px; padding: 0; justify-content: center; }
-  .mobile-peek { position: fixed; z-index: 640; right: 10px; bottom: calc(max(9px, env(safe-area-inset-bottom)) + 74px); left: 10px; display: flex; min-height: 58px; padding: 10px 13px; align-items: center; justify-content: space-between; border-radius: 18px; text-align: left; }
+  .mobile-peek { display: none !important; }
+  .mobile-forecast { position: fixed; z-index: 635; right: 10px; bottom: calc(max(9px, env(safe-area-inset-bottom)) + 74px); left: 10px; display: grid; min-height: 68px; padding: 10px 12px; align-items: center; grid-template-columns: 88px minmax(0, 1fr) auto; gap: 10px; border-radius: 18px; cursor: pointer; text-align: left; }
+  body[data-mode='rain'] .mobile-forecast, body[data-mode='smoke'] .mobile-forecast { bottom: calc(max(9px, env(safe-area-inset-bottom)) + 142px); }
+  .mobile-forecast-time, .mobile-forecast-story { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
+  .mobile-forecast-time { padding-right: 9px; border-right: 1px solid var(--line); }
+  .mobile-forecast-time small { color: var(--cyan); font: 800 7px/1 'Manrope', sans-serif; letter-spacing: .9px; }
+  .mobile-forecast-time b, .mobile-forecast-story b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mobile-forecast-time b { color: #b8c6d2; font-size: 8px; }
+  .mobile-forecast-story b { font-size: 10px; }
+  .mobile-forecast-story small { overflow: hidden; color: var(--muted); font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+  .mobile-forecast > i { color: var(--muted); font-style: normal; }
   .mobile-peek.hidden { display: none; }
   .mobile-peek span { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
   .mobile-peek small { color: var(--cyan); font: 800 7px/1 'Manrope', sans-serif; letter-spacing: 1.1px; }
@@ -89,5 +99,6 @@
   .layer-button { width: 44px; min-height: 42px; }
   .layer-button span { display: none; }
   .timeline, .mobile-peek { right: 8px; bottom: 8px; left: 72px; }
+  .mobile-forecast { display: none; }
   .leaflet-bottom { bottom: 0; }
 }

@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#07101a">
   <meta name="color-scheme" content="dark">
   <title>SkyMap Ontario — Live Ontario Conditions</title>
-  <meta name="description" content="Live Ontario rain radar, smoke forecasts, AQHI observations, wildfire hotspots and weather alerts.">
+  <meta name="description" content="Plain-English Ontario rain nowcasts, smoke forecasts, local weather, AQHI observations, reported active fires and weather alerts.">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="vendor/leaflet.css">
@@ -39,7 +39,7 @@
     <button class="layer-button active" type="button" data-mode="rain" aria-label="Rain radar"><i class="rain" aria-hidden="true">◒</i><span><b>Rain</b><small>Radar</small></span></button>
     <button class="layer-button" type="button" data-mode="smoke" aria-label="Smoke forecast"><i class="smoke" aria-hidden="true">≈</i><span><b>Smoke</b><small>Forecast</small></span></button>
     <button class="layer-button" type="button" data-mode="air" aria-label="Air quality"><i class="air" aria-hidden="true">◎</i><span><b>Air</b><small>AQHI</small></span></button>
-    <button class="layer-button" type="button" data-mode="fire" aria-label="Wildfire hotspots"><i class="fire" aria-hidden="true">◆</i><span><b>Fires</b><small>Hotspots</small></span></button>
+    <button class="layer-button" type="button" data-mode="fire" aria-label="Reported active fires"><i class="fire" aria-hidden="true">◆</i><span><b>Fires</b><small>Active</small></span></button>
     <button class="layer-button" type="button" data-mode="alerts" aria-label="Weather alerts"><i class="alerts" aria-hidden="true">!</i><span><b>Alerts</b><small>Ontario</small></span><em class="count-badge" id="alert-badge" hidden>0</em></button>
   </nav>
 
@@ -54,6 +54,21 @@
       <span><b id="status-text">Connecting to the radar…</b><small id="status-detail">Official public data</small></span>
       <time id="updated-time">—</time>
     </div>
+
+    <section class="forecast-card" id="forecast-card" aria-live="polite" aria-labelledby="forecast-headline">
+      <div class="forecast-topline">
+        <span><small id="forecast-eyebrow">AT THE MAP CENTRE</small><b id="forecast-place">Ontario</b></span>
+        <em id="forecast-kind">CONNECTING</em>
+      </div>
+      <div class="forecast-story">
+        <i id="forecast-icon" aria-hidden="true">⌁</i>
+        <div><h2 id="forecast-headline">Building your local picture…</h2><p id="forecast-copy">Matching the selected map time with official nearby conditions.</p></div>
+      </div>
+      <div class="forecast-facts" id="forecast-facts">
+        <span><small>MAP VALUE</small><b>—</b></span><span><small>NEARBY WEATHER</small><b>—</b></span><span><small>WIND</small><b>—</b></span>
+      </div>
+      <p class="forecast-foot" id="forecast-foot">Move the map or choose a time to update this explanation.</p>
+    </section>
 
     <section class="primary-card" id="primary-card">
       <div class="primary-value" id="primary-value">—</div>
@@ -88,6 +103,12 @@
     <button class="refresh" id="refresh-button" type="button" aria-label="Refresh this layer">↻<span>Refresh</span></button>
   </section>
 
+  <button class="mobile-forecast surface" id="mobile-forecast" type="button" aria-controls="info-sheet">
+    <span class="mobile-forecast-time"><small id="mobile-forecast-kind">LOCAL PICTURE</small><b id="mobile-forecast-time">Finding the selected time…</b></span>
+    <span class="mobile-forecast-story"><b id="mobile-forecast-headline">Connecting to official data…</b><small id="mobile-forecast-copy">Move the map or choose a time for a plain-English explanation.</small></span>
+    <i aria-hidden="true">⌃</i>
+  </button>
+
   <button class="mobile-peek surface" id="mobile-peek" type="button" aria-controls="info-sheet">
     <span><small id="mobile-kicker">LIVE RAIN RADAR</small><b id="mobile-story">Connecting to official data…</b></span><i>⌃</i>
   </button>
@@ -102,15 +123,21 @@
 
   <section class="sheet info-sheet" id="info-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" hidden>
     <div class="sheet-handle" aria-hidden="true"></div>
-    <div class="sheet-head"><div><small>SKYMAP ONTARIO 4.3</small><h2 id="sheet-title">Live map details</h2></div><button type="button" data-close aria-label="Close map information">×</button></div>
+    <div class="sheet-head"><div><small>SKYMAP ONTARIO 4.4</small><h2 id="sheet-title">Your local picture</h2></div><button type="button" data-close aria-label="Close map information">×</button></div>
     <div class="sheet-body">
       <div class="sheet-live"><i></i><span><b id="sheet-status">Connecting to public data…</b><small id="sheet-updated">Official source</small></span></div>
+      <div class="sheet-forecast">
+        <small id="sheet-forecast-kind">LOCAL PICTURE</small>
+        <h3 id="sheet-forecast-headline">Building your local picture…</h3>
+        <p id="sheet-forecast-copy">Matching the map with official nearby conditions.</p>
+        <div id="sheet-forecast-facts"></div>
+      </div>
       <div class="sheet-section"><small>CURRENT VIEW</small><h3 id="sheet-mode-title">Rain radar</h3><p id="sheet-mode-copy">Recent precipitation observations across Ontario.</p></div>
       <label class="opacity-control"><span><b>Layer opacity</b><small>Adjust the environmental overlay</small></span><input id="opacity-slider" type="range" min="25" max="100" value="82"></label>
       <button class="sheet-action" id="install-button" type="button" hidden><span>＋</span><div><b>Install browser app</b><small>Add SkyMap to your home screen</small></div></button>
       <a class="sheet-action" href="../" target="_top"><span>⌂</span><div><b>Product website</b><small>Android download, sources and project notes</small></div></a>
       <a class="support-card" href="https://ko-fi.com/rbt4dev" target="_blank" rel="noopener noreferrer"><span>☕</span><div><small>INDEPENDENT &amp; AD-FREE</small><b>Support SkyMap Ontario</b><p>Optional support helps keep the public-data connections maintained.</p></div><i>↗</i></a>
-      <p class="disclaimer">SkyMap Ontario is independent and not an official government app. Public data can be delayed or unavailable. Satellite hotspots are thermal detections, not confirmed fire boundaries. Follow official emergency instructions.</p>
+      <p class="disclaimer">SkyMap Ontario is independent and not an official government app. Public data can be delayed or unavailable. Reported fire points are not fire boundaries. Follow official emergency instructions.</p>
     </div>
   </section>
 

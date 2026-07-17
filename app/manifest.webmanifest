@@ -1,7 +1,7 @@
 {
   "name": "SkyMap Ontario — Rain, Smoke, Air & Fire",
   "short_name": "SkyMap Ontario",
-  "description": "Live Ontario rain radar, smoke forecasts, AQHI, wildfire hotspots and weather alerts.",
+  "description": "Plain-English Ontario rain nowcasts, smoke forecasts, AQHI, reported active fires and weather alerts.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

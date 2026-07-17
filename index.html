@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#07101a">
   <meta name="color-scheme" content="dark">
   <title>SkyMap Ontario — Live Rain, Smoke, Air, Fire & Alerts</title>
-  <meta name="description" content="One fast, visual map for live Ontario rain radar, smoke forecasts, AQHI observations, wildfire hotspots and weather alerts.">
+  <meta name="description" content="A plain-English Ontario map for rain nowcasts, smoke forecasts, AQHI observations, reported active fires and weather alerts.">
   <link rel="canonical" href="https://rbt4.github.io/skymapontario/">
   <meta property="og:type" content="website">
   <meta property="og:title" content="SkyMap Ontario — See what is moving your way">
@@ -41,10 +41,10 @@
       <div class="hero-copy reveal">
         <div class="live-pill"><i></i><span data-feed-status>CONNECTING TO ONTARIO</span></div>
         <h1>See what’s moving <em>your way.</em></h1>
-        <p>SkyMap Ontario brings rain, smoke, air quality, wildfire hotspots and weather alerts into one focused map. No account. No clutter. Just the answer you came for.</p>
+        <p>SkyMap Ontario turns rain, smoke, air quality, reported active fires and weather alerts into a local, plain-English picture for every selected time. No account. No clutter. No guessing what a colour means.</p>
         <div class="hero-actions">
           <a class="button primary" href="app/">Open the live map <span>↗</span></a>
-          <a class="button secondary" href="download/SkyMap-Ontario-v4.3.apk" download>Download Android 4.3</a>
+          <a class="button secondary" href="download/SkyMap-Ontario-v4.4.apk" download>Download Android 4.4</a>
         </div>
         <div class="hero-proof"><span><i>✓</i> Official public feeds</span><span><i>✓</i> Works on any screen</span><span><i>✓</i> Independent &amp; ad-free</span></div>
       </div>
@@ -70,10 +70,10 @@
     <section class="layers section" id="layers">
       <div class="section-heading reveal"><div><small>ONE MAP · FIVE ANSWERS</small><h2>The useful layers.<br><em>None of the dashboard mess.</em></h2></div><p>Each view has one job, explains what the data means and tells you when its official source is not responding.</p></div>
       <div class="layer-grid">
-        <article class="layer-card rain reveal"><div class="card-index">01</div><div class="card-icon">◒</div><span>OBSERVED</span><h3>Rain in motion</h3><p>Timestamped Environment Canada radar frames show recent precipitation moving across Ontario.</p><a href="app/#map=5/49.6500/-84.3500&mode=rain">Open radar ↗</a></article>
-        <article class="layer-card smoke reveal"><div class="card-index">02</div><div class="card-icon">≈</div><span>MODELLED</span><h3>Smoke forecast</h3><p>Explore forecast wildfire-smoke concentration and move through the model’s advertised hours.</p><a href="app/#map=5/49.6500/-84.3500&mode=smoke">Open smoke ↗</a></article>
+        <article class="layer-card rain reveal"><div class="card-index">01</div><div class="card-icon">◒</div><span>PAST + NEXT</span><h3>Rain, explained</h3><p>Recent observed radar joins a clearly labelled one-hour nowcast, with an exact rain rate and local explanation for every frame.</p><a href="app/#map=5/49.6500/-84.3500&mode=rain">Open radar ↗</a></article>
+        <article class="layer-card smoke reveal"><div class="card-index">02</div><div class="card-icon">≈</div><span>MODELLED</span><h3>Smoke with context</h3><p>Every forecast hour shows the modelled PM₂.₅ value at the map centre beside observed AQHI, nearby weather and wind.</p><a href="app/#map=5/49.6500/-84.3500&mode=smoke">Open smoke ↗</a></article>
         <article class="layer-card air reveal"><div class="card-index">03</div><div class="card-icon">◎</div><span>OBSERVED</span><h3>Air quality nearby</h3><p>Real AQHI station markers, the nearest observation and plain-language health-risk levels.</p><a href="app/#map=5/49.6500/-84.3500&mode=air">Open AQHI ↗</a></article>
-        <article class="layer-card fire reveal"><div class="card-index">04</div><div class="card-icon">◆</div><span>SATELLITE</span><h3>Wildfire hotspots</h3><p>Recent Ontario thermal detections from NRCan—clearly identified as hotspots, not fire boundaries.</p><a href="app/#map=5/49.6500/-84.3500&mode=fire">Open hotspots ↗</a></article>
+        <article class="layer-card fire reveal"><div class="card-index">04</div><div class="card-icon">◆</div><span>AGENCY REPORTED</span><h3>Active fires with status</h3><p>Current Ontario fire IDs, reported size and stage of control from NRCan’s new national active-fire service.</p><a href="app/#map=5/49.6500/-84.3500&mode=fire">Open active fires ↗</a></article>
         <article class="layer-card alerts reveal"><div class="card-index">05</div><div class="card-icon">!</div><span>ACTIVE</span><h3>Mapped alert areas</h3><p>Current warnings, watches and advisories shown over the places they affect, with official links.</p><a href="app/#map=5/49.6500/-84.3500&mode=alerts">Open alerts ↗</a></article>
       </div>
     </section>
@@ -83,7 +83,7 @@
         <div class="trust-copy"><small>HONEST ABOUT THE DATA</small><h2>Official sources.<br><em>Visible limits.</em></h2><p>SkyMap does not invent a “live” state. A layer turns green only after usable tiles, stations, points or polygons render. If a source fails, the app says so.</p><a class="text-link" href="https://eccc-msc.github.io/open-data/" target="_blank" rel="noopener noreferrer">Explore public-data documentation ↗</a></div>
         <div class="source-stack">
           <a href="https://eccc-msc.github.io/open-data/" target="_blank" rel="noopener noreferrer"><span>ECCC</span><div><b>Weather &amp; air</b><small>Radar · smoke · AQHI · alerts</small></div><i>↗</i></a>
-          <a href="https://cwfis.cfs.nrcan.gc.ca/" target="_blank" rel="noopener noreferrer"><span>NRCan</span><div><b>Wildfire hotspots</b><small>Canadian Wildland Fire Information System</small></div><i>↗</i></a>
+          <a href="https://cwfis.cfs.nrcan.gc.ca/" target="_blank" rel="noopener noreferrer"><span>NRCan</span><div><b>Reported active fires</b><small>Fire IDs · size · stage of control</small></div><i>↗</i></a>
           <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer"><span>MAP</span><div><b>Base geography</b><small>CARTO · OpenStreetMap contributors</small></div><i>↗</i></a>
         </div>
       </div>
@@ -92,7 +92,7 @@
     <section class="android section" id="android">
       <div class="android-card reveal">
         <div class="phone-preview" aria-hidden="true"><div class="phone-screen"><img src="assets/skymap-ontario-mark.svg" alt=""><span>skymap <em>ontario</em></span><i></i><b>LIVE PUBLIC DATA</b></div></div>
-        <div class="android-copy"><small>SKYMAP ON YOUR PHONE</small><h2>The full map.<br><em>Ready to install.</em></h2><p>Download the Android APK or install the browser app from your home screen. Version 4.3 includes the bundled map engine and the same responsive live-data experience.</p><div><a class="button primary" href="download/SkyMap-Ontario-v4.3.apk" download>Download APK</a><a class="button secondary" href="demo/">Open dedicated demo</a></div><span class="version-note">Android 7.0+ · Version 4.3 · Direct APK installation</span></div>
+        <div class="android-copy"><small>SKYMAP ON YOUR PHONE</small><h2>The full map.<br><em>Ready to install.</em></h2><p>Download the Android APK or install the browser app from your home screen. Version 4.4 adds calm crossfaded playback, exact point values and official local hourly weather context.</p><div><a class="button primary" href="download/SkyMap-Ontario-v4.4.apk" download>Download APK</a><a class="button secondary" href="demo/">Open dedicated demo</a></div><span class="version-note">Android 7.0+ · Version 4.4 · Direct APK installation</span></div>
       </div>
     </section>
 
@@ -107,7 +107,7 @@
 
   <footer class="site-footer">
     <div><a class="wordmark" href="#top"><img src="assets/skymap-ontario-mark.svg" alt=""><span><b>skymap <em>ontario</em></b><small>BUILT BY RBT4</small></span></a><nav aria-label="Footer navigation"><a href="app/">Live map</a><a href="demo/">Demo</a><a href="privacy.html">Privacy</a><a href="https://github.com/rbt4/skymapontario" target="_blank" rel="noopener noreferrer">GitHub</a><a href="https://ko-fi.com/rbt4dev" target="_blank" rel="noopener noreferrer">Ko-fi</a></nav></div>
-    <p>SkyMap Ontario is independent and is not affiliated with or endorsed by the Government of Ontario or the Government of Canada. Data can be delayed, preliminary or unavailable. Satellite hotspots are detections, not confirmed fire perimeters. Follow official instructions during emergencies.</p>
+    <p>SkyMap Ontario is independent and is not affiliated with or endorsed by the Government of Ontario or the Government of Canada. Data can be delayed, preliminary or unavailable. Reported fire points are not fire perimeters. Follow official instructions during emergencies.</p>
     <span>© <span data-year></span> RBT4 · Made in Ontario</span>
   </footer>
 </body>
