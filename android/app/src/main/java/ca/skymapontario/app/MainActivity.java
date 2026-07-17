@@ -24,56 +24,101 @@ public final class MainActivity extends Activity {
     @Override @SuppressLint("SetJavaScriptEnabled")
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        getWindow().setStatusBarColor(Color.rgb(4,7,12));
-        getWindow().setNavigationBarColor(Color.rgb(4,7,12));
+        getWindow().setStatusBarColor(Color.rgb(4, 7, 12));
+        getWindow().setNavigationBarColor(Color.rgb(4, 7, 12));
+
         webView = new WebView(this);
-        webView.setBackgroundColor(Color.rgb(4,7,12));
+        webView.setBackgroundColor(Color.rgb(4, 7, 12));
         webView.setOverScrollMode(WebView.OVER_SCROLL_NEVER);
+        webView.setVerticalScrollBarEnabled(false);
+        webView.setHorizontalScrollBarEnabled(false);
         setContentView(webView);
 
-        WebSettings s = webView.getSettings();
-        s.setJavaScriptEnabled(true);
-        s.setDomStorageEnabled(true);
-        s.setGeolocationEnabled(true);
-        s.setAllowFileAccess(true);
-        s.setAllowFileAccessFromFileURLs(true);
-        s.setAllowUniversalAccessFromFileURLs(true);
-        s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        s.setCacheMode(WebSettings.LOAD_DEFAULT);
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setGeolocationEnabled(true);
+        settings.setAllowFileAccess(true);
+        settings.setAllowFileAccessFromFileURLs(true);
+        settings.setAllowUniversalAccessFromFileURLs(true);
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        settings.setMediaPlaybackRequiresUserGesture(true);
+        settings.setUserAgentString(settings.getUserAgentString() + " SkyMapOntario/4.2");
 
         webView.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
                 if ("file".equalsIgnoreCase(uri.getScheme())) return false;
-                if ("https".equalsIgnoreCase(uri.getScheme())) startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                if ("https".equalsIgnoreCase(uri.getScheme())) {
+                    try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); } catch (RuntimeException ignored) { }
+                }
                 return true;
             }
         });
+
         webView.setWebChromeClient(new WebChromeClient() {
             @Override public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
-                if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                if (hasLocationPermission()) {
                     callback.invoke(origin, true, false);
                 } else {
-                    geoOrigin = origin; geoCallback = callback;
+                    geoOrigin = origin;
+                    geoCallback = callback;
                     requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_REQUEST);
                 }
             }
         });
-        if (state == null) webView.loadUrl("file:///android_asset/index.html"); else webView.restoreState(state);
+
+        if (state == null) webView.loadUrl("file:///android_asset/index.html");
+        else webView.restoreState(state);
+    }
+
+    private boolean hasLocationPermission() {
+        return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
     @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
         super.onRequestPermissionsResult(requestCode, permissions, results);
         if (requestCode == LOCATION_REQUEST && geoCallback != null) {
-            boolean ok = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-            geoCallback.invoke(geoOrigin, ok, false); geoCallback = null; geoOrigin = null;
+            geoCallback.invoke(geoOrigin, hasLocationPermission(), false);
+            geoCallback = null;
+            geoOrigin = null;
         }
     }
 
     @Override public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) webView.goBack(); else super.onBackPressed();
+        if (webView == null) { super.onBackPressed(); return; }
+        webView.evaluateJavascript("window.SkyMapBack ? window.SkyMapBack() : false", handled -> {
+            if (!"true".equals(handled)) {
+                if (webView.canGoBack()) webView.goBack();
+                else MainActivity.super.onBackPressed();
+            }
+        });
     }
 
-    @Override protected void onSaveInstanceState(Bundle out) { webView.saveState(out); super.onSaveInstanceState(out); }
-    @Override protected void onDestroy() { if (webView != null) webView.destroy(); super.onDestroy(); }
+    @Override protected void onSaveInstanceState(Bundle out) {
+        if (webView != null) webView.saveState(out);
+        super.onSaveInstanceState(out);
+    }
+
+    @Override protected void onPause() {
+        if (webView != null) webView.onPause();
+        super.onPause();
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        if (webView != null) webView.onResume();
+    }
+
+    @Override protected void onDestroy() {
+        if (webView != null) {
+            webView.stopLoading();
+            webView.loadUrl("about:blank");
+            webView.destroy();
+            webView = null;
+        }
+        super.onDestroy();
+    }
 }
