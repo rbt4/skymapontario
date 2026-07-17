@@ -40,6 +40,8 @@ assert(!combined.includes('geoserver.cwfis.cfs.nrcan.gc.ca'), 'Dead CWFIS hostna
 assert(!combined.includes('SkyMap-Ontario-v4.2.apk'), 'Stale 4.2 APK link is present');
 assert(appJs.includes("replace(/\\.\\d{3}Z$/, 'Z')"), 'WMS timestamp normalization is missing');
 assert(appHtml.includes('vendor/leaflet.js') && appHtml.includes('vendor/leaflet.css'), 'Bundled Leaflet assets are not wired');
+assert(appJs.includes('DOM.timeline.hidden = !config.timed'), 'Non-timed layers do not hide the timeline semantically');
+assert(appHtml.includes('aria-label="Rain radar"') && appHtml.includes('aria-label="Weather alerts"'), 'Layer controls need explicit accessible names');
 
 console.log(`✓ ${ids.length} app IDs are unique and wired`);
 console.log('✓ HTML assets and service-worker shell files exist');
