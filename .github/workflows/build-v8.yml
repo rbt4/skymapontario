@@ -3,6 +3,7 @@ name: Build SkyMap Ontario 8 Predictive
 on:
   push:
     branches: [skymap-8-predictive-map]
+  pull_request:
   workflow_dispatch:
 
 concurrency:
