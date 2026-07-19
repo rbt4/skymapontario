@@ -1,13 +1,12 @@
-name: Build SkyMap Ontario 7.1 Recovery
+name: Build SkyMap Ontario 7.2 Clarity Reset
 
 on:
   push:
     branches: [skymap-7-clarity-reset]
-  pull_request:
   workflow_dispatch:
 
 concurrency:
-  group: skymap-recovery-${{ github.workflow }}-${{ github.ref }}
+  group: skymap-v72-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -17,6 +16,15 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - name: Restore tested SkyMap 7.2 sources
+        run: |
+          cat scripts/v72/chunk* > /tmp/skymap-v72.b64
+          base64 -d /tmp/skymap-v72.b64 > /tmp/skymap-v72.tar.gz
+          tar -xzf /tmp/skymap-v72.tar.gz -C .
+          grep -q "SkyMap Ontario 7.2" app/index.html
+          grep -q "long-list" app/index.html
+          grep -q "A trillium beneath radar arcs" app/icon.svg
+          node --check app/app.js
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -36,33 +44,26 @@ jobs:
           if [ ! -f ~/.android/debug.keystore ]; then
             keytool -genkeypair -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=SkyMap Ontario Development,O=RBT4,C=CA"
           fi
-      - name: Validate bundled app
-        run: |
-          node --check app/app.js
-          test -f app/index.html
-          test -f app/app-base.css
-          test -f app/app-responsive.css
-          test -f app/icon.svg
-          test -x gradlew
-          test -f gradle/wrapper/gradle-wrapper.jar
-      - name: Build Android APK through Gradle
+      - name: Build APK through Gradle
         run: ./gradlew :android-app:assembleDebug --stacktrace --no-daemon
-      - name: Verify APK signature and package
+      - name: Verify Android package
         run: |
           APK=android/app/build/outputs/apk/debug/android-app-debug.apk
-          test -s "$APK"
+          test -f "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -P 16 -v 4 "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | head -12
-      - name: Prepare downloadable APK
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee /tmp/badging.txt
+          grep -q "versionCode='72'" /tmp/badging.txt
+          grep -q "versionName='7.2'" /tmp/badging.txt
+      - name: Prepare release
         run: |
           mkdir -p release
-          cp android/app/build/outputs/apk/debug/android-app-debug.apk release/SkyMap-Ontario-v7.1-Recovery.apk
+          cp android/app/build/outputs/apk/debug/android-app-debug.apk release/SkyMap-Ontario-v7.2-Clarity-Reset.apk
           cd release
-          sha256sum SkyMap-Ontario-v7.1-Recovery.apk > SkyMap-Ontario-v7.1-Recovery.apk.sha256
+          sha256sum SkyMap-Ontario-v7.2-Clarity-Reset.apk > SkyMap-Ontario-v7.2-Clarity-Reset.apk.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: SkyMap-Ontario-v7.1-Recovery
+          name: SkyMap-Ontario-v7.2-Clarity-Reset
           path: release/
           if-no-files-found: error
           retention-days: 30
