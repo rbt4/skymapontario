@@ -26,7 +26,7 @@ jobs:
             .build/skymap8-parts/part-00 \
             .build/skymap8-fix/01-00 .build/skymap8-fix/01-01 .build/skymap8-fix/01-02 .build/skymap8-fix/01-03 .build/skymap8-fix/01-04 \
             .build/skymap8-parts/part-02 \
-            .build/skymap8-fix/03-00 .build/skymap8-fix/03-01 .build/skymap8-fix/03-02a .build/skymap8-fix/03-02b .build/skymap8-fix/03-03 .build/skymap8-fix/03-04 \
+            .build/skymap8-fix/03-00 .build/skymap8-fix/03-01 .build/skymap8-fix/03-02a .build/skymap8-fix/03-02b0 .build/skymap8-fix/03-02b1 .build/skymap8-fix/03-03 .build/skymap8-fix/03-04 \
             .build/skymap8-parts/part-04 .build/skymap8-parts/part-05 \
             > /tmp/skymap8-source.tar.gz.b64
           test "$(wc -c < /tmp/skymap8-source.tar.gz.b64)" = "33540"
