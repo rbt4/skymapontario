@@ -22,7 +22,13 @@ jobs:
           node-version: '22'
       - name: Restore tested SkyMap 8 predictive sources
         run: |
-          cat .build/skymap8-parts/part-* > /tmp/skymap8-source.tar.gz.b64
+          cat \
+            .build/skymap8-parts/part-00 \
+            .build/skymap8-fix/01-00 .build/skymap8-fix/01-01 .build/skymap8-fix/01-02 .build/skymap8-fix/01-03 .build/skymap8-fix/01-04 \
+            .build/skymap8-parts/part-02 \
+            .build/skymap8-fix/03-00 .build/skymap8-fix/03-01 .build/skymap8-fix/03-02 .build/skymap8-fix/03-03 .build/skymap8-fix/03-04 \
+            .build/skymap8-parts/part-04 .build/skymap8-parts/part-05 \
+            > /tmp/skymap8-source.tar.gz.b64
           test "$(wc -c < /tmp/skymap8-source.tar.gz.b64)" = "33540"
           base64 -d /tmp/skymap8-source.tar.gz.b64 > /tmp/skymap8-source.tar.gz
           echo "431a0db5e0cf6ba6af1138de7c6fb12bb2ca111d4b05c9a4489012789d4c1961  /tmp/skymap8-source.tar.gz" | sha256sum -c -
