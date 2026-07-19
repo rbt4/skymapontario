@@ -24,7 +24,9 @@ jobs:
 
       - name: Restore tested predictive-map sources
         run: |
-          base64 -d .build/skymap8-source.tar.gz.b64 > /tmp/skymap8-source.tar.gz
+          cat .build/skymap8-parts/part-* > /tmp/skymap8-source.tar.gz.b64
+          test "$(wc -c < /tmp/skymap8-source.tar.gz.b64)" = "33540"
+          base64 -d /tmp/skymap8-source.tar.gz.b64 > /tmp/skymap8-source.tar.gz
           echo "431a0db5e0cf6ba6af1138de7c6fb12bb2ca111d4b05c9a4489012789d4c1961  /tmp/skymap8-source.tar.gz" | sha256sum -c -
           tar -xzf /tmp/skymap8-source.tar.gz -C app
           node --check app/app.js
