@@ -3,10 +3,11 @@ name: Build SkyMap Ontario 7.2 Clarity Reset
 on:
   push:
     branches: [skymap-7-clarity-reset]
+  pull_request:
   workflow_dispatch:
 
 concurrency:
-  group: skymap-v72-${{ github.ref }}
+  group: skymap-v72-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
