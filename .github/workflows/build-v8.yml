@@ -38,7 +38,8 @@ jobs:
           node --check app/v10.js
           grep -q 'SkyMap Ontario 10' app/index.html
           grep -q 'class="snapshots"' app/index.html
-          grep -q 'Why this forecast' app/index.html
+          grep -q 'id="deep-sheet"' app/index.html
+          grep -q 'ON-DEVICE MEMORY' app/index.html
           grep -q 'SkyMapNative' app/v10.js
           grep -q 'SkyMapLocalIntelligence' app/v10.js
           grep -q 'zoomControl:false' app/v10.js
@@ -53,7 +54,8 @@ jobs:
           grep -q 'PeriodicWorkRequest' android/app/src/main/java/ca/skymapontario/app/MainActivity.java
           grep -q 'SQLiteOpenHelper' android/app/src/main/java/ca/skymapontario/app/SkyMapStore.java
           grep -q 'recordForecast' android/app/src/main/java/ca/skymapontario/app/SkyMapBridge.java
-          grep -q 'scorePendingForecasts' android/app/src/main/java/ca/skymapontario/app/WeatherRefreshWorker.java
+          grep -q 'archiveForecasts' android/app/src/main/java/ca/skymapontario/app/WeatherRefreshWorker.java
+          grep -q 'refreshObservation' android/app/src/main/java/ca/skymapontario/app/WeatherRefreshWorker.java
           test -f app/vendor/leaflet.js
           test -f app/vendor/leaflet.css
 
