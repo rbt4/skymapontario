@@ -1,4 +1,4 @@
-name: Build SkyMap Ontario 10 Local Intelligence
+name: Build SkyMap Ontario 11 Weather Theatre
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: skymap-v10-${{ github.workflow }}-${{ github.ref }}
+  group: skymap-v11-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Reconstruct verified SkyMap 10 source
+      - name: Reconstruct verified SkyMap 10 native base
         run: |
           test "$(find .build/skymap10 -maxdepth 1 -type f -name 'part-*' | wc -l)" = "17"
           cat .build/skymap10/part-* > /tmp/skymap10-source.tar.gz.b64
@@ -33,29 +33,57 @@ jobs:
           echo "fdaef2b84e05982338de4be4b45853ae1ab0a8f014c51e97b412f716745ee0cd  /tmp/skymap10-source.tar.gz" | sha256sum -c -
           tar -xzf /tmp/skymap10-source.tar.gz -C .
 
-      - name: Validate local-intelligence experience
+      - name: Apply verified SkyMap 11 Weather Theatre overlay
         run: |
-          node --check app/v10.js
-          grep -q 'SkyMap Ontario 10' app/index.html
-          grep -q 'class="snapshots"' app/index.html
-          grep -q 'id="deep-sheet"' app/index.html
-          grep -q 'ON-DEVICE MEMORY' app/index.html
-          grep -q 'SkyMapNative' app/v10.js
-          grep -q 'SkyMapLocalIntelligence' app/v10.js
-          grep -q 'zoomControl:false' app/v10.js
-          grep -q 'Radar_1km_RainPrecipRate-Extrapolation' app/v10.js
-          grep -q 'HRDPS.CONTINENTAL_PR' app/v10.js
-          grep -q 'GDPS_15km_PrecipType-Significant1h' app/v10.js
-          grep -q 'GEPS.DIAG.12_PRMM.ERGE10' app/v10.js
-          grep -q 'RAQDPS.SFC_PM2.5' app/v10.js
-          grep -q 'collections/swob-realtime' app/v10.js
+          test "$(find .build/skymap11 -maxdepth 1 -type f -name 'part-*' | wc -l)" = "13"
+          cat .build/skymap11/part-* > /tmp/skymap11-overlay.tar.gz.b64
+          test "$(wc -c < /tmp/skymap11-overlay.tar.gz.b64)" = "28408"
+          echo "90e44e7ca364a9cbffeba2cd9622767c9745a56503246121a1a0c660dba0ced2  /tmp/skymap11-overlay.tar.gz.b64" | sha256sum -c -
+          base64 -d /tmp/skymap11-overlay.tar.gz.b64 > /tmp/skymap11-overlay.tar.gz
+          echo "004a43651d9354b183a721a7ca7bc72132ab48b941a754a3c5bef0a3e574f0ff  /tmp/skymap11-overlay.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/skymap11-overlay.tar.gz -C .
+
+      - name: Set SkyMap 11 Android identity
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          gradle = Path('android/app/build.gradle')
+          text = gradle.read_text(encoding='utf-8')
+          text = re.sub(r'versionCode\s+\d+', 'versionCode 110', text)
+          text = re.sub(r"versionName\s+'[^']+'", "versionName '11.0-weather-theatre'", text)
+          gradle.write_text(text, encoding='utf-8')
+          main = Path('android/app/src/main/java/ca/skymapontario/app/MainActivity.java')
+          text = main.read_text(encoding='utf-8')
+          text = re.sub(r'SkyMapOntario/\d+(?:\.\d+)?', 'SkyMapOntario/11.0', text)
+          main.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Validate radar-first Weather Theatre
+        run: |
+          node --check app/v11-core.js
+          node --check app/v11-radar.js
+          node --check app/v11-ui.js
+          grep -q 'SkyMap Ontario 11' app/index.html
+          grep -q 'YOUR WEATHER MOVIE' app/index.html
+          grep -q 'class="scene-track"' app/index.html
+          grep -q 'id="movie-slider"' app/index.html
+          grep -q 'GetFeatureInfo' app/v11-radar.js
+          grep -q 'Radar_1km_RainPrecipRate-Extrapolation' app/v11-core.js
+          grep -q 'HRDPS.CONTINENTAL_PR' app/v11-core.js
+          grep -q 'GDPS_15km_PrecipType-Significant1h' app/v11-core.js
+          grep -q 'GEPS.DIAG.12_PRMM.ERGE10' app/v11-core.js
+          grep -q 'wind_direction_10m' app/v11-core.js
+          grep -q 'buildEvents' app/v11-core.js
+          grep -q 'SkyMapNative' app/v11-core.js
+          grep -q 'SkyMapLocalIntelligence' app/v11-core.js
+          grep -q 'weather-path' app/v11.css
           ! grep -q '<select' app/index.html
           grep -q 'WebViewAssetLoader' android/app/src/main/java/ca/skymapontario/app/MainActivity.java
           grep -q 'PeriodicWorkRequest' android/app/src/main/java/ca/skymapontario/app/MainActivity.java
           grep -q 'SQLiteOpenHelper' android/app/src/main/java/ca/skymapontario/app/SkyMapStore.java
           grep -q 'recordForecast' android/app/src/main/java/ca/skymapontario/app/SkyMapBridge.java
           grep -q 'archiveForecasts' android/app/src/main/java/ca/skymapontario/app/WeatherRefreshWorker.java
-          grep -q 'refreshObservation' android/app/src/main/java/ca/skymapontario/app/WeatherRefreshWorker.java
           test -f app/vendor/leaflet.js
           test -f app/vendor/leaflet.css
 
@@ -93,7 +121,7 @@ jobs:
         if: steps.gradle_build.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
-          name: SkyMap-v10-Gradle-Diagnostic
+          name: SkyMap-v11-Gradle-Diagnostic
           path: /tmp/skymap-gradle.log
           if-no-files-found: error
           retention-days: 7
@@ -104,30 +132,32 @@ jobs:
           tail -n 180 /tmp/skymap-gradle.log
           exit 1
 
-      - name: Verify Android package and local engine
+      - name: Verify Android package and Weather Theatre
         run: |
           APK=android/app/build/outputs/apk/debug/android-app-debug.apk
           test -s "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -P 16 -v 4 "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee /tmp/badging.txt
-          grep -q "versionCode='100'" /tmp/badging.txt
-          grep -q "versionName='10.0-local-intelligence'" /tmp/badging.txt
-          unzip -p "$APK" assets/index.html | grep -q 'SkyMap Ontario 10'
-          unzip -p "$APK" assets/v10.js | grep -q 'SkyMapLocalIntelligence'
-          unzip -p "$APK" assets/v10.js | grep -q 'collections/swob-realtime'
-          unzip -p "$APK" assets/v10.css | grep -q '.snapshot{'
+          grep -q "versionCode='110'" /tmp/badging.txt
+          grep -q "versionName='11.0-weather-theatre'" /tmp/badging.txt
+          unzip -p "$APK" assets/index.html | grep -q 'SkyMap Ontario 11'
+          unzip -p "$APK" assets/index.html | grep -q 'YOUR WEATHER MOVIE'
+          unzip -p "$APK" assets/v11-radar.js | grep -q 'GetFeatureInfo'
+          unzip -p "$APK" assets/v11-core.js | grep -q 'SkyMapLocalIntelligence'
+          unzip -p "$APK" assets/v11-ui.js | grep -q 'renderScenes'
+          unzip -p "$APK" assets/v11.css | grep -q '.scene-card'
 
       - name: Prepare release
         run: |
           mkdir -p release
-          cp android/app/build/outputs/apk/debug/android-app-debug.apk release/SkyMap-Ontario-v10.0-Local-Intelligence.apk
+          cp android/app/build/outputs/apk/debug/android-app-debug.apk release/SkyMap-Ontario-v11.0-Weather-Theatre.apk
           cd release
-          sha256sum SkyMap-Ontario-v10.0-Local-Intelligence.apk > SkyMap-Ontario-v10.0-Local-Intelligence.apk.sha256
+          sha256sum SkyMap-Ontario-v11.0-Weather-Theatre.apk > SkyMap-Ontario-v11.0-Weather-Theatre.apk.sha256
 
       - uses: actions/upload-artifact@v4
         with:
-          name: SkyMap-Ontario-v10.0-Local-Intelligence
+          name: SkyMap-Ontario-v11.0-Weather-Theatre
           path: release/
           if-no-files-found: error
           retention-days: 30
