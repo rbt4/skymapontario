@@ -28,11 +28,15 @@ jobs:
           from pathlib import Path
           p = Path('app/v9.js')
           s = p.read_text(encoding='utf-8')
-          old = "function weight(id,h){if(h.hours<=48)return{id:'gem',w:.46}[id]? .46:"
-          new = "function weight(id,h){if(h.hours<=48)return id==='gem'?.46:"
-          if old in s:
-              s = s.replace(old, new)
-              p.write_text(s, encoding='utf-8')
+          s = s.replace(
+              "function weight(id,h){if(h.hours<=48)return{id:'gem',w:.46}[id]? .46:",
+              "function weight(id,h){if(h.hours<=48)return id==='gem'?.46:"
+          )
+          s = s.replace(
+              "const days=m.id==='gem'?10:16;",
+              "const days=m.id==='gem'?10:(m.id==='gfs'?16:15);"
+          )
+          p.write_text(s, encoding='utf-8')
           PY
           node --check app/v9.js
           grep -q 'SkyMap Ontario 9' app/index.html
