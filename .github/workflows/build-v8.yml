@@ -22,16 +22,37 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Verify source part 00
+        run: echo "f81ddd3bd1dd4c0ca7fb7e1bfe62414391037e1e2c0b3e97648b3cf4c718feee  .build/skymap81-parts/part-00" | sha256sum -c -
+      - name: Verify source part 01
+        run: echo "7cb1d0a78b206b40eaa927b278a4a1115202feaeafcbd0e619035a87ea3ba311  .build/skymap81-parts/part-01" | sha256sum -c -
+      - name: Verify source part 02a0
+        run: echo "6c1823c3e745eac245bb0d04d258b503d4f55aafa0d304980e5e281e4c876354  .build/skymap81-parts/part-02a0" | sha256sum -c -
+      - name: Verify source part 02a1
+        run: echo "550809826deaeddabe722625229c3ca47a5bf6b07d5e764223ed2bb19286bbbe  .build/skymap81-parts/part-02a1" | sha256sum -c -
+      - name: Verify source part 02b
+        run: echo "0642e1f4a54abb0e74c958977f2518566efc06b7d47e64784f6cd46e6ef261c6  .build/skymap81-parts/part-02b" | sha256sum -c -
+      - name: Verify source part 03a
+        run: echo "c7114cabb3d54e03c2d4be4c3738daabcdaec1b0261ec0e8a2b2e9c1c03d2778  .build/skymap81-parts/part-03a" | sha256sum -c -
+      - name: Verify source part 03b
+        run: echo "9527de3d6703074ad2423f298c5c4b3a6e0ef40e965ca61e1dfe33775e401052  .build/skymap81-parts/part-03b" | sha256sum -c -
+      - name: Verify source part 04a
+        run: echo "154c2dfee66f29ae1a3382fb4333f831dc641d5799140e18cdb536a213211a13  .build/skymap81-parts/part-04a" | sha256sum -c -
+      - name: Verify source part 04b
+        run: echo "69abafd37f4785a122209a7f1944bff0a2b84a4c46c12af1d568a4806a8c4253  .build/skymap81-parts/part-04b" | sha256sum -c -
+      - name: Verify source part 05a
+        run: echo "3125bd11a30dde471eee0b54c7db1efc89b39d5cf70d792d50503b28f4c418f1  .build/skymap81-parts/part-05a" | sha256sum -c -
+      - name: Verify source part 05b
+        run: echo "127fb36978e70d6884eb015463355da1a87ca40a532463a90cb0a5f0fb8a5a9f  .build/skymap81-parts/part-05b" | sha256sum -c -
+
       - name: Assemble SkyMap 8.1 source bundle
         run: |
           cat .build/skymap81-parts/part-* > /tmp/skymap81-source.tar.gz.b64
-          echo "Bundle characters: $(wc -c < /tmp/skymap81-source.tar.gz.b64)"
           test "$(wc -c < /tmp/skymap81-source.tar.gz.b64)" = "89200"
 
       - name: Verify SkyMap 8.1 source bundle
         run: |
           base64 -d /tmp/skymap81-source.tar.gz.b64 > /tmp/skymap81-source.tar.gz
-          sha256sum /tmp/skymap81-source.tar.gz
           echo "be22272146af3548cfa95e8d54d717345fce4a603c839a2730b088b3eb008345  /tmp/skymap81-source.tar.gz" | sha256sum -c -
 
       - name: Restore SkyMap 8.1 app
