@@ -24,8 +24,14 @@ jobs:
 
       - name: Verify source part 00
         run: echo "f81ddd3bd1dd4c0ca7fb7e1bfe62414391037e1e2c0b3e97648b3cf4c718feee  .build/skymap81-parts/part-00" | sha256sum -c -
-      - name: Verify source part 01
-        run: echo "7cb1d0a78b206b40eaa927b278a4a1115202feaeafcbd0e619035a87ea3ba311  .build/skymap81-parts/part-01" | sha256sum -c -
+      - name: Verify source part 01a0
+        run: echo "82a3f818a7f6a6718486c51b2e9b3e0250b15d87a031895b8d9dbf157b7ffc2d  .build/skymap81-parts/part-01a0" | sha256sum -c -
+      - name: Verify source part 01a1
+        run: echo "a57429e2da13ccb43c57c107fc722db840d39d0395a6b974c8392de17ea20b66  .build/skymap81-parts/part-01a1" | sha256sum -c -
+      - name: Verify source part 01b0
+        run: echo "1445b3ba33f31246deefb0cfedd0755bd39ed2314fe3b43143ee18352570662b  .build/skymap81-parts/part-01b0" | sha256sum -c -
+      - name: Verify source part 01b1
+        run: echo "11651d6fc3e25074622be0ad3f9f84674fa3bc2758766e7e33d23c28d49e4a11  .build/skymap81-parts/part-01b1" | sha256sum -c -
       - name: Verify source part 02a0
         run: echo "6c1823c3e745eac245bb0d04d258b503d4f55aafa0d304980e5e281e4c876354  .build/skymap81-parts/part-02a0" | sha256sum -c -
       - name: Verify source part 02a1
