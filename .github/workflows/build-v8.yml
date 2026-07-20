@@ -35,11 +35,17 @@ jobs:
 
       - name: Apply verified SkyMap 11 Weather Theatre overlay
         run: |
+          echo "Overlay parts: $(find .build/skymap11 -maxdepth 1 -type f -name 'part-*' | wc -l)"
+          find .build/skymap11 -maxdepth 1 -type f -name 'part-*' -printf '%f %s bytes\n' | sort
           test "$(find .build/skymap11 -maxdepth 1 -type f -name 'part-*' | wc -l)" = "13"
           cat .build/skymap11/part-* > /tmp/skymap11-overlay.tar.gz.b64
+          echo "Overlay Base64 size: $(wc -c < /tmp/skymap11-overlay.tar.gz.b64)"
+          sha256sum /tmp/skymap11-overlay.tar.gz.b64
           test "$(wc -c < /tmp/skymap11-overlay.tar.gz.b64)" = "28408"
           echo "90e44e7ca364a9cbffeba2cd9622767c9745a56503246121a1a0c660dba0ced2  /tmp/skymap11-overlay.tar.gz.b64" | sha256sum -c -
           base64 -d /tmp/skymap11-overlay.tar.gz.b64 > /tmp/skymap11-overlay.tar.gz
+          echo "Overlay archive size: $(wc -c < /tmp/skymap11-overlay.tar.gz)"
+          sha256sum /tmp/skymap11-overlay.tar.gz
           echo "004a43651d9354b183a721a7ca7bc72132ab48b941a754a3c5bef0a3e574f0ff  /tmp/skymap11-overlay.tar.gz" | sha256sum -c -
           tar -xzf /tmp/skymap11-overlay.tar.gz -C .
 
