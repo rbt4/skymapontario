@@ -1,4 +1,4 @@
-name: Build SkyMap Ontario 8 Predictive
+name: Build SkyMap Ontario 8.1 Visual Timeline
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: skymap-v8-${{ github.ref }}
+  group: skymap-v81-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -22,18 +22,19 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Restore tested predictive-map sources
+      - name: Restore tested SkyMap 8.1 visual timeline sources
         run: |
-          cat .build/skymap8-parts/part-* > /tmp/skymap8-source.tar.gz.b64
-          test "$(wc -c < /tmp/skymap8-source.tar.gz.b64)" = "33540"
-          base64 -d /tmp/skymap8-source.tar.gz.b64 > /tmp/skymap8-source.tar.gz
-          echo "431a0db5e0cf6ba6af1138de7c6fb12bb2ca111d4b05c9a4489012789d4c1961  /tmp/skymap8-source.tar.gz" | sha256sum -c -
-          tar -xzf /tmp/skymap8-source.tar.gz -C app
+          cat .build/skymap81-parts/part-* > /tmp/skymap81-source.tar.gz.b64
+          test "$(wc -c < /tmp/skymap81-source.tar.gz.b64)" = "89200"
+          base64 -d /tmp/skymap81-source.tar.gz.b64 > /tmp/skymap81-source.tar.gz
+          echo "be22272146af3548cfa95e8d54d717345fce4a603c839a2730b088b3eb008345  /tmp/skymap81-source.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/skymap81-source.tar.gz -C app
           node --check app/app.js
-          grep -q "SKYMAP WEATHER STORY" app/index.html
-          grep -q "ecmwf_aifs025_single" app/app.js
-          grep -q "Lightning_2.5km_Density" app/app.js
-          grep -q "mode==='smoke'||!state.mapReady" app/app.js
+          grep -q "SkyMap Ontario 8.1" app/index.html
+          grep -q 'class="mode-strip"' app/index.html
+          grep -q "Radar_1km_RainPrecipRate-Extrapolation" app/app.js
+          grep -q "GDPS_15km_PrecipType-Significant1h" app/app.js
+          grep -q "GEPS.DIAG.12_PRMM.ERGE10" app/app.js
           test -f app/vendor/leaflet.js
           test -f app/vendor/leaflet.css
 
@@ -65,29 +66,31 @@ jobs:
       - name: Build APK through Gradle
         run: ./gradlew :android-app:assembleDebug --stacktrace --no-daemon
 
-      - name: Verify Android package and bundled experience
+      - name: Verify Android package and visual timeline experience
         run: |
           APK=android/app/build/outputs/apk/debug/android-app-debug.apk
           test -s "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -P 16 -v 4 "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee /tmp/badging.txt
-          grep -q "versionCode='80'" /tmp/badging.txt
-          grep -q "versionName='8.0-predictive'" /tmp/badging.txt
-          unzip -p "$APK" assets/index.html | grep -q "SKYMAP WEATHER STORY"
-          unzip -p "$APK" assets/app.js | grep -q "ecmwf_aifs025_single"
-          unzip -p "$APK" assets/app.js | grep -q "Lightning_2.5km_Density"
+          grep -q "versionCode='81'" /tmp/badging.txt
+          grep -q "versionName='8.1-visual-timeline'" /tmp/badging.txt
+          unzip -p "$APK" assets/index.html | grep -q "SkyMap Ontario 8.1"
+          unzip -p "$APK" assets/index.html | grep -q 'class="mode-strip"'
+          unzip -p "$APK" assets/app.js | grep -q "Radar_1km_RainPrecipRate-Extrapolation"
+          unzip -p "$APK" assets/app.js | grep -q "GDPS_15km_PrecipType-Significant1h"
+          unzip -p "$APK" assets/app.js | grep -q "GEPS.DIAG.12_PRMM.ERGE10"
 
       - name: Prepare release
         run: |
           mkdir -p release
-          cp android/app/build/outputs/apk/debug/android-app-debug.apk release/SkyMap-Ontario-v8.0-Predictive.apk
+          cp android/app/build/outputs/apk/debug/android-app-debug.apk release/SkyMap-Ontario-v8.1-Visual-Timeline.apk
           cd release
-          sha256sum SkyMap-Ontario-v8.0-Predictive.apk > SkyMap-Ontario-v8.0-Predictive.apk.sha256
+          sha256sum SkyMap-Ontario-v8.1-Visual-Timeline.apk > SkyMap-Ontario-v8.1-Visual-Timeline.apk.sha256
 
       - uses: actions/upload-artifact@v4
         with:
-          name: SkyMap-Ontario-v8.0-Predictive
+          name: SkyMap-Ontario-v8.1-Visual-Timeline
           path: release/
           if-no-files-found: error
           retention-days: 30
