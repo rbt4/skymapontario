@@ -22,21 +22,32 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Restore tested SkyMap 8.1 visual timeline sources
+      - name: Assemble SkyMap 8.1 source bundle
         run: |
           cat .build/skymap81-parts/part-* > /tmp/skymap81-source.tar.gz.b64
+          echo "Bundle characters: $(wc -c < /tmp/skymap81-source.tar.gz.b64)"
           test "$(wc -c < /tmp/skymap81-source.tar.gz.b64)" = "89200"
+
+      - name: Verify SkyMap 8.1 source bundle
+        run: |
           base64 -d /tmp/skymap81-source.tar.gz.b64 > /tmp/skymap81-source.tar.gz
+          sha256sum /tmp/skymap81-source.tar.gz
           echo "be22272146af3548cfa95e8d54d717345fce4a603c839a2730b088b3eb008345  /tmp/skymap81-source.tar.gz" | sha256sum -c -
+
+      - name: Restore SkyMap 8.1 app
+        run: |
           tar -xzf /tmp/skymap81-source.tar.gz -C app
           node --check app/app.js
+          test -f app/vendor/leaflet.js
+          test -f app/vendor/leaflet.css
+
+      - name: Verify visual timeline and predictive layers
+        run: |
           grep -q "SkyMap Ontario 8.1" app/index.html
           grep -q 'class="mode-strip"' app/index.html
           grep -q "Radar_1km_RainPrecipRate-Extrapolation" app/app.js
           grep -q "GDPS_15km_PrecipType-Significant1h" app/app.js
           grep -q "GEPS.DIAG.12_PRMM.ERGE10" app/app.js
-          test -f app/vendor/leaflet.js
-          test -f app/vendor/leaflet.css
 
       - uses: actions/setup-java@v4
         with:
