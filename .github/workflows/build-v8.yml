@@ -1,4 +1,4 @@
-name: Build SkyMap Ontario 8.1 Visual Timeline
+name: Build SkyMap Ontario 9 Weather Lens
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: skymap-v81-${{ github.workflow }}-${{ github.ref }}
+  group: skymap-v9-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -22,59 +22,31 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Verify source part 00
-        run: echo "f81ddd3bd1dd4c0ca7fb7e1bfe62414391037e1e2c0b3e97648b3cf4c718feee  .build/skymap81-parts/part-00" | sha256sum -c -
-      - name: Verify source part 01a0
-        run: echo "82a3f818a7f6a6718486c51b2e9b3e0250b15d87a031895b8d9dbf157b7ffc2d  .build/skymap81-parts/part-01a0" | sha256sum -c -
-      - name: Verify source part 01a1
-        run: echo "a57429e2da13ccb43c57c107fc722db840d39d0395a6b974c8392de17ea20b66  .build/skymap81-parts/part-01a1" | sha256sum -c -
-      - name: Verify source part 01b0
-        run: echo "1445b3ba33f31246deefb0cfedd0755bd39ed2314fe3b43143ee18352570662b  .build/skymap81-parts/part-01b0" | sha256sum -c -
-      - name: Verify source part 01b1
-        run: echo "11651d6fc3e25074622be0ad3f9f84674fa3bc2758766e7e33d23c28d49e4a11  .build/skymap81-parts/part-01b1" | sha256sum -c -
-      - name: Verify source part 02a0
-        run: echo "6c1823c3e745eac245bb0d04d258b503d4f55aafa0d304980e5e281e4c876354  .build/skymap81-parts/part-02a0" | sha256sum -c -
-      - name: Verify source part 02a1
-        run: echo "550809826deaeddabe722625229c3ca47a5bf6b07d5e764223ed2bb19286bbbe  .build/skymap81-parts/part-02a1" | sha256sum -c -
-      - name: Verify source part 02b
-        run: echo "0642e1f4a54abb0e74c958977f2518566efc06b7d47e64784f6cd46e6ef261c6  .build/skymap81-parts/part-02b" | sha256sum -c -
-      - name: Verify source part 03a
-        run: echo "c7114cabb3d54e03c2d4be4c3738daabcdaec1b0261ec0e8a2b2e9c1c03d2778  .build/skymap81-parts/part-03a" | sha256sum -c -
-      - name: Verify source part 03b
-        run: echo "9527de3d6703074ad2423f298c5c4b3a6e0ef40e965ca61e1dfe33775e401052  .build/skymap81-parts/part-03b" | sha256sum -c -
-      - name: Verify source part 04a
-        run: echo "154c2dfee66f29ae1a3382fb4333f831dc641d5799140e18cdb536a213211a13  .build/skymap81-parts/part-04a" | sha256sum -c -
-      - name: Verify source part 04b
-        run: echo "69abafd37f4785a122209a7f1944bff0a2b84a4c46c12af1d568a4806a8c4253  .build/skymap81-parts/part-04b" | sha256sum -c -
-      - name: Verify source part 05a
-        run: echo "3125bd11a30dde471eee0b54c7db1efc89b39d5cf70d792d50503b28f4c418f1  .build/skymap81-parts/part-05a" | sha256sum -c -
-      - name: Verify source part 05b
-        run: echo "127fb36978e70d6884eb015463355da1a87ca40a532463a90cb0a5f0fb8a5a9f  .build/skymap81-parts/part-05b" | sha256sum -c -
-
-      - name: Assemble SkyMap 8.1 source bundle
+      - name: Validate weather-lens source
         run: |
-          cat .build/skymap81-parts/part-* > /tmp/skymap81-source.tar.gz.b64
-          test "$(wc -c < /tmp/skymap81-source.tar.gz.b64)" = "89200"
-
-      - name: Verify SkyMap 8.1 source bundle
-        run: |
-          base64 -d /tmp/skymap81-source.tar.gz.b64 > /tmp/skymap81-source.tar.gz
-          echo "be22272146af3548cfa95e8d54d717345fce4a603c839a2730b088b3eb008345  /tmp/skymap81-source.tar.gz" | sha256sum -c -
-
-      - name: Restore SkyMap 8.1 app
-        run: |
-          tar -xzf /tmp/skymap81-source.tar.gz -C app
-          node --check app/app.js
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('app/v9.js')
+          s = p.read_text(encoding='utf-8')
+          old = "function weight(id,h){if(h.hours<=48)return{id:'gem',w:.46}[id]? .46:"
+          new = "function weight(id,h){if(h.hours<=48)return id==='gem'?.46:"
+          if old in s:
+              s = s.replace(old, new)
+              p.write_text(s, encoding='utf-8')
+          PY
+          node --check app/v9.js
+          grep -q 'SkyMap Ontario 9' app/index.html
+          grep -q 'class="snapshots"' app/index.html
+          grep -q 'class="mode-strip"' app/index.html
+          grep -q 'zoomControl:false' app/v9.js
+          grep -q 'Radar_1km_RainPrecipRate-Extrapolation' app/v9.js
+          grep -q 'HRDPS.CONTINENTAL_PR' app/v9.js
+          grep -q 'GDPS_15km_PrecipType-Significant1h' app/v9.js
+          grep -q 'GEPS.DIAG.12_PRMM.ERGE10' app/v9.js
+          grep -q 'ecmwf_aifs025_single' app/v9.js
+          ! grep -q '<select' app/index.html
           test -f app/vendor/leaflet.js
           test -f app/vendor/leaflet.css
-
-      - name: Verify visual timeline and predictive layers
-        run: |
-          grep -q "SkyMap Ontario 8.1" app/index.html
-          grep -q 'class="mode-strip"' app/index.html
-          grep -q "Radar_1km_RainPrecipRate-Extrapolation" app/app.js
-          grep -q "GDPS_15km_PrecipType-Significant1h" app/app.js
-          grep -q "GEPS.DIAG.12_PRMM.ERGE10" app/app.js
 
       - uses: actions/setup-java@v4
         with:
@@ -104,31 +76,30 @@ jobs:
       - name: Build APK through Gradle
         run: ./gradlew :android-app:assembleDebug --stacktrace --no-daemon
 
-      - name: Verify Android package and visual timeline experience
+      - name: Verify Android package and weather-lens experience
         run: |
           APK=android/app/build/outputs/apk/debug/android-app-debug.apk
           test -s "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -P 16 -v 4 "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee /tmp/badging.txt
-          grep -q "versionCode='81'" /tmp/badging.txt
-          grep -q "versionName='8.1-visual-timeline'" /tmp/badging.txt
-          unzip -p "$APK" assets/index.html | grep -q "SkyMap Ontario 8.1"
-          unzip -p "$APK" assets/index.html | grep -q 'class="mode-strip"'
-          unzip -p "$APK" assets/app.js | grep -q "Radar_1km_RainPrecipRate-Extrapolation"
-          unzip -p "$APK" assets/app.js | grep -q "GDPS_15km_PrecipType-Significant1h"
-          unzip -p "$APK" assets/app.js | grep -q "GEPS.DIAG.12_PRMM.ERGE10"
+          grep -q "versionCode='90'" /tmp/badging.txt
+          grep -q "versionName='9.0-weather-lens'" /tmp/badging.txt
+          unzip -p "$APK" assets/index.html | grep -q 'SkyMap Ontario 9'
+          unzip -p "$APK" assets/v9.js | grep -q 'Radar_1km_RainPrecipRate-Extrapolation'
+          unzip -p "$APK" assets/v9.js | grep -q 'ecmwf_aifs025_single'
+          unzip -p "$APK" assets/v9.css | grep -q '.confidence-orbit'
 
       - name: Prepare release
         run: |
           mkdir -p release
-          cp android/app/build/outputs/apk/debug/android-app-debug.apk release/SkyMap-Ontario-v8.1-Visual-Timeline.apk
+          cp android/app/build/outputs/apk/debug/android-app-debug.apk release/SkyMap-Ontario-v9.0-Weather-Lens.apk
           cd release
-          sha256sum SkyMap-Ontario-v8.1-Visual-Timeline.apk > SkyMap-Ontario-v8.1-Visual-Timeline.apk.sha256
+          sha256sum SkyMap-Ontario-v9.0-Weather-Lens.apk > SkyMap-Ontario-v9.0-Weather-Lens.apk.sha256
 
       - uses: actions/upload-artifact@v4
         with:
-          name: SkyMap-Ontario-v8.1-Visual-Timeline
+          name: SkyMap-Ontario-v9.0-Weather-Lens
           path: release/
           if-no-files-found: error
           retention-days: 30
