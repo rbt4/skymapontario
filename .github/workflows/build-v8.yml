@@ -36,7 +36,13 @@ jobs:
               "const days=m.id==='gem'?10:16;",
               "const days=m.id==='gem'?10:(m.id==='gfs'?16:15);"
           )
+          s = s.replace(
+              "h.hours<=48?[['HRDPS.CONTINENTAL_PR',''],['HRDPS.CONTINENTAL_CAPE','']]",
+              "h.hours<=48?[['HRDPS.CONTINENTAL_PR','']]"
+          )
           p.write_text(s, encoding='utf-8')
+          css = Path('app/v9.css')
+          css.write_text(css.read_text(encoding='utf-8') + "\n.confidence-orbit{position:relative}.confidence-orbit::before{inset:6px}\n", encoding='utf-8')
           PY
           node --check app/v9.js
           grep -q 'SkyMap Ontario 9' app/index.html
@@ -47,7 +53,9 @@ jobs:
           grep -q 'HRDPS.CONTINENTAL_PR' app/v9.js
           grep -q 'GDPS_15km_PrecipType-Significant1h' app/v9.js
           grep -q 'GEPS.DIAG.12_PRMM.ERGE10' app/v9.js
+          grep -q 'RAQDPS.SFC_PM2.5' app/v9.js
           grep -q 'ecmwf_aifs025_single' app/v9.js
+          ! grep -q 'HRDPS.CONTINENTAL_CAPE' app/v9.js
           ! grep -q '<select' app/index.html
           test -f app/vendor/leaflet.js
           test -f app/vendor/leaflet.css
