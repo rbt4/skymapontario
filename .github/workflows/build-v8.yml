@@ -116,7 +116,7 @@ jobs:
           unzip -p "$APK" assets/index.html | grep -q 'SkyMap Ontario 10'
           unzip -p "$APK" assets/v10.js | grep -q 'SkyMapLocalIntelligence'
           unzip -p "$APK" assets/v10.js | grep -q 'collections/swob-realtime'
-          unzip -p "$APK" assets/v10.css | grep -q '.snapshot-card'
+          unzip -p "$APK" assets/v10.css | grep -q '.snapshot{'
 
       - name: Prepare release
         run: |
