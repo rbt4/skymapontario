@@ -8,8 +8,8 @@ android {
         applicationId 'ca.skymapontario.app'
         minSdk 24
         targetSdk 35
-        versionCode 81
-        versionName '8.1-visual-timeline'
+        versionCode 90
+        versionName '9.0-weather-lens'
     }
 
     sourceSets {
