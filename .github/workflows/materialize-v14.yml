@@ -1,29 +1,31 @@
-name: Materialize canonical SkyMap 14 source
+name: Materialize, build and deploy SkyMap Ontario 14
 
 on:
-  issue_comment:
-    types: [created]
+  push:
+    branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: write
+concurrency:
+  group: skymap-14-release
+  cancel-in-progress: true
 
 jobs:
-  materialize:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.issue.pull_request &&
-       github.event.issue.number == 7 &&
-       github.event.comment.body == '/materialize-skymap-14')
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: rbt4/skymapontario
-          ref: skymap-14-clarity-reset
           fetch-depth: 0
 
-      - name: Verify transfer bundle
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify canonical SkyMap 14 transfer
         run: |
           set -euo pipefail
           test "$(find .build/skymap14-materialize -maxdepth 1 -type f -name 'chunk-*' | wc -l)" = "13"
@@ -39,25 +41,230 @@ jobs:
           grep -q '^assets/site.css$' /tmp/skymap14-file-list.txt
           grep -q '^.github/workflows/deploy-pages.yml$' /tmp/skymap14-file-list.txt
 
-      - name: Replace stale product source
+      - name: Materialize and validate readable product source
         run: |
           set -euo pipefail
           rm -rf assets app scripts demo
           rm -f version.json index.html privacy.html README.md BUILD_RECOVERY.md
           find .github/workflows -maxdepth 1 -type f -delete
           tar -xzf /tmp/skymap14-canonical.tar.gz -C .
+          rm -rf .build/skymap14-materialize
           node --check assets/site.js
           node --check app/app.js
           node --check scripts/prepare-release.mjs
           node --check scripts/validate-release.mjs
           node scripts/validate-release.mjs
+          rm -rf /tmp/skymap14-current
+          mkdir -p /tmp/skymap14-current
+          cp -a version.json index.html privacy.html README.md BUILD_RECOVERY.md assets app scripts .github /tmp/skymap14-current/
 
-      - name: Commit readable canonical source
+      - name: Commit canonical readable source
         run: |
           set -euo pipefail
-          rm -rf .build/skymap14-materialize
           git config user.name 'SkyMap Release Bot'
           git config user.email 'actions@users.noreply.github.com'
-          git add -A
-          git commit -m 'Rebuild SkyMap 14 as one aligned radar-first product'
-          git push origin HEAD:skymap-14-clarity-reset
+          git add -A assets app scripts demo .github/workflows version.json index.html privacy.html README.md BUILD_RECOVERY.md .build/skymap14-materialize
+          if ! git diff --cached --quiet; then
+            git commit -m 'Rebuild SkyMap 14 as one aligned radar-first product'
+            git push origin HEAD:main
+          fi
+          echo "RELEASE_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Import verified native foundations
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin skymap-8-predictive-map:refs/remotes/origin/skymap-8-predictive-map
+          git checkout refs/remotes/origin/skymap-8-predictive-map -- .build/skymap10 .build/skymap13
+
+      - name: Reconstruct verified native base
+        run: |
+          set -euo pipefail
+          test "$(find .build/skymap10 -maxdepth 1 -type f -name 'part-*' | wc -l)" = "17"
+          cat .build/skymap10/part-* > /tmp/skymap10-source.tar.gz.b64
+          test "$(wc -c < /tmp/skymap10-source.tar.gz.b64)" = "29024"
+          echo "2897fe53fd25647b55adf7dceffb9f7118939aab37331bde9442e332cc46fa0f  /tmp/skymap10-source.tar.gz.b64" | sha256sum -c -
+          base64 -d /tmp/skymap10-source.tar.gz.b64 > /tmp/skymap10-source.tar.gz
+          echo "fdaef2b84e05982338de4be4b45853ae1ab0a8f014c51e97b412f716745ee0cd  /tmp/skymap10-source.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/skymap10-source.tar.gz -C .
+
+      - name: Apply verified native radar relay
+        run: |
+          set -euo pipefail
+          test "$(find .build/skymap13 -maxdepth 1 -type f -name 'chunk-*' | wc -l)" = "6"
+          cat .build/skymap13/chunk-* > /tmp/skymap13-overlay.tar.gz.b64
+          test "$(wc -c < /tmp/skymap13-overlay.tar.gz.b64)" = "37164"
+          echo "7b58b3275123c37b1b33a401a97b373a8ba58dc10bb069e8cc9b97d05e825156  /tmp/skymap13-overlay.tar.gz.b64" | sha256sum -c -
+          base64 -d /tmp/skymap13-overlay.tar.gz.b64 > /tmp/skymap13-overlay.tar.gz
+          echo "59eba3742bd2d52bf4cdec2ec9434f6edcf9106d6337b11da20d974677d37625  /tmp/skymap13-overlay.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/skymap13-overlay.tar.gz -C .
+
+      - name: Restore and align SkyMap 14 product
+        run: |
+          set -euo pipefail
+          rm -rf assets app scripts .github
+          cp -a /tmp/skymap14-current/assets /tmp/skymap14-current/app /tmp/skymap14-current/scripts /tmp/skymap14-current/.github .
+          cp /tmp/skymap14-current/version.json /tmp/skymap14-current/index.html /tmp/skymap14-current/privacy.html /tmp/skymap14-current/README.md /tmp/skymap14-current/BUILD_RECOVERY.md .
+          node scripts/prepare-release.mjs
+          node --check assets/site.js
+          node --check app/app.js
+          node scripts/validate-release.mjs
+          grep -q 'android.useAndroidX=true' gradle.properties
+
+      - name: Verify live ECCC radar paths
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 4 --retry-all-errors --connect-timeout 15 --max-time 90 \
+            --get 'https://geo.weather.gc.ca/geomet' \
+            --data-urlencode 'SERVICE=WMS' \
+            --data-urlencode 'VERSION=1.3.0' \
+            --data-urlencode 'REQUEST=GetCapabilities' \
+            --data-urlencode 'LAYERS=RADAR_1KM_RRAI' \
+            --output /tmp/radar-capabilities.xml
+          grep -q 'RADAR_1KM_RRAI' /tmp/radar-capabilities.xml
+          fetch_png() {
+            local layer="$1" style="$2" output="$3"
+            curl --fail --location --retry 4 --retry-all-errors --connect-timeout 15 --max-time 90 \
+              --get 'https://geo.weather.gc.ca/geomet' \
+              --data-urlencode 'SERVICE=WMS' \
+              --data-urlencode 'VERSION=1.3.0' \
+              --data-urlencode 'REQUEST=GetMap' \
+              --data-urlencode "LAYERS=${layer}" \
+              --data-urlencode "STYLES=${style}" \
+              --data-urlencode 'CRS=EPSG:4326' \
+              --data-urlencode 'BBOX=41,-84,47,-74' \
+              --data-urlencode 'WIDTH=720' \
+              --data-urlencode 'HEIGHT=540' \
+              --data-urlencode 'FORMAT=image/png' \
+              --data-urlencode 'TRANSPARENT=TRUE' \
+              --output "$output"
+          }
+          fetch_png 'RADAR_1KM_RRAI' 'RADARURPPRECIPR14-LINEAR' /tmp/radar.png
+          fetch_png 'Radar_1km_RainPrecipRate-Extrapolation' '' /tmp/nowcast.png
+          python - <<'PY'
+          from pathlib import Path
+          import struct
+          for name in ('radar', 'nowcast'):
+              data = Path(f'/tmp/{name}.png').read_bytes()
+              assert data[:8] == b'\x89PNG\r\n\x1a\n', f'{name} is not PNG'
+              width, height = struct.unpack('>II', data[16:24])
+              assert (width, height) == (720, 540)
+              assert len(data) > 500
+              print(name, len(data), width, height)
+          PY
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools" >/dev/null
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Restore stable development signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: skymap-ontario-debug-keystore-v1
+
+      - name: Prepare development signing key
+        run: |
+          mkdir -p ~/.android
+          if [ ! -f ~/.android/debug.keystore ]; then
+            keytool -genkeypair -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=SkyMap Ontario Development,O=RBT4,C=CA"
+          fi
+
+      - name: Build Android APK
+        id: gradle_build
+        continue-on-error: true
+        run: ./gradlew :android-app:assembleDebug --stacktrace --no-daemon --console=plain > /tmp/skymap-gradle.log 2>&1
+
+      - name: Upload Gradle diagnostic
+        if: steps.gradle_build.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: SkyMap-Gradle-Diagnostic
+          path: /tmp/skymap-gradle.log
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Stop after concise Gradle failure
+        if: steps.gradle_build.outcome == 'failure'
+        run: |
+          tail -n 180 /tmp/skymap-gradle.log
+          exit 1
+
+      - name: Verify APK and packaged experience
+        run: |
+          set -euo pipefail
+          APK=android/app/build/outputs/apk/debug/android-app-debug.apk
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -P 16 -v 4 "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee /tmp/badging.txt
+          grep -q "versionCode='${SKYMAP_VERSION_CODE}'" /tmp/badging.txt
+          grep -q "versionName='${SKYMAP_VERSION}'" /tmp/badging.txt
+          rm -rf /tmp/apk-inspect && mkdir /tmp/apk-inspect
+          unzip -q "$APK" -d /tmp/apk-inspect
+          grep -q 'WEATHER SNAPSHOTS' /tmp/apk-inspect/assets/index.html
+          grep -q '7-DAY FORECAST' /tmp/apk-inspect/assets/index.html
+          grep -q 'Promise.allSettled' /tmp/apk-inspect/assets/app.js
+          grep -q 'NATIVE_GEOMET' /tmp/apk-inspect/assets/app.js
+          grep -q '14.0.0' /tmp/apk-inspect/assets/version.json
+          strings /tmp/apk-inspect/classes*.dex > /tmp/classes.txt
+          grep -q 'GeoMetProxy' /tmp/classes.txt
+          grep -q 'geomet-proxy' /tmp/classes.txt
+
+      - name: Prepare lean website and release files
+        run: |
+          set -euo pipefail
+          mkdir -p release _site/assets _site/app _site/download
+          APK=android/app/build/outputs/apk/debug/android-app-debug.apk
+          cp "$APK" "release/${SKYMAP_APK}"
+          (cd release && sha256sum "${SKYMAP_APK}" > "${SKYMAP_APK}.sha256")
+          cp "release/${SKYMAP_APK}" release/SkyMap-Ontario-latest.apk
+          cp "release/${SKYMAP_APK}.sha256" release/SkyMap-Ontario-latest.apk.sha256
+          cp index.html privacy.html version.json _site/
+          cp assets/site.css assets/site.js _site/assets/
+          cp -a app/. _site/app/
+          cp "release/${SKYMAP_APK}" "release/${SKYMAP_APK}.sha256" release/SkyMap-Ontario-latest.apk release/SkyMap-Ontario-latest.apk.sha256 _site/download/
+          node - <<'NODE'
+          const fs = require('fs');
+          const version = JSON.parse(fs.readFileSync('version.json'));
+          fs.writeFileSync('_site/release.json', JSON.stringify({ ...version, commit: process.env.RELEASE_COMMIT || process.env.GITHUB_SHA, runId: process.env.GITHUB_RUN_ID, completedAt: new Date().toISOString() }, null, 2));
+          NODE
+          touch _site/.nojekyll
+          test -f _site/index.html
+          test -f _site/app/app.js
+          test -f "_site/download/${SKYMAP_APK}"
+          test ! -e _site/.build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SkyMap-Ontario-${{ env.SKYMAP_VERSION }}
+          path: release/
+          if-no-files-found: error
+          retention-days: 30
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy SkyMap Ontario 14
+        id: deployment
+        uses: actions/deploy-pages@v4
