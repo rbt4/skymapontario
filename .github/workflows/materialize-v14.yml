@@ -18,33 +18,6 @@ jobs:
           ref: skymap-14-clarity-reset
           fetch-depth: 0
 
-      - name: Record transfer diagnostics
-        run: |
-          set -u
-          {
-            echo "count=$(find .build/skymap14-materialize -maxdepth 1 -type f -name 'chunk-*' | wc -l)"
-            find .build/skymap14-materialize -maxdepth 1 -type f -name 'chunk-*' -printf '%f %s bytes\n' | sort
-            sha256sum .build/skymap14-materialize/chunk-* | sort -k2
-            cat .build/skymap14-materialize/chunk-* > /tmp/skymap14-canonical.tar.gz.b64
-            echo "combined_bytes=$(wc -c < /tmp/skymap14-canonical.tar.gz.b64)"
-            sha256sum /tmp/skymap14-canonical.tar.gz.b64
-            if base64 -d /tmp/skymap14-canonical.tar.gz.b64 > /tmp/skymap14-canonical.tar.gz; then
-              echo "decoded_bytes=$(wc -c < /tmp/skymap14-canonical.tar.gz)"
-              sha256sum /tmp/skymap14-canonical.tar.gz
-              tar -tzf /tmp/skymap14-canonical.tar.gz | sort
-            else
-              echo "base64_decode=failed"
-            fi
-          } > /tmp/skymap14-materialize-diagnostic.txt 2>&1
-          cat /tmp/skymap14-materialize-diagnostic.txt
-
-      - name: Upload transfer diagnostics
-        uses: actions/upload-artifact@v4
-        with:
-          name: SkyMap-14-materialize-diagnostic
-          path: /tmp/skymap14-materialize-diagnostic.txt
-          retention-days: 1
-
       - name: Verify transfer bundle
         run: |
           set -euo pipefail
@@ -55,10 +28,11 @@ jobs:
           base64 -d /tmp/skymap14-canonical.tar.gz.b64 > /tmp/skymap14-canonical.tar.gz
           test "$(wc -c < /tmp/skymap14-canonical.tar.gz)" = "35849"
           echo "d43cca399a0de09695c2eab440776ca71aeebd77f76ab087768bbaec46c163cb  /tmp/skymap14-canonical.tar.gz" | sha256sum -c -
-          tar -tzf /tmp/skymap14-canonical.tar.gz | grep -q '^version.json$'
-          tar -tzf /tmp/skymap14-canonical.tar.gz | grep -q '^app/app.js$'
-          tar -tzf /tmp/skymap14-canonical.tar.gz | grep -q '^assets/site.css$'
-          tar -tzf /tmp/skymap14-canonical.tar.gz | grep -q '^.github/workflows/deploy-pages.yml$'
+          tar -tzf /tmp/skymap14-canonical.tar.gz > /tmp/skymap14-file-list.txt
+          grep -q '^version.json$' /tmp/skymap14-file-list.txt
+          grep -q '^app/app.js$' /tmp/skymap14-file-list.txt
+          grep -q '^assets/site.css$' /tmp/skymap14-file-list.txt
+          grep -q '^.github/workflows/deploy-pages.yml$' /tmp/skymap14-file-list.txt
 
       - name: Replace stale product source
         run: |
