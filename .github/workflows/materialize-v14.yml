@@ -1,8 +1,10 @@
 name: Materialize canonical SkyMap 14 source
 
 on:
-  pull_request_target:
+  push:
     branches: [main]
+    paths:
+      - '.github/workflows/materialize-v14.yml'
   workflow_dispatch:
 
 permissions:
@@ -10,10 +12,6 @@ permissions:
 
 jobs:
   materialize:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.pull_request.head.repo.full_name == github.repository &&
-       github.event.pull_request.head.ref == 'skymap-14-clarity-reset')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
