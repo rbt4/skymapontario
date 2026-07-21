@@ -1,10 +1,8 @@
 name: Materialize canonical SkyMap 14 source
 
 on:
-  push:
+  pull_request:
     branches: [main]
-    paths:
-      - '.github/workflows/materialize-v14.yml'
   workflow_dispatch:
 
 permissions:
@@ -12,6 +10,7 @@ permissions:
 
 jobs:
   materialize:
+    if: github.head_ref == 'skymap-14-clarity-reset'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,7 +38,7 @@ jobs:
           set -euo pipefail
           rm -rf assets app scripts demo
           rm -f version.json index.html privacy.html README.md BUILD_RECOVERY.md
-          find .github/workflows -maxdepth 1 -type f ! -name 'materialize-v14.yml' -delete
+          find .github/workflows -maxdepth 1 -type f -delete
           tar -xzf /tmp/skymap14-canonical.tar.gz -C .
           node --check assets/site.js
           node --check app/app.js
@@ -51,11 +50,8 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf .build/skymap14-materialize
-          rm -f .github/workflows/materialize-v14.yml
           git config user.name 'SkyMap Release Bot'
           git config user.email 'actions@users.noreply.github.com'
           git add -A
           git commit -m 'Rebuild SkyMap 14 as one aligned radar-first product'
           git push origin HEAD:skymap-14-clarity-reset
-
-# Retry marker: default-branch workflow is now registered.
