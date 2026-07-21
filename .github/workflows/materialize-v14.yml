@@ -21,7 +21,7 @@ jobs:
       - name: Verify transfer bundle
         run: |
           set -euo pipefail
-          test "$(find .build/skymap14-materialize -maxdepth 1 -type f -name 'chunk-*' | wc -l)" = "8"
+          test "$(find .build/skymap14-materialize -maxdepth 1 -type f -name 'chunk-*' | wc -l)" = "13"
           cat .build/skymap14-materialize/chunk-* > /tmp/skymap14-canonical.tar.gz.b64
           test "$(wc -c < /tmp/skymap14-canonical.tar.gz.b64)" = "47800"
           echo "48a076d90d42c3e1c07f726cd88b5d8b073119d6097364bb1949ab4c5f638b4e  /tmp/skymap14-canonical.tar.gz.b64" | sha256sum -c -
