@@ -1,0 +1,168 @@
+name: Build SkyMap Ontario 12 Radar and Forecast
+
+on:
+  push:
+    branches: [skymap-8-predictive-map]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: skymap-v12-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Reconstruct verified SkyMap 10 native base
+        run: |
+          test "$(find .build/skymap10 -maxdepth 1 -type f -name 'part-*' | wc -l)" = "17"
+          cat .build/skymap10/part-* > /tmp/skymap10-source.tar.gz.b64
+          test "$(wc -c < /tmp/skymap10-source.tar.gz.b64)" = "29024"
+          echo "2897fe53fd25647b55adf7dceffb9f7118939aab37331bde9442e332cc46fa0f  /tmp/skymap10-source.tar.gz.b64" | sha256sum -c -
+          base64 -d /tmp/skymap10-source.tar.gz.b64 > /tmp/skymap10-source.tar.gz
+          echo "fdaef2b84e05982338de4be4b45853ae1ab0a8f014c51e97b412f716745ee0cd  /tmp/skymap10-source.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/skymap10-source.tar.gz -C .
+
+      - name: Apply verified SkyMap 12 radar and forecast overlay
+        run: |
+          echo "Overlay chunks: $(find .build/skymap12 -maxdepth 1 -type f -name 'chunk-*' | wc -l)"
+          find .build/skymap12 -maxdepth 1 -type f -name 'chunk-*' -printf '%f %s bytes\n' | sort
+          test "$(find .build/skymap12 -maxdepth 1 -type f -name 'chunk-*' | wc -l)" = "4"
+          cat .build/skymap12/chunk-* > /tmp/skymap12-overlay.tar.gz.b64
+          echo "Overlay Base64 size: $(wc -c < /tmp/skymap12-overlay.tar.gz.b64)"
+          test "$(wc -c < /tmp/skymap12-overlay.tar.gz.b64)" = "26368"
+          echo "75922199700c5d252a01fce4cc9bebe326bf80e6fda069f53c9a3ff1cd20d790  /tmp/skymap12-overlay.tar.gz.b64" | sha256sum -c -
+          base64 -d /tmp/skymap12-overlay.tar.gz.b64 > /tmp/skymap12-overlay.tar.gz
+          echo "66e8caf57516aa3fc9113603c202e85c0efabd243b9a08fab3592a8dea660b99  /tmp/skymap12-overlay.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/skymap12-overlay.tar.gz -C .
+
+      - name: Set SkyMap 12 Android identity
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          gradle = Path('android/app/build.gradle')
+          text = gradle.read_text(encoding='utf-8')
+          text = re.sub(r'versionCode\s+\d+', 'versionCode 120', text)
+          text = re.sub(r"versionName\s+'[^']+'", "versionName '12.0-radar-forecast'", text)
+          gradle.write_text(text, encoding='utf-8')
+          main = Path('android/app/src/main/java/ca/skymapontario/app/MainActivity.java')
+          text = main.read_text(encoding='utf-8')
+          text = re.sub(r'SkyMapOntario/\d+(?:\.\d+)?', 'SkyMapOntario/12.0', text)
+          main.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Validate radar and multi-day forecast experience
+        run: |
+          node --check app/v12-core.js
+          node --check app/v12-radar.js
+          node --check app/v12-ui.js
+          grep -q 'SkyMap Ontario 12' app/index.html
+          grep -q '7-DAY FORECAST' app/index.html
+          grep -q 'NEXT IMPORTANT CHANGES' app/index.html
+          grep -q 'class="daily-rail"' app/index.html
+          grep -q 'RADAR_COVERAGE_RRAI' app/v12-radar.js
+          grep -q 'tileerror' app/v12-radar.js
+          grep -q 'request=GetCapabilities&layer=' app/v12-radar.js
+          grep -q 'No precipitation is visible near this location' app/index.html
+          grep -q 'buildDailyForecasts' app/v12-ui.js
+          grep -q 'SkyMapNative' app/v12-core.js
+          grep -q 'SkyMapLocalIntelligence' app/v12-core.js
+          grep -q 'Radar_1km_RainPrecipRate-Extrapolation' app/v12-core.js
+          grep -q 'HRDPS.CONTINENTAL_PR' app/v12-core.js
+          grep -q 'GDPS_15km_PrecipType-Significant1h' app/v12-core.js
+          grep -q 'GEPS.DIAG.12_PRMM.ERGE10' app/v12-core.js
+          grep -q 'grid-template-rows:minmax(0,58fr)' app/v12.css
+          ! grep -q '<select' app/index.html
+          grep -q 'WebViewAssetLoader' android/app/src/main/java/ca/skymapontario/app/MainActivity.java
+          grep -q 'PeriodicWorkRequest' android/app/src/main/java/ca/skymapontario/app/MainActivity.java
+          grep -q 'SQLiteOpenHelper' android/app/src/main/java/ca/skymapontario/app/SkyMapStore.java
+          grep -q 'recordForecast' android/app/src/main/java/ca/skymapontario/app/SkyMapBridge.java
+          grep -q 'archiveForecasts' android/app/src/main/java/ca/skymapontario/app/WeatherRefreshWorker.java
+          test -f app/vendor/leaflet.js
+          test -f app/vendor/leaflet.css
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools" >/dev/null
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Restore stable development signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: skymap-ontario-debug-keystore-v1
+
+      - name: Prepare development signing key
+        run: |
+          mkdir -p ~/.android
+          if [ ! -f ~/.android/debug.keystore ]; then
+            keytool -genkeypair -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=SkyMap Ontario Development,O=RBT4,C=CA"
+          fi
+
+      - name: Build APK through Gradle
+        id: gradle_build
+        continue-on-error: true
+        run: ./gradlew :android-app:assembleDebug --stacktrace --no-daemon --console=plain > /tmp/skymap-gradle.log 2>&1
+
+      - name: Upload Gradle diagnostic
+        if: steps.gradle_build.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: SkyMap-v12-Gradle-Diagnostic
+          path: /tmp/skymap-gradle.log
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Stop after concise Gradle failure
+        if: steps.gradle_build.outcome == 'failure'
+        run: |
+          tail -n 180 /tmp/skymap-gradle.log
+          exit 1
+
+      - name: Verify Android package, radar and seven-day forecast
+        run: |
+          APK=android/app/build/outputs/apk/debug/android-app-debug.apk
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -P 16 -v 4 "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee /tmp/badging.txt
+          grep -q "versionCode='120'" /tmp/badging.txt
+          grep -q "versionName='12.0-radar-forecast'" /tmp/badging.txt
+          unzip -p "$APK" assets/index.html | grep -q 'SkyMap Ontario 12'
+          unzip -p "$APK" assets/index.html | grep -q '7-DAY FORECAST'
+          unzip -p "$APK" assets/v12-radar.js | grep -q 'RADAR_COVERAGE_RRAI'
+          unzip -p "$APK" assets/v12-radar.js | grep -q 'tileerror'
+          unzip -p "$APK" assets/v12-ui.js | grep -q 'buildDailyForecasts'
+          unzip -p "$APK" assets/v12.css | grep -q '.forecast-shell'
+
+      - name: Prepare release
+        run: |
+          mkdir -p release
+          cp android/app/build/outputs/apk/debug/android-app-debug.apk release/SkyMap-Ontario-v12.0-Radar-Forecast.apk
+          cd release
+          sha256sum SkyMap-Ontario-v12.0-Radar-Forecast.apk > SkyMap-Ontario-v12.0-Radar-Forecast.apk.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SkyMap-Ontario-v12.0-Radar-Forecast
+          path: release/
+          if-no-files-found: error
+          retention-days: 30

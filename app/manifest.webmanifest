@@ -1,14 +1,14 @@
 {
-  "name": "SkyMap Ontario — Rain, Smoke, Air & Fire",
-  "short_name": "SkyMap Ontario",
-  "description": "Plain-English Ontario rain nowcasts, smoke forecasts, AQHI, reported active fires and weather alerts.",
+  "name": "SkyMap Ontario 9 — Weather Lens",
+  "short_name": "SkyMap",
+  "description": "A radar-first Ontario weather lens that moves from observation to nowcast, high-resolution guidance and ensemble scenarios.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#07101a",
-  "theme_color": "#07101a",
+  "background_color": "#02070d",
+  "theme_color": "#02070d",
   "categories": ["weather", "utilities", "travel"],
   "icons": [
     {"src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
