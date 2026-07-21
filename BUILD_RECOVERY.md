@@ -44,6 +44,18 @@ This keeps the working native intelligence engine separate from the replaceable 
 
 Never change an expected size or hash merely to make a check pass. A mismatch means the verified source changed.
 
+## Public website alignment
+
+The `main` branch owns the public GitHub Pages site. Its **Validate, build and deploy SkyMap Ontario 12** workflow imports these verified native and visual bundles, applies the separately verified product-site overlay, builds the APK, and publishes the landing page, web app, APK and checksum together.
+
+When the website is changed:
+
+- keep the product-site source in `.build/site12/` on `main`
+- validate the landing page and the reconstructed v12 web app in the same workflow
+- never restore a v4.x APK link or version label
+- never deploy the website independently from the matching web app and APK
+- treat a successful Pages deployment, not merely a successful commit, as completion
+
 ## Failure guide
 
 ### `Reconstruct verified SkyMap 10 native base`
@@ -104,3 +116,4 @@ A release is complete only after all of these pass:
 - package version verification
 - packaged radar and seven-day asset inspection
 - artifact upload
+- aligned GitHub Pages deployment
