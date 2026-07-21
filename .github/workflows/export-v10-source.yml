@@ -1,0 +1,38 @@
+name: Export reconstructed SkyMap source
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/export-v10-source.yml'
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Import verified native bundle
+        run: |
+          git fetch --no-tags --depth=1 origin skymap-8-predictive-map:refs/remotes/origin/skymap-8-predictive-map
+          git checkout refs/remotes/origin/skymap-8-predictive-map -- .build/skymap10
+      - name: Reconstruct verified SkyMap 10 native base
+        run: |
+          test "$(find .build/skymap10 -maxdepth 1 -type f -name 'part-*' | wc -l)" = "17"
+          cat .build/skymap10/part-* > /tmp/skymap10-source.tar.gz.b64
+          echo "2897fe53fd25647b55adf7dceffb9f7118939aab37331bde9442e332cc46fa0f  /tmp/skymap10-source.tar.gz.b64" | sha256sum -c -
+          base64 -d /tmp/skymap10-source.tar.gz.b64 > /tmp/skymap10-source.tar.gz
+          echo "fdaef2b84e05982338de4be4b45853ae1ab0a8f014c51e97b412f716745ee0cd  /tmp/skymap10-source.tar.gz" | sha256sum -c -
+          mkdir -p /tmp/reconstructed
+          tar -xzf /tmp/skymap10-source.tar.gz -C /tmp/reconstructed
+      - name: Package reconstructed source
+        run: tar -czf /tmp/SkyMap-v10-reconstructed-source.tar.gz -C /tmp/reconstructed .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SkyMap-v10-reconstructed-source
+          path: /tmp/SkyMap-v10-reconstructed-source.tar.gz
+          if-no-files-found: error
+          retention-days: 3
