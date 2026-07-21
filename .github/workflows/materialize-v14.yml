@@ -1,0 +1,59 @@
+name: Materialize canonical SkyMap 14 source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/materialize-v14.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: skymap-14-clarity-reset
+          fetch-depth: 0
+
+      - name: Verify transfer bundle
+        run: |
+          set -euo pipefail
+          test "$(find .build/skymap14-materialize -maxdepth 1 -type f -name 'chunk-*' | wc -l)" = "8"
+          cat .build/skymap14-materialize/chunk-* > /tmp/skymap14-canonical.tar.gz.b64
+          test "$(wc -c < /tmp/skymap14-canonical.tar.gz.b64)" = "47800"
+          echo "48a076d90d42c3e1c07f726cd88b5d8b073119d6097364bb1949ab4c5f638b4e  /tmp/skymap14-canonical.tar.gz.b64" | sha256sum -c -
+          base64 -d /tmp/skymap14-canonical.tar.gz.b64 > /tmp/skymap14-canonical.tar.gz
+          test "$(wc -c < /tmp/skymap14-canonical.tar.gz)" = "35849"
+          echo "d43cca399a0de09695c2eab440776ca71aeebd77f76ab087768bbaec46c163cb  /tmp/skymap14-canonical.tar.gz" | sha256sum -c -
+          tar -tzf /tmp/skymap14-canonical.tar.gz | grep -q '^version.json$'
+          tar -tzf /tmp/skymap14-canonical.tar.gz | grep -q '^app/app.js$'
+          tar -tzf /tmp/skymap14-canonical.tar.gz | grep -q '^assets/site.css$'
+          tar -tzf /tmp/skymap14-canonical.tar.gz | grep -q '^.github/workflows/deploy-pages.yml$'
+
+      - name: Replace stale product source
+        run: |
+          set -euo pipefail
+          rm -rf assets app scripts demo
+          rm -f version.json index.html privacy.html README.md BUILD_RECOVERY.md
+          find .github/workflows -maxdepth 1 -type f ! -name 'materialize-v14.yml' -delete
+          tar -xzf /tmp/skymap14-canonical.tar.gz -C .
+          node --check assets/site.js
+          node --check app/app.js
+          node --check scripts/prepare-release.mjs
+          node --check scripts/validate-release.mjs
+          node scripts/validate-release.mjs
+
+      - name: Commit readable canonical source
+        run: |
+          set -euo pipefail
+          rm -rf .build/skymap14-materialize
+          rm -f .github/workflows/materialize-v14.yml
+          git config user.name 'SkyMap Release Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git commit -m 'Rebuild SkyMap 14 as one aligned radar-first product'
+          git push origin HEAD:skymap-14-clarity-reset
