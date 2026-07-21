@@ -1,9 +1,8 @@
 name: Materialize canonical SkyMap 14 source
 
 on:
-  pull_request_target:
-    branches: [main]
-    types: [ready_for_review]
+  issue_comment:
+    types: [created]
   workflow_dispatch:
 
 permissions:
@@ -13,8 +12,9 @@ jobs:
   materialize:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event.pull_request.head.repo.full_name == github.repository &&
-       github.event.pull_request.head.ref == 'skymap-14-clarity-reset')
+      (github.event.issue.pull_request &&
+       github.event.issue.number == 7 &&
+       github.event.comment.body == '/materialize-skymap-14')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
