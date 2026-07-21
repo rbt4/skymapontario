@@ -57,3 +57,5 @@ jobs:
           git add -A
           git commit -m 'Rebuild SkyMap 14 as one aligned radar-first product'
           git push origin HEAD:skymap-14-clarity-reset
+
+# Retry marker: default-branch workflow is now registered.
