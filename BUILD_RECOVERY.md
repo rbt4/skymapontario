@@ -1,149 +1,106 @@
 # SkyMap Android build recovery
 
-SkyMap 11 has one canonical workflow: **Build SkyMap Ontario 11 Weather Theatre**.
+SkyMap 12 has one canonical workflow: **Build SkyMap Ontario 12 Radar and Forecast**.
 
-The old SkyMap pipeline is manual-only and must not be used for normal releases.
+The legacy workflow is manual-only and must not be used for normal releases.
 
 ## Architecture
 
-The release is assembled in two independently verified layers:
+The APK is assembled from two independently verified layers:
 
-1. **SkyMap 10 native base** — Android WebView asset loader, WorkManager, SQLite forecast memory, native bridge and local scoring engine.
-2. **SkyMap 11 Weather Theatre overlay** — radar movie, automatic weather-aware camera, weather paths, arrival windows, event scenes and cinematic interface.
+1. **SkyMap 10 native base** — Android WebView asset loader, WorkManager, SQLite forecast memory, native bridge and local model scoring.
+2. **SkyMap 12 radar and forecast overlay** — fixed radar/forecast layout, radar health feedback, observed-to-nowcast playback, important-change cards and seven-day forecast rail.
 
-This separation allows the complete visual experience to be replaced or rolled back without weakening the native intelligence engine.
+This keeps the working native intelligence engine separate from the replaceable visual experience.
 
-## First response to any failed build
+## First response to a failed build
 
-1. Open **Actions** in GitHub.
-2. Open the latest **Build SkyMap Ontario 11 Weather Theatre** run.
+1. Open **Actions**.
+2. Open the newest **Build SkyMap Ontario 12 Radar and Forecast** run.
 3. Open `build-android`.
-4. Find the **first red step**. Later failures are normally consequences of that first error.
-5. Fix only that stage. Do not repeatedly push unrelated edits.
-6. A cancelled run usually means a newer commit replaced it; inspect the newest run instead.
+4. Find the first red step. Later skipped steps are normally consequences.
+5. Fix only that stage. Do not make several unrelated commits.
+6. Ignore a cancelled run when a newer commit has replaced it.
 
-## Source integrity
+## Verified source bundles
 
 ### SkyMap 10 native base
 
 - directory: `.build/skymap10/`
 - files: `part-000` through `part-016`
-- file count: `17`
-- combined Base64 size: `29024` bytes
+- count: `17`
+- combined Base64 size: `29024`
 - Base64 SHA-256: `2897fe53fd25647b55adf7dceffb9f7118939aab37331bde9442e332cc46fa0f`
 - decoded archive SHA-256: `fdaef2b84e05982338de4be4b45853ae1ab0a8f014c51e97b412f716745ee0cd`
 
-### SkyMap 11 Weather Theatre overlay
+### SkyMap 12 radar and forecast overlay
 
-- directory: `.build/skymap11/`
-- files: `part-000` through `part-012`
-- file count: `13`
-- combined Base64 size: `28408` bytes
-- Base64 SHA-256: `90e44e7ca364a9cbffeba2cd9622767c9745a56503246121a1a0c660dba0ced2`
-- decoded archive SHA-256: `004a43651d9354b183a721a7ca7bc72132ab48b941a754a3c5bef0a3e574f0ff`
+- directory: `.build/skymap12/`
+- files: `chunk-00` through `chunk-03`
+- count: `4`
+- combined Base64 size: `26368`
+- Base64 SHA-256: `75922199700c5d252a01fce4cc9bebe326bf80e6fda069f53c9a3ff1cd20d790`
+- decoded archive SHA-256: `66e8caf57516aa3fc9113603c202e85c0efabd243b9a08fab3592a8dea660b99`
 
-Never change an expected size or hash merely to make a red check green. A mismatch means the source is no longer the verified bundle.
+Never change an expected size or hash merely to make a check pass. A mismatch means the verified source changed.
 
 ## Failure guide
 
-### `Reconstruct verified SkyMap 10 native base` fails
+### `Reconstruct verified SkyMap 10 native base`
 
-A native-base chunk is missing, duplicated, altered or out of order.
+A base chunk is missing, duplicated, renamed or altered. Restore only the incorrect chunk. Do not remove the native database, WorkManager or bridge to bypass the error.
 
-- Check the file count and names first.
-- Compare the named chunk with the known-good local source.
-- Replace only the incorrect chunk.
-- Do not remove WorkManager, SQLite, the bridge or the local model scoring to bypass the failure.
+### `Apply verified SkyMap 12 radar and forecast overlay`
 
-### `Apply verified SkyMap 11 Weather Theatre overlay` fails
+Check that `chunk-00` through `chunk-03` all exist. Compare the total size and SHA-256 with the values above. Replace only the incorrect chunk and rerun.
 
-The cinematic overlay is incomplete or altered.
+### `Validate radar and multi-day forecast experience`
 
-The step prints each chunk size plus the combined size and SHA-256. Use those diagnostics.
+The archive is intact, but a source or feature check failed.
 
-- If the file count is not 13, restore the missing or incorrectly named part.
-- If the total size is wrong, compare each part size with the original split bundle.
-- If size is correct but SHA-256 differs, one or more characters changed. Compare each Git blob SHA or local SHA-256 until the bad part is identified.
-- Replace only that part and rerun.
-- Never weaken the integrity checks.
+- `node --check`: repair the named JavaScript file, recreate the overlay archive and regenerate all four chunks.
+- Missing radar marker: confirm `RADAR_COVERAGE_RRAI`, `tileerror` and the official GetCapabilities request remain in `v12-radar.js`.
+- Missing forecast marker: confirm `buildDailyForecasts`, `7-DAY FORECAST` and the daily rail remain present.
+- Layout marker failure: confirm the fixed radar/forecast grid remains in `v12.css`.
+- Never patch the compiled APK or weaken a check just to obtain a green run.
 
-### `Validate radar-first Weather Theatre` fails
+### Android SDK setup
 
-The archives are intact, but syntax or a required experience marker failed.
+Use **Re-run failed jobs** once. This is usually a temporary GitHub runner or download problem. Do not change application code for an SDK outage.
 
-- `node --check`: repair the named JavaScript source locally, rebuild the overlay archive and regenerate all overlay chunks.
-- Missing `grep` marker: confirm whether the feature was accidentally removed or deliberately renamed.
-- Do not patch the compiled APK.
-- Do not remove a validation rule unless the architecture changed and an equally specific replacement check is added.
+### `Build APK through Gradle`
 
-### Android SDK setup fails
+Download **SkyMap-v12-Gradle-Diagnostic**. Read the first compiler or dependency error, not only the final Gradle summary. Fix the exact import, dependency, API or method-signature problem.
 
-This is normally a temporary runner or download problem.
-
-- Use **Re-run failed jobs** once.
-- If the same SDK package fails again, inspect the exact download error.
-- Do not change application code for an SDK outage.
-
-### `Build APK through Gradle` fails
-
-The workflow uploads **SkyMap-v11-Gradle-Diagnostic**.
-
-- Download that diagnostic artifact.
-- Read the first compiler or dependency error, not the final Gradle summary.
-- Typical causes are a missing import, invalid dependency version, method-signature mismatch or malformed Java.
-- Confirm `google()` and `mavenCentral()` remain configured.
-- Fix the actual error; do not remove core native features as a shortcut.
-
-### `Verify Android package and Weather Theatre` fails
+### `Verify Android package, radar and seven-day forecast`
 
 - `zipalign`: rebuild; do not manually repackage the APK.
-- `apksigner`: inspect the signing-key restoration and signing output.
-- version mismatch: confirm `versionCode 110` and `versionName 11.0-weather-theatre` are applied by the workflow.
-- asset marker failure: the APK contains stale assets or the overlay was not applied before compilation.
+- `apksigner`: inspect the signing-key restoration step.
+- version mismatch: confirm `versionCode 120` and `versionName 12.0-radar-forecast`.
+- asset failure: the compiled APK contains stale assets or the v12 overlay was not applied before compilation.
 
-### Artifact upload fails after verification succeeded
+### Artifact upload
 
-The APK may already be valid.
+When package verification succeeded but upload failed, rerun the failed job once. Do not rewrite the app for a temporary artifact-service failure.
 
-- Confirm `Prepare release` succeeded.
-- Re-run the failed job once.
-- Do not rewrite source because `upload-artifact` had a temporary failure.
+### GitHub `409`, SHA mismatch or branch conflict
 
-### GitHub file update returns `409`, `sha does not match`, or a branch conflict
+Fetch the file again and use its newest blob SHA. Never update the same path in parallel. Upload encoded chunks sequentially.
 
-- Fetch the file again.
-- Use its newest blob SHA for the next update.
-- Never update the same path in parallel.
-- Upload encoded chunks sequentially.
-- After a partial upload, list or fetch the expected parts before retrying.
+### Android installation conflict
 
-### Android says the app cannot be installed
-
-SkyMap uses the cached development signing key `skymap-ontario-debug-keystore-v1`.
-
-Do not remove that cache during ordinary troubleshooting. If the key is lost and Android sees a different signature, uninstall the older SkyMap installation once and install the new APK fresh. Uninstalling also removes the existing on-device forecast history.
-
-## Safe rollback
-
-1. Keep the latest successful APK and checksum.
-2. Identify the last successful workflow commit.
-3. To roll back only the experience, restore the last known-good `.build/skymap11/` overlay and workflow checks while leaving the v10 native base untouched.
-4. To roll back the native engine, restore the verified `.build/skymap10/` bundle as well.
-5. Run the canonical workflow.
-6. Never replace a known-good release artifact with an unverified APK.
+SkyMap normally reuses the cached signing identity `skymap-ontario-debug-keystore-v1`. If that key was lost, uninstall the previously installed SkyMap once and install the new APK fresh. Uninstalling removes the previous app's local forecast archive.
 
 ## Release rule
 
-A release is complete only after all of these succeed:
+A release is complete only after all of these pass:
 
-- native-base size and hashes
-- Weather Theatre overlay size and hashes
+- native-base hashes
+- v12 overlay hashes
 - JavaScript syntax and feature checks
 - Android compilation
 - ZIP alignment
 - APK signature verification
 - package version verification
-- packaged asset inspection
+- packaged radar and seven-day asset inspection
 - artifact upload
-
-A green status without the named APK artifact is not a completed release.
