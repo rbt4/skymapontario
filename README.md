@@ -1,69 +1,64 @@
-# SkyMap Ontario 4.4
+# SkyMap Ontario 12
 
-**Plain-English Ontario rain nowcasts, smoke forecasts, local weather, air quality, reported active fires and weather alerts in one focused map.**
+**Weather, moving toward you.**
 
-SkyMap Ontario is an independent, responsive public-data app for a quick province-wide check or a closer look at a specific community. It runs as a website, installable browser app and Android APK without requiring an account.
+SkyMap Ontario is a radar-first weather experience for Ontario. It connects recent observed radar, short-range radar extrapolation, Canadian high-resolution guidance, meaningful weather snapshots and a visible multi-day outlook in one moving timeline.
 
 ## Open SkyMap
 
 - Product website: `https://rbt4.github.io/skymapontario/`
-- Full-screen live map: `https://rbt4.github.io/skymapontario/app/`
-- Dedicated interactive demo: `https://rbt4.github.io/skymapontario/demo/`
-- Android APK: `https://rbt4.github.io/skymapontario/download/SkyMap-Ontario-v4.4.apk`
+- Full-screen web app: `https://rbt4.github.io/skymapontario/app/`
+- Android APK: `https://rbt4.github.io/skymapontario/download/SkyMap-Ontario-v12.0-Radar-Forecast.apk`
+- APK checksum: `https://rbt4.github.io/skymapontario/download/SkyMap-Ontario-v12.0-Radar-Forecast.apk.sha256`
 - Optional support: `https://ko-fi.com/rbt4dev`
 
-## Live views
+## What makes it different
 
-- Recent Environment Canada radar observations joined to a one-hour radar nowcast
-- Exact rain and modelled wildfire-smoke values at the map centre
-- Nearby official current conditions and hourly temperature, precipitation chance and wind
-- Plain-English explanation cards for every selected radar or smoke time
-- Observed AQHI station markers and nearest-station risk
-- NRCan reported Ontario active fires with fire ID, size and stage of control
-- Environment Canada weather-alert polygons and summaries
-- Sixteen Ontario city and regional presets
+- **Radar is the opening experience.** Recent observed frames flow into the immediate nowcast instead of being buried as a secondary layer.
+- **The visual language changes with forecast distance.** Radar detail stays sharp near the present; model fields become smoother; longer-range guidance becomes scenarios and probability.
+- **Snapshots focus on meaningful changes.** Rain onset, peak, clearing, freezing transitions, strongest wind and useful dry windows are surfaced before repetitive hourly icons.
+- **The seven-day forecast remains visible.** Event snapshots add context without replacing the dependable daily outlook.
+- **The Android app remembers locally.** Forecasts and later observations can be stored privately on the phone to support local model scoring and forecast-change comparisons.
+- **Source hierarchy is explicit.** ECCC observations and Canadian guidance lead the near term, while global and ensemble models add longer-range diversity.
 
-## What changed in 4.4
+## Source hierarchy
 
-- Added ECCC's short-range radar extrapolation as clearly labelled `NEXT` frames after observed `PAST` radar
-- Added ECCC City Page Weather for nearby current conditions, 24-hour forecasts, precipitation chance and wind
-- Added WMS point-value queries so each selected time reports the rain rate or modelled wildfire PM₂.₅ under the map centre
-- Added a responsive local-picture card with plain-English context on desktop, mobile and Android
-- Replaced rapid looping animation with slower crossfaded playback that runs once and stops on the final frame
-- Kept observed AQHI beside modelled smoke so a forecast concentration is never presented as a health-risk observation
-- Replaced anonymous thermal-hotspot noise with NRCan's current agency-reported active-fire service
-- Extended live integration checks to radar nowcasts, point-value queries and local city forecasts
+| Horizon | Primary role |
+|---|---|
+| Now | ECCC radar and observations |
+| 0–2 hours | Radar extrapolation / immediate nowcast |
+| 2–48 hours | HRDPS and Canadian high-resolution guidance |
+| 3–10 days | GDPS, ECMWF and ensemble blending |
+| 10+ days | Ensemble scenarios and broad patterns only |
 
-## Build the Android APK
+SkyMap is independent and is not affiliated with or endorsed by the Government of Ontario or the Government of Canada.
 
-The repository includes the Gradle wrapper and all required Android project files.
+## Build and deployment
+
+The `main` branch owns the public website and GitHub Pages deployment. Its workflow imports the verified SkyMap 10 native bundle and SkyMap 12 visual/forecast overlay from the `skymap-8-predictive-map` branch, validates both, builds the APK and publishes the website, web app, APK and checksum together.
+
+The Android APK can also be built locally after reconstructing the verified source bundles:
 
 ```bash
 ./gradlew :android-app:assembleDebug
 ```
 
-The APK is produced at `android/app/build/outputs/apk/debug/android-app-debug.apk`. GitHub Actions publishes the named `SkyMap-Ontario-v4.4.apk` artifact and copies it to the website download path after validation succeeds.
+The APK is produced at:
 
-## Validate the public feeds
-
-```bash
-node scripts/check-live-feeds.mjs
+```text
+android/app/build/outputs/apk/debug/android-app-debug.apk
 ```
 
-The check verifies browser CORS access, observed and next-hour radar timestamps, WMS point values, local city weather, usable WMS images, AQHI observations, Ontario alert GeoJSON and the NRCan active-fire FeatureCollection.
+## Project structure
 
-## Repository structure
+- `index.html` and `assets/` — public product website
+- `app/` — reconstructed SkyMap 12 web app during CI
+- `android/` — native Android shell and local intelligence engine
+- `.build/skymap10/` — verified native/source bundle
+- `.build/skymap12/` — verified radar-and-forecast overlay
+- `.github/workflows/deploy-pages.yml` — aligned website, web app and APK deployment
+- `BUILD_RECOVERY.md` — build failure and rollback instructions
 
-- `index.html` and `assets/` — product website
-- `demo/` — dedicated interactive browser demo
-- `app/` — responsive PWA and bundled map engine
-- `android/` — reusable native Android WebView shell
-- `gradle/`, `gradlew`, `gradlew.bat` — repeatable Gradle wrapper
-- `scripts/check-live-feeds.mjs` — live integration checks
-- `.github/workflows/deploy-pages.yml` — validation, Android build and Pages deployment
+## Data and safety
 
-## Data and independence
-
-SkyMap Ontario uses publicly available data from Environment and Climate Change Canada and Natural Resources Canada. It is independent and is not affiliated with or endorsed by the Government of Ontario or the Government of Canada.
-
-Data can be delayed, preliminary or unavailable. Reported fire points are not fire boundaries. Always follow official emergency instructions.
+Weather data may be delayed, preliminary or unavailable. SkyMap does not replace official alerts, emergency instructions or professional meteorological guidance. During severe weather, follow official government and emergency-management sources.
