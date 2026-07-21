@@ -1,10 +1,10 @@
 {
   "version": "4.4",
-  "commit": "8c1dc66ca23d021443128de7db44127e2d7146bd",
-  "runId": 29614494668,
+  "commit": "6fce3b8437951c64d4ffeb9d73f516ae2a75e2b7",
+  "runId": 29799154293,
   "runAttempt": "1",
   "artifact": "SkyMap-Ontario-v4.4",
   "apk": "https://rbt4.github.io/skymapontario/download/SkyMap-Ontario-v4.4.apk",
   "page": "https://rbt4.github.io/skymapontario/",
-  "completedAt": "2026-07-17T21:24:15.810Z"
+  "completedAt": "2026-07-21T03:42:14.972Z"
 }
