@@ -5,6 +5,9 @@ on:
     branches: [skymap-8-predictive-map]
     paths:
       - '.github/workflows/export-v10-source.yml'
+  pull_request:
+    paths:
+      - '.github/workflows/export-v10-source.yml'
   workflow_dispatch:
 
 jobs:
