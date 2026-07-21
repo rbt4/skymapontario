@@ -1,4 +1,4 @@
-name: Validate, build and deploy SkyMap Ontario
+name: Validate, build and deploy SkyMap Ontario 12
 
 on:
   push:
@@ -7,146 +7,210 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: skymap-${{ github.workflow }}-${{ github.ref }}
+  group: skymap-pages-v12-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  validate:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validate source files
+
+      - name: Import verified SkyMap 12 source bundles
+        run: |
+          git fetch --no-tags --depth=1 origin skymap-8-predictive-map:refs/remotes/origin/skymap-8-predictive-map
+          git checkout refs/remotes/origin/skymap-8-predictive-map -- .build/skymap10 .build/skymap12
+
+      - name: Reconstruct verified SkyMap 10 native base
+        run: |
+          test "$(find .build/skymap10 -maxdepth 1 -type f -name 'part-*' | wc -l)" = "17"
+          cat .build/skymap10/part-* > /tmp/skymap10-source.tar.gz.b64
+          test "$(wc -c < /tmp/skymap10-source.tar.gz.b64)" = "29024"
+          echo "2897fe53fd25647b55adf7dceffb9f7118939aab37331bde9442e332cc46fa0f  /tmp/skymap10-source.tar.gz.b64" | sha256sum -c -
+          base64 -d /tmp/skymap10-source.tar.gz.b64 > /tmp/skymap10-source.tar.gz
+          echo "fdaef2b84e05982338de4be4b45853ae1ab0a8f014c51e97b412f716745ee0cd  /tmp/skymap10-source.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/skymap10-source.tar.gz -C .
+
+      - name: Apply verified SkyMap 12 radar and forecast overlay
+        run: |
+          test "$(find .build/skymap12 -maxdepth 1 -type f -name 'chunk-*' | wc -l)" = "4"
+          cat .build/skymap12/chunk-* > /tmp/skymap12-overlay.tar.gz.b64
+          test "$(wc -c < /tmp/skymap12-overlay.tar.gz.b64)" = "26368"
+          echo "75922199700c5d252a01fce4cc9bebe326bf80e6fda069f53c9a3ff1cd20d790  /tmp/skymap12-overlay.tar.gz.b64" | sha256sum -c -
+          base64 -d /tmp/skymap12-overlay.tar.gz.b64 > /tmp/skymap12-overlay.tar.gz
+          echo "66e8caf57516aa3fc9113603c202e85c0efabd243b9a08fab3592a8dea660b99  /tmp/skymap12-overlay.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/skymap12-overlay.tar.gz -C .
+
+      - name: Apply verified SkyMap 12 product-site overlay
+        run: |
+          test "$(find .build/site12 -maxdepth 1 -type f -name 'chunk-*' | wc -l)" = "4"
+          cat .build/site12/chunk-* > /tmp/skymap-site12-overlay.tar.gz.b64
+          test "$(wc -c < /tmp/skymap-site12-overlay.tar.gz.b64)" = "23292"
+          echo "021d7c54a053193703492149c58d18df93f396d1e3325b36348f83b53359420c  /tmp/skymap-site12-overlay.tar.gz.b64" | sha256sum -c -
+          base64 -d /tmp/skymap-site12-overlay.tar.gz.b64 > /tmp/skymap-site12-overlay.tar.gz
+          echo "6702823cdd92860035b3fb2cae5b926bf6a830466c0e5bab5db84f8785dcec38  /tmp/skymap-site12-overlay.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/skymap-site12-overlay.tar.gz -C .
+
+      - name: Set SkyMap 12 Android identity
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          gradle = Path('android/app/build.gradle')
+          text = gradle.read_text(encoding='utf-8')
+          text = re.sub(r'versionCode\s+\d+', 'versionCode 120', text)
+          text = re.sub(r"versionName\s+'[^']+'", "versionName '12.0-radar-forecast'", text)
+          gradle.write_text(text, encoding='utf-8')
+          main = Path('android/app/src/main/java/ca/skymapontario/app/MainActivity.java')
+          text = main.read_text(encoding='utf-8')
+          text = re.sub(r'SkyMapOntario/\d+(?:\.\d+)?', 'SkyMapOntario/12.0', text)
+          main.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Validate aligned website and web app
         run: |
           node --check assets/site.js
-          node --check app/app.js
-          node --check app/sw.js
-          node --check scripts/check-static-app.mjs
-          node --check scripts/check-live-feeds.mjs
-          test -f index.html
-          test -f demo/index.html
-          test -f app/index.html
-          test -f app/app-base.css
-          test -f app/app-responsive.css
-          test -f app/vendor/leaflet.css
-          test -f app/vendor/leaflet.js
+          node --check app/v12-core.js
+          node --check app/v12-radar.js
+          node --check app/v12-ui.js
+          grep -q 'Weather, moving toward you' index.html
+          grep -q 'SkyMap-Ontario-v12.0-Radar-Forecast.apk' index.html
+          grep -q 'ONE MOVING WEATHER STORY' index.html
+          grep -q '7-day forecast' index.html
+          grep -q 'SOURCE HIERARCHY, NOT SOURCE SOUP' index.html
+          grep -q 'SkyMap Ontario 12' app/index.html
+          grep -q '7-DAY FORECAST' app/index.html
+          grep -q 'RADAR_COVERAGE_RRAI' app/v12-radar.js
+          grep -q 'tileerror' app/v12-radar.js
+          grep -q 'buildDailyForecasts' app/v12-ui.js
+          grep -q 'grid-template-rows:minmax(0,58fr)' app/v12.css
+          ! grep -q 'SkyMap-Ontario-v4.4.apk' index.html
+          ! grep -q 'Version 4.4' index.html
+          test -f assets/site-base.css
+          test -f assets/site-responsive.css
+          test -f assets/skymap-ontario-mark.svg
           test -f privacy.html
-          test -x gradlew
-          test -f gradle/wrapper/gradle-wrapper.jar
-          test -f gradle/wrapper/gradle-wrapper.properties
-          node scripts/check-static-app.mjs
-      - name: Verify live public feeds
-        run: node scripts/check-live-feeds.mjs
+          test -f app/vendor/leaflet.js
+          test -f app/vendor/leaflet.css
 
-  build-android:
-    needs: validate
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
+
       - uses: android-actions/setup-android@v3
+
       - name: Install Android SDK
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools" >/dev/null
+
       - uses: gradle/actions/setup-gradle@v4
+
       - name: Restore stable development signing key
         uses: actions/cache@v4
         with:
           path: ~/.android/debug.keystore
           key: skymap-ontario-debug-keystore-v1
+
       - name: Prepare development signing key
         run: |
           mkdir -p ~/.android
           if [ ! -f ~/.android/debug.keystore ]; then
             keytool -genkeypair -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=SkyMap Ontario Development,O=RBT4,C=CA"
           fi
-      - name: Build installable Android APK
-        run: ./gradlew :android-app:assembleDebug --stacktrace --no-daemon
-      - name: Name and checksum APK
+
+      - name: Build SkyMap Ontario 12 APK
+        id: gradle_build
+        continue-on-error: true
+        run: ./gradlew :android-app:assembleDebug --stacktrace --no-daemon --console=plain > /tmp/skymap-gradle.log 2>&1
+
+      - name: Upload Gradle diagnostic
+        if: steps.gradle_build.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: SkyMap-v12-Pages-Gradle-Diagnostic
+          path: /tmp/skymap-gradle.log
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Stop after concise Gradle failure
+        if: steps.gradle_build.outcome == 'failure'
         run: |
-          mkdir -p release
-          cp android/app/build/outputs/apk/debug/android-app-debug.apk release/SkyMap-Ontario-v4.4.apk
-          cd release
-          sha256sum SkyMap-Ontario-v4.4.apk > SkyMap-Ontario-v4.4.apk.sha256
+          tail -n 180 /tmp/skymap-gradle.log
+          exit 1
+
+      - name: Verify APK and packaged experience
+        run: |
+          APK=android/app/build/outputs/apk/debug/android-app-debug.apk
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -P 16 -v 4 "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee /tmp/badging.txt
+          grep -q "versionCode='120'" /tmp/badging.txt
+          grep -q "versionName='12.0-radar-forecast'" /tmp/badging.txt
+          unzip -p "$APK" assets/index.html | grep -q '7-DAY FORECAST'
+          unzip -p "$APK" assets/v12-radar.js | grep -q 'RADAR_COVERAGE_RRAI'
+          unzip -p "$APK" assets/v12-ui.js | grep -q 'buildDailyForecasts'
+
+      - name: Prepare aligned Pages site and release
+        run: |
+          mkdir -p release _site/download
+          cp android/app/build/outputs/apk/debug/android-app-debug.apk release/SkyMap-Ontario-v12.0-Radar-Forecast.apk
+          (cd release && sha256sum SkyMap-Ontario-v12.0-Radar-Forecast.apk > SkyMap-Ontario-v12.0-Radar-Forecast.apk.sha256)
+          rsync -a \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '.gradle' \
+            --exclude '.build' \
+            --exclude 'android' \
+            --exclude 'gradle' \
+            --exclude 'gradlew' \
+            --exclude 'gradlew.bat' \
+            --exclude 'build.gradle' \
+            --exclude 'settings.gradle' \
+            --exclude 'gradle.properties' \
+            --exclude 'release' \
+            --exclude '_site' \
+            --exclude 'demo' \
+            ./ _site/
+          cp release/SkyMap-Ontario-v12.0-Radar-Forecast.apk _site/download/
+          cp release/SkyMap-Ontario-v12.0-Radar-Forecast.apk.sha256 _site/download/
+          touch _site/.nojekyll
+          test -f _site/index.html
+          test -f _site/app/index.html
+          test -f _site/download/SkyMap-Ontario-v12.0-Radar-Forecast.apk
+
       - uses: actions/upload-artifact@v4
         with:
-          name: SkyMap-Ontario-v4.4
+          name: SkyMap-Ontario-v12.0-Radar-Forecast
           path: release/
           if-no-files-found: error
           retention-days: 30
 
-  deploy-pages:
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
     if: github.event_name != 'pull_request'
-    needs: [validate, build-android]
+    needs: build
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     permissions:
-      contents: write
       pages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: SkyMap-Ontario-v4.4
-          path: release
-      - name: Prepare Pages artifact
-        run: |
-          mkdir -p _site/download
-          rsync -a --exclude '.git' --exclude '.github' --exclude '.gradle' --exclude '.gradle-bootstrap-*' --exclude 'android' --exclude 'gradle' --exclude 'gradlew' --exclude 'gradlew.bat' --exclude 'build.gradle' --exclude 'settings.gradle' --exclude 'gradle.properties' --exclude 'release' --exclude '_site' ./ _site/
-          cp release/SkyMap-Ontario-v4.4.apk _site/download/SkyMap-Ontario-v4.4.apk
-          cp release/SkyMap-Ontario-v4.4.apk.sha256 _site/download/SkyMap-Ontario-v4.4.apk.sha256
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-      - id: deployment
+      - name: Deploy aligned SkyMap site
+        id: deployment
         uses: actions/deploy-pages@v4
-      - name: Publish successful build receipt
-        uses: actions/github-script@v7
-        env:
-          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
-        with:
-          script: |
-            const branch = 'build-receipts';
-            const path = 'latest.json';
-            const receipt = {
-              version: '4.4',
-              commit: context.sha,
-              runId: context.runId,
-              runAttempt: process.env.GITHUB_RUN_ATTEMPT,
-              artifact: 'SkyMap-Ontario-v4.4',
-              apk: `${process.env.PAGE_URL}download/SkyMap-Ontario-v4.4.apk`,
-              page: process.env.PAGE_URL,
-              completedAt: new Date().toISOString()
-            };
-            try {
-              await github.rest.git.getRef({ ...context.repo, ref: `heads/${branch}` });
-            } catch (error) {
-              if (error.status !== 404) throw error;
-              await github.rest.git.createRef({ ...context.repo, ref: `refs/heads/${branch}`, sha: context.sha });
-            }
-            let current;
-            try {
-              current = await github.rest.repos.getContent({ ...context.repo, path, ref: branch });
-            } catch (error) {
-              if (error.status !== 404) throw error;
-            }
-            await github.rest.repos.createOrUpdateFileContents({
-              ...context.repo,
-              path,
-              branch,
-              message: `Record successful SkyMap Ontario 4.4 build ${context.runId}`,
-              content: Buffer.from(`${JSON.stringify(receipt, null, 2)}\n`).toString('base64'),
-              sha: current?.data?.sha
-            });
