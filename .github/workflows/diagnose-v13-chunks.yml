@@ -9,7 +9,14 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - name: Print chunk fingerprints
+      - name: Write chunk fingerprints
         run: |
-          find .build/skymap13 -maxdepth 1 -type f -name 'chunk-*' -printf '%f %s bytes\n' | sort
-          sha256sum .build/skymap13/chunk-* | sort -k2
+          mkdir -p /tmp/chunk-diagnostics
+          find .build/skymap13 -maxdepth 1 -type f -name 'chunk-*' -printf '%f %s bytes\n' | sort > /tmp/chunk-diagnostics/fingerprints.txt
+          sha256sum .build/skymap13/chunk-* | sort -k2 >> /tmp/chunk-diagnostics/fingerprints.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SkyMap-v13-chunk-diagnostics
+          path: /tmp/chunk-diagnostics/fingerprints.txt
+          if-no-files-found: error
+          retention-days: 1
