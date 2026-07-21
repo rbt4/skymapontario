@@ -1,0 +1,57 @@
+name: Diagnose SkyMap 13 APK
+on:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Import native bundle
+        run: |
+          git fetch --no-tags --depth=1 origin skymap-8-predictive-map:refs/remotes/origin/skymap-8-predictive-map
+          git checkout refs/remotes/origin/skymap-8-predictive-map -- .build/skymap10
+      - name: Reconstruct source
+        run: |
+          cat .build/skymap10/part-* > /tmp/base.b64
+          echo "2897fe53fd25647b55adf7dceffb9f7118939aab37331bde9442e332cc46fa0f  /tmp/base.b64" | sha256sum -c -
+          base64 -d /tmp/base.b64 | tar -xz -C .
+          cat .build/skymap13/chunk-* > /tmp/v13.b64
+          echo "7b58b3275123c37b1b33a401a97b373a8ba58dc10bb069e8cc9b97d05e825156  /tmp/v13.b64" | sha256sum -c -
+          base64 -d /tmp/v13.b64 | tar -xz -C .
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('android/app/build.gradle')
+          t=p.read_text()
+          t=re.sub(r'versionCode\s+\d+','versionCode 130',t)
+          t=re.sub(r"versionName\s+'[^']+'","versionName '13.0-radar-recovery'",t)
+          p.write_text(t)
+          PY
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools" >/dev/null
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew :android-app:assembleDebug --no-daemon --console=plain
+      - name: Create package report
+        run: |
+          APK=android/app/build/outputs/apk/debug/android-app-debug.apk
+          mkdir -p /tmp/apk-diagnostic
+          cp "$APK" /tmp/apk-diagnostic/SkyMap-v13-debug.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" > /tmp/apk-diagnostic/badging.txt
+          unzip -l "$APK" > /tmp/apk-diagnostic/entries.txt
+          for dex in $(zipinfo -1 "$APK" | grep '^classes.*\.dex$'); do unzip -p "$APK" "$dex" | strings | grep -E 'GeoMetProxy|geomet-proxy' >> /tmp/apk-diagnostic/dex-markers.txt || true; done
+          for file in assets/index.html assets/v13-radar.js assets/v13-ui.js; do echo "--- $file" >> /tmp/apk-diagnostic/asset-markers.txt; unzip -p "$APK" "$file" | grep -E 'WHAT MATTERS NEXT|7-DAY FORECAST|L.imageOverlay|RADAR_COVERAGE_RRAI.INV|buildDailyForecasts' >> /tmp/apk-diagnostic/asset-markers.txt || true; done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SkyMap-v13-APK-Diagnostic
+          path: /tmp/apk-diagnostic/
+          if-no-files-found: error
+          retention-days: 1
