@@ -1,10 +1,10 @@
 {
-  "version": "12.0-radar-forecast",
-  "commit": "b20b9cd69a0c691db1e369aafe3e18c4d8d2f494",
-  "runId": 29800109334,
+  "version": "13.0-radar-recovery",
+  "commit": "52efefaf2066c84172294d16aa410a672350621a",
+  "runId": 29828690581,
   "runAttempt": 1,
-  "artifact": "SkyMap-Ontario-v12.0-Radar-Forecast",
-  "apk": "https://rbt4.github.io/skymapontario/download/SkyMap-Ontario-v12.0-Radar-Forecast.apk",
+  "artifact": "SkyMap-Ontario-v13.0-Radar-Recovery",
+  "apk": "https://rbt4.github.io/skymapontario/download/SkyMap-Ontario-v13.0-Radar-Recovery.apk",
   "page": "https://rbt4.github.io/skymapontario/",
-  "completedAt": "2026-07-21T04:03:37Z"
+  "completedAt": "2026-07-21T12:07:03.930Z"
 }
