@@ -1,10 +1,10 @@
 {
   "version": "13.0-radar-recovery",
-  "commit": "4f9a9d035989286bec437897055cad2fddf39bf7",
-  "runId": 29845082870,
+  "commit": "566619a23f912f45013b3e86e86362630fba5d26",
+  "runId": 29846207593,
   "runAttempt": 1,
   "artifact": "SkyMap-Ontario-v13.0-Radar-Recovery",
   "apk": "https://rbt4.github.io/skymapontario/download/SkyMap-Ontario-v13.0-Radar-Recovery.apk",
   "page": "https://rbt4.github.io/skymapontario/",
-  "completedAt": "2026-07-21T15:42:02.517Z"
+  "completedAt": "2026-07-21T15:56:45.562Z"
 }
