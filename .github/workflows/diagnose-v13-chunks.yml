@@ -1,0 +1,15 @@
+name: Diagnose SkyMap 13 chunks
+on:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print chunk fingerprints
+        run: |
+          find .build/skymap13 -maxdepth 1 -type f -name 'chunk-*' -printf '%f %s bytes\n' | sort
+          sha256sum .build/skymap13/chunk-* | sort -k2
