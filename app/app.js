@@ -39,7 +39,7 @@
   };
 
   const state = {
-    version: '14.1.0',
+    version: '14.1.1',
     place: loadPlace(),
     mode: 'rain',
     map: null,
@@ -229,18 +229,24 @@
     return ((Number(match[1]) || 0) * 1440) + ((Number(match[2]) || 0) * 60) + (Number(match[3]) || 0);
   }
 
+  function formatWmsTime(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    return Number.isFinite(date.getTime()) ? date.toISOString().replace(/\.\d{3}Z$/, 'Z') : String(value);
+  }
+
   function expandDimension(value) {
     const content = (value || '').trim();
     if (!content) return [];
-    if (content.includes(',')) return content.split(',').map(item => item.trim()).filter(Boolean);
-    if (!content.includes('/')) return [content];
+    if (content.includes(',')) return content.split(',').map(item => formatWmsTime(item.trim())).filter(Boolean);
+    if (!content.includes('/')) return [formatWmsTime(content)];
     const [startValue, endValue, period] = content.split('/');
     const start = new Date(startValue).getTime();
     const end = new Date(endValue).getTime();
     const step = parseDuration(period) * 60000;
     if (!Number.isFinite(start) || !Number.isFinite(end) || !step) return [];
     const output = [];
-    for (let time = start; time <= end && output.length < 1400; time += step) output.push(new Date(time).toISOString());
+    for (let time = start; time <= end && output.length < 1400; time += step) output.push(formatWmsTime(time));
     return output;
   }
 
@@ -314,8 +320,8 @@
       BBOX: `${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()}`,
       WIDTH: size.width, HEIGHT: size.height, FORMAT: 'image/png', TRANSPARENT: 'TRUE', _: Date.now()
     });
-    if (!latest && frame.time) query.set('TIME', frame.time);
-    if (!latest && frame.referenceTime) query.set('DIM_REFERENCE_TIME', frame.referenceTime);
+    if (!latest && frame.time) query.set('TIME', formatWmsTime(frame.time));
+    if (!latest && frame.referenceTime) query.set('DIM_REFERENCE_TIME', formatWmsTime(frame.referenceTime));
     return `${endpoint}?${query}`;
   }
 
@@ -997,10 +1003,10 @@
   }
 
   async function featureInfo(frame) {
-    if (!frame?.time) return null;
+    if (!frame?.time) return undefined;
     const p = state.place;
     const delta = .04;
-    const query = new URLSearchParams({ SERVICE: 'WMS', VERSION: '1.1.1', REQUEST: 'GetFeatureInfo', SRS: 'EPSG:4326', BBOX: `${p.lon - delta},${p.lat - delta},${p.lon + delta},${p.lat + delta}`, WIDTH: '20', HEIGHT: '20', X: '10', Y: '10', LAYERS: frame.layer, QUERY_LAYERS: frame.layer, INFO_FORMAT: 'application/json', FORMAT: 'image/png', TIME: frame.time });
+    const query = new URLSearchParams({ SERVICE: 'WMS', VERSION: '1.1.1', REQUEST: 'GetFeatureInfo', SRS: 'EPSG:4326', BBOX: `${p.lon - delta},${p.lat - delta},${p.lon + delta},${p.lat + delta}`, WIDTH: '20', HEIGHT: '20', X: '10', Y: '10', LAYERS: frame.layer, QUERY_LAYERS: frame.layer, INFO_FORMAT: 'application/json', FORMAT: 'image/png', TIME: formatWmsTime(frame.time) });
     if (frame.style) query.set('STYLES', frame.style);
     if (frame.referenceTime) query.set('DIM_REFERENCE_TIME', frame.referenceTime);
     for (const endpoint of geometEndpoints()) {
@@ -1012,16 +1018,18 @@
         return direct ?? numericFrom(data);
       } catch (_) { }
     }
-    return null;
+    return undefined;
   }
 
   function frameKey(frame) {
     return `${frame?.layer || ''}|${frame?.time || 'latest'}|${frame?.referenceTime || ''}`;
   }
 
-  function rainDescription(value, future) {
+  function rainDescription(value, future, pending = false) {
     const verb = future ? 'The official nowcast projects' : 'Observed radar detected';
-    if (value === null) return ['Reading this exact point…', 'The radar image loaded; its local rain rate is still resolving.'];
+    if (pending) return ['Reading this exact point…', 'The radar image loaded; its local rain rate is still resolving.'];
+    if (value === undefined) return ['Exact rain rate is unavailable.', 'The radar image is live, but the official point query did not return a usable value for this frame.'];
+    if (value === null) return ['No radar return at this point.', `${verb} no measurable return at the selected location for this frame.`];
     if (value < .05) return [future ? 'No measurable rain is projected here.' : 'No measurable rain is over this point.', `${verb} no measurable rain at the selected location for this frame.`];
     if (value < .5) return ['A trace of rain is over this point.', `${verb} spotty or very light rain at the selected location.`];
     if (value < 2.5) return ['Light rain is over this point.', `${verb} light rain at the selected location.`];
@@ -1039,7 +1047,8 @@
     const blend = blendedAt(target);
     facts.hidden = false;
     text('#story-value-label', frame?.kind === 'nowcast' ? 'NOWCAST AT THIS POINT' : 'OBSERVED AT THIS POINT');
-    text('#story-value', value === null ? 'Rate still resolving' : `${value < .05 ? '0' : value.toFixed(value < 10 ? 1 : 0)} mm/h`);
+    const pending = state.frameValue?.pending;
+    text('#story-value', pending ? 'Rate still resolving' : value === undefined ? 'Point value unavailable' : value === null ? 'No radar return' : `${value < .05 ? '0' : value.toFixed(value < 10 ? 1 : 0)} mm/h`);
     text('#story-official', officialWeatherLabel(official));
     text('#story-guidance', guidanceLabel(blend));
   }
@@ -1057,7 +1066,7 @@
     state.frameValue = { key, value: null, pending: true };
     renderStoryFacts(frame, null);
     updateStory();
-    const value = await featureInfo(frame).catch(() => null);
+    const value = await featureInfo(frame).catch(() => undefined);
     if (token !== state.frameExplanationToken || key !== frameKey(state.frames[state.frameIndex])) return;
     state.frameValue = { key, value, pending: false };
     renderStoryFacts(frame, value);
@@ -1108,8 +1117,8 @@
     }
     if (state.frameValue?.key === frameKey(frame)) {
       const future = frame?.kind === 'nowcast';
-      const [headline, copy] = rainDescription(state.frameValue.value, future);
-      if (!future && state.frameValue.value !== null && state.frameValue.value < .05 && state.arrival?.state === 'approaching') {
+      const [headline, copy] = rainDescription(state.frameValue.value, future, state.frameValue.pending);
+      if (!state.frameValue.pending && !future && Number.isFinite(state.frameValue.value) && state.frameValue.value < .05 && state.arrival?.state === 'approaching') {
         text('#story-title', `Dry at this point now. Rain may arrive ${state.arrival.label}.`);
         text('#story-copy', `Observed radar is dry here in this frame; the short-range nowcast reaches the point later. ${state.arrival.detail}`);
       } else {
