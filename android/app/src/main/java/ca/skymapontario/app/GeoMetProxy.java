@@ -39,7 +39,7 @@ final class GeoMetProxy {
             connection.setInstanceFollowRedirects(true);
             connection.setUseCaches(true);
             connection.setRequestProperty("Accept", "image/png,application/json,application/xml,text/xml,*/*;q=0.8");
-            connection.setRequestProperty("User-Agent", "SkyMapOntario/14.1.1 Android GeoMet Relay");
+            connection.setRequestProperty("User-Agent", "SkyMapOntario/14.1.2 Android GeoMet Relay");
             connection.connect();
 
             int status = connection.getResponseCode();
