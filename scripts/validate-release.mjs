@@ -18,6 +18,7 @@ const assert = (condition, message) => { if (!condition) throw new Error(message
 assert(/^\d+\.\d+\.\d+$/.test(version.version), 'Version must use semantic versioning');
 assert(Number.isInteger(version.versionCode), 'versionCode must be an integer');
 assert(appVersion.version === version.version && appVersion.versionCode === version.versionCode, 'Web app version is not aligned');
+assert(appJs.includes(`version: '${version.version}'`), 'Web app fallback version is not aligned');
 assert(site.includes('Weather,<br><em>moving toward you.</em>'), 'Radar-first hero is missing');
 assert(!site.includes('<iframe'), 'Landing page must not embed the full app');
 assert((site.match(/ko-fi\.com\/rbt4dev/g) || []).length >= 3, 'Ko-fi support must remain visible');
@@ -40,6 +41,9 @@ assert(appJs.includes('citypageweather-realtime'), 'Official ECCC city forecast 
 assert(appJs.includes("timeformat: 'unixtime'"), 'Timezone-safe model timestamps are missing');
 assert(appJs.includes('modelDate(data, value)'), 'UNIX forecast timestamp parsing is missing');
 assert(appJs.includes('updateFrameExplanation'), 'Per-frame radar explanation is missing');
+assert(appJs.includes('function formatWmsTime'), 'Whole-second WMS timestamp formatting is missing');
+assert(appJs.includes("replace(/\\.\\d{3}Z$/, 'Z')"), 'WMS timestamps may still include unsupported milliseconds');
+assert(appJs.includes('Point value unavailable'), 'Failed point queries are not distinguished from zero rain');
 assert(appJs.includes('function frameStamp'), 'Selected radar date-and-time label is missing');
 assert(appJs.includes('crossingNow ? 1650 : 1100'), 'Calm one-pass radar timing is missing');
 assert(appJs.includes('RAQDPS.Sfc_PM2.5-WildfireSmokePlume'), 'Wildfire-specific smoke guidance is missing');

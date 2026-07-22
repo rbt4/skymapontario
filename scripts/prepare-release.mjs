@@ -12,6 +12,11 @@ gradle = gradle.replace(/versionCode\s+\d+/, `versionCode ${version.versionCode}
 gradle = gradle.replace(/versionName\s+'[^']+'/, `versionName '${version.version}'`);
 fs.writeFileSync(gradlePath, gradle);
 
+const appJsPath = path.join(root, 'app/app.js');
+let appJs = fs.readFileSync(appJsPath, 'utf8');
+appJs = appJs.replace(/version: '\d+\.\d+\.\d+'/, `version: '${version.version}'`);
+fs.writeFileSync(appJsPath, appJs);
+
 const javaVersionFiles = ['MainActivity.java', 'GeoMetProxy.java', 'WeatherRefreshWorker.java'];
 for (const file of javaVersionFiles) {
   const javaPath = path.join(root, 'android/app/src/main/java/ca/skymapontario/app', file);
