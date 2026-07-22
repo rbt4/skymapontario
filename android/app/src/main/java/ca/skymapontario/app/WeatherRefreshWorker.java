@@ -226,7 +226,7 @@ public final class WeatherRefreshWorker extends Worker {
             connection.setConnectTimeout(15000);
             connection.setReadTimeout(20000);
             connection.setRequestProperty("Accept", "application/json");
-            connection.setRequestProperty("User-Agent", "SkyMapOntario/14.1.1 local-intelligence");
+            connection.setRequestProperty("User-Agent", "SkyMapOntario/14.1.2 local-intelligence");
             connection.setInstanceFollowRedirects(true);
             int status = connection.getResponseCode();
             if (status < 200 || status >= 300) return null;

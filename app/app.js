@@ -39,7 +39,7 @@
   };
 
   const state = {
-    version: '14.1.1',
+    version: '14.1.2',
     place: loadPlace(),
     mode: 'rain',
     map: null,
@@ -68,6 +68,8 @@
     radar: { state: 'loading', title: 'Connecting to ECCC radar', copy: 'Checking the official feed', transport: IS_NATIVE ? 'Native relay' : 'Direct web', lastSuccess: null, error: null },
     frameValue: null,
     frameExplanationToken: 0,
+    pointValueCache: new Map(),
+    pointValueRequests: new Map(),
     selectedSnapshot: null,
     refreshId: 0
   };
@@ -221,6 +223,19 @@
     const response = await fetchWithTimeout(url, { cache: 'no-store' }, timeout);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
+  }
+
+  async function fetchCompleteJson(url, timeout = 8000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeout);
+    try {
+      const response = await fetch(url, { cache: 'no-store', signal: controller.signal });
+      const body = await response.text();
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return JSON.parse(body);
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   function parseDuration(value) {
@@ -502,7 +517,7 @@
       if (state.mode === 'storm') loadContextLayer({ layer: 'Lightning_2.5km_Density', style: 'Lightning', time: frame.time, kind: 'context' });
       else removeContextOverlay();
       updateStory();
-      updateFrameExplanation(frame);
+      await updateFrameExplanation(frame);
     } catch (error) {
       const hasPrevious = Boolean(state.weatherOverlay);
       setRadarState(hasPrevious ? 'stale' : 'error', hasPrevious ? 'Fresh radar delayed' : 'Radar could not load', hasPrevious ? 'Keeping the last successful frame · tap to retry' : 'Forecasts still work · tap to retry', { error: String(error) });
@@ -1005,20 +1020,37 @@
   async function featureInfo(frame) {
     if (!frame?.time) return undefined;
     const p = state.place;
+    const key = `${p.lat.toFixed(4)},${p.lon.toFixed(4)}|${frameKey(frame)}`;
+    const cached = state.pointValueCache.get(key);
+    if (cached && Date.now() - cached.savedAt < 5 * 60000) return cached.value;
+    if (state.pointValueRequests.has(key)) return state.pointValueRequests.get(key);
+
     const delta = .04;
     const query = new URLSearchParams({ SERVICE: 'WMS', VERSION: '1.1.1', REQUEST: 'GetFeatureInfo', SRS: 'EPSG:4326', BBOX: `${p.lon - delta},${p.lat - delta},${p.lon + delta},${p.lat + delta}`, WIDTH: '20', HEIGHT: '20', X: '10', Y: '10', LAYERS: frame.layer, QUERY_LAYERS: frame.layer, INFO_FORMAT: 'application/json', FORMAT: 'image/png', TIME: formatWmsTime(frame.time) });
     if (frame.style) query.set('STYLES', frame.style);
-    if (frame.referenceTime) query.set('DIM_REFERENCE_TIME', frame.referenceTime);
-    for (const endpoint of geometEndpoints()) {
-      try {
-        const response = await fetchWithTimeout(`${endpoint}?${query}`, { cache: 'no-store' }, 7000);
-        if (!response.ok) throw new Error(response.status);
-        const data = await response.json();
-        const direct = finite(data.features?.[0]?.properties?.value);
-        return direct ?? numericFrom(data);
-      } catch (_) { }
+    if (frame.referenceTime) query.set('DIM_REFERENCE_TIME', formatWmsTime(frame.referenceTime));
+
+    const request = (async () => {
+      for (const endpoint of geometEndpoints()) {
+        try {
+          const data = await fetchCompleteJson(`${endpoint}?${query}`, 8000);
+          const properties = data.features?.[0]?.properties;
+          if (!properties) return null;
+          const direct = finite(properties.value);
+          return direct ?? numericFrom(properties);
+        } catch (_) { }
+      }
+      return undefined;
+    })();
+
+    state.pointValueRequests.set(key, request);
+    try {
+      const value = await request;
+      state.pointValueCache.set(key, { value, savedAt: Date.now() });
+      return value;
+    } finally {
+      state.pointValueRequests.delete(key);
     }
-    return undefined;
   }
 
   function frameKey(frame) {

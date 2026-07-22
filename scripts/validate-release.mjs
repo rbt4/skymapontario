@@ -44,6 +44,10 @@ assert(appJs.includes('updateFrameExplanation'), 'Per-frame radar explanation is
 assert(appJs.includes('function formatWmsTime'), 'Whole-second WMS timestamp formatting is missing');
 assert(appJs.includes("replace(/\\.\\d{3}Z$/, 'Z')"), 'WMS timestamps may still include unsupported milliseconds');
 assert(appJs.includes('Point value unavailable'), 'Failed point queries are not distinguished from zero rain');
+assert(appJs.includes('fetchCompleteJson'), 'Point queries are not protected through complete response parsing');
+assert(appJs.includes('pointValueRequests'), 'Duplicate point queries are not coalesced');
+assert(appJs.includes("formatWmsTime(frame.referenceTime)"), 'Point-query reference times may still include unsupported milliseconds');
+assert(appJs.includes('await updateFrameExplanation(frame)'), 'The selected point must resolve before arrival probing begins');
 assert(appJs.includes('function frameStamp'), 'Selected radar date-and-time label is missing');
 assert(appJs.includes('crossingNow ? 1650 : 1100'), 'Calm one-pass radar timing is missing');
 assert(appJs.includes('RAQDPS.Sfc_PM2.5-WildfireSmokePlume'), 'Wildfire-specific smoke guidance is missing');
