@@ -3,111 +3,95 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#07101a">
+  <meta name="theme-color" content="#06101a">
   <meta name="color-scheme" content="dark">
-  <title>SkyMap Ontario — Live Rain, Smoke, Air, Fire & Alerts</title>
-  <meta name="description" content="A plain-English Ontario map for rain nowcasts, smoke forecasts, AQHI observations, reported active fires and weather alerts.">
+  <title>SkyMap Ontario — Weather, moving toward you</title>
+  <meta name="description" content="Ontario radar first, meaningful weather snapshots second, and a clear seven-day forecast always visible.">
   <link rel="canonical" href="https://rbt4.github.io/skymapontario/">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="SkyMap Ontario — See what is moving your way">
-  <meta property="og:description" content="Five official environmental feeds. One focused Ontario map.">
+  <meta property="og:title" content="SkyMap Ontario — Weather, moving toward you">
+  <meta property="og:description" content="A focused Ontario radar and forecast experience.">
   <meta property="og:url" content="https://rbt4.github.io/skymapontario/">
-  <meta property="og:image" content="https://rbt4.github.io/skymapontario/assets/skymap-ontario-mark.svg">
-  <meta name="twitter:card" content="summary_large_image">
-  <link rel="icon" href="assets/skymap-ontario-mark.svg" type="image/svg+xml">
-  <link rel="manifest" href="app/manifest.webmanifest">
-  <script>document.documentElement.classList.add('js')</script>
-  <link rel="stylesheet" href="assets/site-base.css">
-  <link rel="stylesheet" href="assets/site-responsive.css">
+  <link rel="icon" href="app/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/site.css">
   <script src="assets/site.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
-  <div class="page-glow" aria-hidden="true"><i></i><i></i></div>
 
-  <header class="site-header" data-nav>
-    <nav class="site-nav" aria-label="Main navigation">
-      <a class="wordmark" href="#top" aria-label="SkyMap Ontario home"><img src="assets/skymap-ontario-mark.svg" alt=""><span><b>skymap <em>ontario</em></b><small>LIVE PUBLIC DATA</small></span></a>
-      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-menu" data-nav-toggle><i></i><i></i><span class="sr-only">Open menu</span></button>
-      <div class="nav-links" id="nav-menu" data-nav-menu>
-        <a href="#layers">Five views</a><a href="#sources">Sources</a><a href="#android">Android</a><a href="#support">Support</a>
-        <a class="nav-cta" href="app/">Open live map <span>↗</span></a>
-      </div>
+  <header class="site-header">
+    <nav class="nav" aria-label="Main navigation">
+      <a class="brand" href="#top"><span class="brand-mark"><i></i></span><span><b>SkyMap</b><small>ONTARIO</small></span></a>
+      <div class="nav-links"><a href="#story">How it works</a><a href="#install">Install</a><a class="kofi-link" href="https://ko-fi.com/rbt4dev" target="_blank" rel="noopener noreferrer">☕ Support</a></div>
+      <a class="nav-cta" href="app/">Open live map <span>↗</span></a>
     </nav>
   </header>
 
   <main id="main">
     <section class="hero" id="top">
-      <div class="hero-copy reveal">
-        <div class="live-pill"><i></i><span data-feed-status>CONNECTING TO ONTARIO</span></div>
-        <h1>See what’s moving <em>your way.</em></h1>
-        <p>SkyMap Ontario turns rain, smoke, air quality, reported active fires and weather alerts into a local, plain-English picture for every selected time. No account. No clutter. No guessing what a colour means.</p>
+      <div class="hero-copy">
+        <div class="eyebrow"><i></i><span>RADAR FIRST · ONTARIO FOCUSED</span></div>
+        <h1>Weather,<br><em>moving toward you.</em></h1>
+        <p>SkyMap keeps the radar as the hero, then turns the next meaningful changes and the seven-day outlook into one clear weather story.</p>
         <div class="hero-actions">
           <a class="button primary" href="app/">Open the live map <span>↗</span></a>
-          <a class="button secondary" href="download/SkyMap-Ontario-v4.4.apk" download>Download Android 4.4</a>
+          <a class="button secondary" data-apk href="download/SkyMap-Ontario-latest.apk">Download Android</a>
         </div>
-        <div class="hero-proof"><span><i>✓</i> Official public feeds</span><span><i>✓</i> Works on any screen</span><span><i>✓</i> Independent &amp; ad-free</span></div>
+        <div class="hero-meta"><span><i>✓</i> No account</span><span><i>✓</i> No ads</span><span><i>✓</i> Official public radar</span></div>
       </div>
 
-      <div class="live-product reveal">
-        <div class="product-orbit one" aria-hidden="true"></div><div class="product-orbit two" aria-hidden="true"></div>
-        <div class="browser-frame">
-          <div class="browser-top"><div><i></i><i></i><i></i></div><span>LIVE MAP · ONTARIO</span><a href="app/" aria-label="Open the full-screen map">↗</a></div>
-          <iframe src="app/?embed=1" title="Interactive SkyMap Ontario live map" allow="geolocation; fullscreen"></iframe>
+      <div class="product-preview" data-preview="radar" aria-label="SkyMap product preview">
+        <div class="preview-top"><span><i></i> Toronto</span><b data-version>SkyMap Ontario</b><small>Sources live</small></div>
+        <div class="preview-stage">
+          <div class="preview-map"><div class="lake"></div><div class="rain-band one"></div><div class="rain-band two"></div><div class="location-dot"></div><div class="motion-line"></div></div>
+          <div class="preview-story"><small data-preview-kicker>OBSERVED RADAR</small><h2 data-preview-title>Rain stays west for now.</h2><p data-preview-copy>Watch the latest frames move toward your location.</p></div>
+          <div class="preview-play"><button type="button" aria-label="Preview play">▶</button><div><b data-preview-time>NOW</b><span></span><small>PAST 60M <em>NOW</em> NEXT 2H</small></div></div>
         </div>
-        <div class="live-readout aqhi-readout"><small>TORONTO AQHI</small><b data-live-aqhi>—</b><span data-live-aqhi-risk>Checking station</span></div>
-        <div class="live-readout alert-readout"><small>ONTARIO ALERT AREAS</small><b data-live-alerts>—</b><span>Official feed</span></div>
-      </div>
-    </section>
-
-    <section class="signal-bar" aria-label="SkyMap Ontario principles">
-      <div><span>01</span><b>Five official views</b><small>One clear interface</small></div>
-      <div><span>02</span><b>Real live data</b><small>Feed health is verified</small></div>
-      <div><span>03</span><b>Ontario first</b><small>16 quick locations</small></div>
-      <div><span>04</span><b>Free to use</b><small>No account or ad wall</small></div>
-    </section>
-
-    <section class="layers section" id="layers">
-      <div class="section-heading reveal"><div><small>ONE MAP · FIVE ANSWERS</small><h2>The useful layers.<br><em>None of the dashboard mess.</em></h2></div><p>Each view has one job, explains what the data means and tells you when its official source is not responding.</p></div>
-      <div class="layer-grid">
-        <article class="layer-card rain reveal"><div class="card-index">01</div><div class="card-icon">◒</div><span>PAST + NEXT</span><h3>Rain, explained</h3><p>Recent observed radar joins a clearly labelled one-hour nowcast, with an exact rain rate and local explanation for every frame.</p><a href="app/#map=5/49.6500/-84.3500&mode=rain">Open radar ↗</a></article>
-        <article class="layer-card smoke reveal"><div class="card-index">02</div><div class="card-icon">≈</div><span>MODELLED</span><h3>Smoke with context</h3><p>Every forecast hour shows the modelled PM₂.₅ value at the map centre beside observed AQHI, nearby weather and wind.</p><a href="app/#map=5/49.6500/-84.3500&mode=smoke">Open smoke ↗</a></article>
-        <article class="layer-card air reveal"><div class="card-index">03</div><div class="card-icon">◎</div><span>OBSERVED</span><h3>Air quality nearby</h3><p>Real AQHI station markers, the nearest observation and plain-language health-risk levels.</p><a href="app/#map=5/49.6500/-84.3500&mode=air">Open AQHI ↗</a></article>
-        <article class="layer-card fire reveal"><div class="card-index">04</div><div class="card-icon">◆</div><span>AGENCY REPORTED</span><h3>Active fires with status</h3><p>Current Ontario fire IDs, reported size and stage of control from NRCan’s new national active-fire service.</p><a href="app/#map=5/49.6500/-84.3500&mode=fire">Open active fires ↗</a></article>
-        <article class="layer-card alerts reveal"><div class="card-index">05</div><div class="card-icon">!</div><span>ACTIVE</span><h3>Mapped alert areas</h3><p>Current warnings, watches and advisories shown over the places they affect, with official links.</p><a href="app/#map=5/49.6500/-84.3500&mode=alerts">Open alerts ↗</a></article>
-      </div>
-    </section>
-
-    <section class="trust section" id="sources">
-      <div class="trust-card reveal">
-        <div class="trust-copy"><small>HONEST ABOUT THE DATA</small><h2>Official sources.<br><em>Visible limits.</em></h2><p>SkyMap does not invent a “live” state. A layer turns green only after usable tiles, stations, points or polygons render. If a source fails, the app says so.</p><a class="text-link" href="https://eccc-msc.github.io/open-data/" target="_blank" rel="noopener noreferrer">Explore public-data documentation ↗</a></div>
-        <div class="source-stack">
-          <a href="https://eccc-msc.github.io/open-data/" target="_blank" rel="noopener noreferrer"><span>ECCC</span><div><b>Weather &amp; air</b><small>Radar · smoke · AQHI · alerts</small></div><i>↗</i></a>
-          <a href="https://cwfis.cfs.nrcan.gc.ca/" target="_blank" rel="noopener noreferrer"><span>NRCan</span><div><b>Reported active fires</b><small>Fire IDs · size · stage of control</small></div><i>↗</i></a>
-          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer"><span>MAP</span><div><b>Base geography</b><small>CARTO · OpenStreetMap contributors</small></div><i>↗</i></a>
+        <div class="preview-tabs" role="tablist" aria-label="Preview SkyMap views">
+          <button class="active" data-preview-tab="radar" type="button">Radar</button>
+          <button data-preview-tab="moments" type="button">Snapshots</button>
+          <button data-preview-tab="week" type="button">7 day</button>
         </div>
       </div>
     </section>
 
-    <section class="android section" id="android">
-      <div class="android-card reveal">
-        <div class="phone-preview" aria-hidden="true"><div class="phone-screen"><img src="assets/skymap-ontario-mark.svg" alt=""><span>skymap <em>ontario</em></span><i></i><b>LIVE PUBLIC DATA</b></div></div>
-        <div class="android-copy"><small>SKYMAP ON YOUR PHONE</small><h2>The full map.<br><em>Ready to install.</em></h2><p>Download the Android APK or install the browser app from your home screen. Version 4.4 adds calm crossfaded playback, exact point values and official local hourly weather context.</p><div><a class="button primary" href="download/SkyMap-Ontario-v4.4.apk" download>Download APK</a><a class="button secondary" href="demo/">Open dedicated demo</a></div><span class="version-note">Android 7.0+ · Version 4.4 · Direct APK installation</span></div>
+    <section class="story-section" id="story">
+      <header class="section-heading"><small>ONE MOVING WEATHER STORY</small><h2>Now. Next. Week.</h2><p>No dashboard maze. Each part has one job.</p></header>
+      <div class="story-grid">
+        <article><span>01</span><div class="mini-scene radar-scene"><i></i><i></i><b></b></div><small>NOW</small><h3>Radar stays primary.</h3><p>Observed ECCC radar and its short-range extrapolation share one calm, scrubable timeline.</p></article>
+        <article><span>02</span><div class="mini-scene moments-scene"><i></i><i></i><i></i></div><small>NEXT</small><h3>Snapshots find the moments.</h3><p>Rain beginning, the strongest period, tomorrow morning, or the most useful dry window.</p></article>
+        <article><span>03</span><div class="mini-scene week-scene"><i></i><i></i><i></i><i></i><i></i></div><small>WEEK</small><h3>Seven days stay visible.</h3><p>Daily highs, lows, conditions and expected rainfall without hiding behind another screen.</p></article>
       </div>
     </section>
 
-    <section class="support section" id="support">
-      <div class="support-card reveal">
-        <div class="coffee-mark" aria-hidden="true">☕</div>
-        <div><small>INDEPENDENT BY DESIGN</small><h2>Like having this map around?</h2><p>There is no company, subscription or ad network behind SkyMap. Optional support helps cover the maintenance and testing that keep public-data connections useful.</p><span><i>✓</i> The map stays free either way</span></div>
-        <a href="https://ko-fi.com/rbt4dev" target="_blank" rel="noopener noreferrer"><b>Support on Ko-fi</b><small>rbt4dev · Optional ↗</small></a>
+    <section class="edge-section">
+      <div class="edge-copy"><small>THE EDGE</small><h2>Not more weather data.<br><em>Better weather decisions.</em></h2></div>
+      <div class="edge-list">
+        <article><b>Fast first picture</b><p>Radar and the first dependable forecast load independently, so one slow source cannot freeze the whole app.</p></article>
+        <article><b>Honest uncertainty</b><p>Near-term radar remains precise. Longer-range guidance becomes broader and more cautious instead of pretending to be future radar.</p></article>
+        <article><b>Private local memory</b><p>The Android app can remember forecasts on the device and compare what changed without requiring an account.</p></article>
+      </div>
+    </section>
+
+    <section class="install-section" id="install">
+      <div class="install-card">
+        <div class="install-copy"><small>ANDROID + WEB</small><h2>Use the same SkyMap everywhere.</h2><p>Open the browser app on any screen or install the Android APK for the native radar relay, offline forecast cache and on-device weather memory.</p><div><a class="button primary" data-apk href="download/SkyMap-Ontario-latest.apk">Download Android <span>↓</span></a><a class="button secondary" href="app/">Open web app</a></div><span class="release-line" data-release>Loading current release…</span></div>
+        <aside class="support-card" id="support">
+          <span class="coffee">☕</span>
+          <small>INDEPENDENTLY BUILT</small>
+          <h3>Help keep the idea moving.</h3>
+          <p>SkyMap is an independent, AI-assisted build. Ko-fi support helps cover testing, Android builds and the time spent refining public weather connections.</p>
+          <a href="https://ko-fi.com/rbt4dev" target="_blank" rel="noopener noreferrer"><b>Support on Ko-fi</b><span>rbt4dev ↗</span></a>
+          <em>The map stays free either way.</em>
+        </aside>
       </div>
     </section>
   </main>
 
-  <footer class="site-footer">
-    <div><a class="wordmark" href="#top"><img src="assets/skymap-ontario-mark.svg" alt=""><span><b>skymap <em>ontario</em></b><small>BUILT BY RBT4</small></span></a><nav aria-label="Footer navigation"><a href="app/">Live map</a><a href="demo/">Demo</a><a href="privacy.html">Privacy</a><a href="https://github.com/rbt4/skymapontario" target="_blank" rel="noopener noreferrer">GitHub</a><a href="https://ko-fi.com/rbt4dev" target="_blank" rel="noopener noreferrer">Ko-fi</a></nav></div>
-    <p>SkyMap Ontario is independent and is not affiliated with or endorsed by the Government of Ontario or the Government of Canada. Data can be delayed, preliminary or unavailable. Reported fire points are not fire perimeters. Follow official instructions during emergencies.</p>
+  <footer class="footer">
+    <a class="brand" href="#top"><span class="brand-mark"><i></i></span><span><b>SkyMap</b><small>ONTARIO</small></span></a>
+    <p>Independent and not affiliated with the Government of Ontario or Government of Canada. Weather data can be delayed or unavailable. Follow official instructions during emergencies.</p>
+    <nav><a href="app/">Live map</a><a href="privacy.html">Privacy</a><a href="https://github.com/rbt4/skymapontario" target="_blank" rel="noopener noreferrer">GitHub</a><a href="https://ko-fi.com/rbt4dev" target="_blank" rel="noopener noreferrer">Ko-fi</a></nav>
     <span>© <span data-year></span> RBT4 · Made in Ontario</span>
   </footer>
 </body>

@@ -1,52 +1,40 @@
-# SkyMap Ontario 13
+# SkyMap Ontario
 
-**Weather, moving toward you — with radar that does not silently disappear.**
+**Weather, moving toward you.**
 
-SkyMap Ontario is a radar-first weather experience for Ontario. It connects recent observed radar, short-range radar extrapolation, Canadian high-resolution guidance, meaningful weather moments and a visible seven-day forecast in one continuous experience.
+SkyMap Ontario is a radar-first Ontario weather experience. It keeps observed radar and short-range radar extrapolation primary, surfaces meaningful weather snapshots, and always leaves the seven-day forecast visible.
 
-## Open SkyMap
+## Current release
 
-- Product website: `https://rbt4.github.io/skymapontario/`
-- Full-screen web app: `https://rbt4.github.io/skymapontario/app/`
-- Android APK: `https://rbt4.github.io/skymapontario/download/SkyMap-Ontario-v13.0-Radar-Recovery.apk`
-- APK checksum: `https://rbt4.github.io/skymapontario/download/SkyMap-Ontario-v13.0-Radar-Recovery.apk.sha256`
+The single source of truth is [`version.json`](version.json). The website, web app, Android package metadata, download filenames, build artifact and deployment receipt are generated from that file.
+
+- Website: `https://rbt4.github.io/skymapontario/`
+- Web app: `https://rbt4.github.io/skymapontario/app/`
+- Latest Android APK: `https://rbt4.github.io/skymapontario/download/SkyMap-Ontario-latest.apk`
 - Optional support: `https://ko-fi.com/rbt4dev`
 
-## What makes version 13 different
+## Product structure
 
-- **Two Android radar routes.** The app tries a tightly restricted native GeoMet relay and then the official direct ECCC connection as a fallback.
-- **One radar image per viewport.** SkyMap requests a complete, correctly timed WMS image rather than relying on dozens of fragile browser tiles.
-- **Exact run metadata.** Forecast layers select both valid time and `DIM_REFERENCE_TIME` where the source provides them.
-- **Last-good-image protection.** A refresh failure does not erase a radar image that already loaded successfully.
-- **Explicit feed health.** Transport, update time, retry state and failure reason remain visible.
-- **A refined layout.** Radar, the next meaningful weather changes and the seven-day forecast each have their own permanent space.
-- **No fake long-range radar.** Detailed radar is used near the present; longer horizons become smoother guidance and probability.
+- `index.html`, `assets/site.css`, `assets/site.js` — lean public product page
+- `app/index.html`, `app/app.css`, `app/app.js` — canonical current weather experience
+- `android/app/src/main/java/ca/skymapontario/app/` — native bridge, restricted GeoMet relay, local store and background refresh worker
+- `version.json` — release identity used everywhere
+- `.github/workflows/deploy-pages.yml` — one build, one APK, one Pages deployment
 
-## Forecast hierarchy
+The website, app and Android bridge are all committed as readable source. The release workflow validates that source directly, builds one matching APK and deploys the same experience to Pages. It never rewrites its own workflow or reconstructs the product from encoded chunks.
 
-| Horizon | Primary role |
-|---|---|
-| Now | ECCC observed radar and observations |
-| 0–2 hours | ECCC radar extrapolation / immediate nowcast |
-| 2–48 hours | HRDPS and Canadian high-resolution guidance |
-| 3–10 days | GDPS, ECMWF and ensemble blending |
-| 10+ days | Ensemble scenarios and broad patterns only |
+## Core behaviour
 
-SkyMap is independent and is not affiliated with or endorsed by the Government of Ontario or the Government of Canada.
+- Radar and forecasts load independently; one slow source cannot freeze the whole app.
+- Radar playback runs once and stops rather than looping endlessly.
+- Every selected radar time explains whether it is observed or projected and reports the value beneath the map centre when available.
+- Nearby official ECCC conditions and hourly guidance are combined with timezone-safe model guidance without presenting model agreement as a probability.
+- The Android app tries a restricted native ECCC GeoMet relay first and the public direct route second.
+- A failed refresh keeps the last successful weather image visible.
+- Forecast cards render when the first dependable model responds and refine progressively as more guidance arrives.
+- Ko-fi support remains optional and the map remains free.
 
-## Verification and deployment
-
-The canonical workflow is `.github/workflows/deploy-v13.yml`. A release is blocked unless it can:
-
-1. Reconstruct the verified native source and SkyMap 13 overlay.
-2. Pass JavaScript and interface checks.
-3. Retrieve and decode a real ECCC observed-radar PNG.
-4. Retrieve and decode a real ECCC nowcast PNG.
-5. Compile the Android application.
-6. Verify APK alignment, signature, version, native relay and packaged interface.
-7. Publish the website, web app, APK and checksum together.
-
-The Android APK can also be built locally after reconstructing the verified source bundles:
+## Build
 
 ```bash
 ./gradlew :android-app:assembleDebug
@@ -58,18 +46,4 @@ Output:
 android/app/build/outputs/apk/debug/android-app-debug.apk
 ```
 
-## Project structure
-
-- `index.html` and `assets/` — public product website
-- `app/` — reconstructed SkyMap 13 web interface during CI
-- `android/` — native Android shell, GeoMet relay and local intelligence engine
-- `.build/skymap10/` — verified native/source bundle imported during CI
-- `.build/skymap13/` — verified radar-recovery and refined-interface overlay
-- `scripts/prepare-v13.py` — deterministic website/version preparation
-- `scripts/verify-v13-*.sh` — source, live-radar and APK verification
-- `.github/workflows/deploy-v13.yml` — canonical build and Pages deployment
-- `BUILD_RECOVERY.md` — failure diagnosis and rollback instructions
-
-## Data and safety
-
-Weather data may be delayed, preliminary or unavailable. SkyMap does not replace official alerts, emergency instructions or professional meteorological guidance. During severe weather, follow official government and emergency-management sources.
+Weather information can be delayed, preliminary or unavailable. SkyMap Ontario is independent and does not replace official warnings or emergency instructions.

@@ -2,152 +2,126 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-  <meta name="theme-color" content="#07101a">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07131f">
   <meta name="color-scheme" content="dark">
-  <title>SkyMap Ontario — Live Ontario Conditions</title>
-  <meta name="description" content="Plain-English Ontario rain nowcasts, smoke forecasts, local weather, AQHI observations, reported active fires and weather alerts.">
+  <title>SkyMap Ontario</title>
+  <meta name="description" content="Ontario radar, meaningful weather snapshots, and a clear seven-day forecast.">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="vendor/leaflet.css">
-  <link rel="stylesheet" href="app-base.css">
-  <link rel="stylesheet" href="app-responsive.css">
+  <link rel="stylesheet" href="app.css">
 </head>
-<body data-mode="rain">
-  <a class="skip-link" href="#layer-dock">Skip to map layers</a>
-  <main id="map" aria-label="Interactive map of Ontario environmental conditions"></main>
-  <div class="map-shade" aria-hidden="true"></div>
-
-  <header class="app-header">
-    <button class="brand surface" type="button" data-open="info-sheet" aria-label="About SkyMap Ontario">
-      <img src="icon.svg" alt="">
-      <span><b>skymap <em>ontario</em></b><small><i class="live-dot"></i><span id="connection-label">CONNECTING</span></small></span>
+<body>
+  <header class="topbar">
+    <button class="location-button" id="location-button" type="button" aria-label="Choose location">
+      <span class="app-mark" aria-hidden="true"><i></i></span>
+      <span><small>SKYMAP ONTARIO</small><b id="location-name">Toronto</b></span>
+      <span class="chevron">⌄</span>
     </button>
-
-    <button class="place surface" id="place-button" type="button" aria-label="Choose map location, currently Ontario" aria-haspopup="dialog" aria-controls="place-sheet">
-      <i aria-hidden="true">⌖</i><span><small>VIEWING</small><b id="place-label">Ontario</b></span><em aria-hidden="true">⌄</em>
-    </button>
-
-    <div class="header-actions">
-      <button class="round-button surface" id="locate-button" type="button" aria-label="Use my location" title="Use my location">◎</button>
-      <button class="round-button surface" id="share-button" type="button" aria-label="Share this map" title="Share this map">↗</button>
-      <button class="round-button surface" id="menu-button" type="button" aria-label="Open map information" aria-controls="info-sheet">•••</button>
+    <div class="current-brief" aria-live="polite">
+      <strong id="current-temp">—</strong>
+      <span id="current-condition">Loading forecast</span>
     </div>
+    <button class="icon-button" id="layers-button" type="button" aria-label="Change weather layer">
+      <span>◫</span><small>Layers</small>
+    </button>
   </header>
 
-  <nav class="layer-dock surface" id="layer-dock" aria-label="Live data layers">
-    <button class="layer-button active" type="button" data-mode="rain" aria-label="Rain radar"><i class="rain" aria-hidden="true">◒</i><span><b>Rain</b><small>Radar</small></span></button>
-    <button class="layer-button" type="button" data-mode="smoke" aria-label="Smoke forecast"><i class="smoke" aria-hidden="true">≈</i><span><b>Smoke</b><small>Forecast</small></span></button>
-    <button class="layer-button" type="button" data-mode="air" aria-label="Air quality"><i class="air" aria-hidden="true">◎</i><span><b>Air</b><small>AQHI</small></span></button>
-    <button class="layer-button" type="button" data-mode="fire" aria-label="Reported active fires"><i class="fire" aria-hidden="true">◆</i><span><b>Fires</b><small>Active</small></span></button>
-    <button class="layer-button" type="button" data-mode="alerts" aria-label="Weather alerts"><i class="alerts" aria-hidden="true">!</i><span><b>Alerts</b><small>Ontario</small></span><em class="count-badge" id="alert-badge" hidden>0</em></button>
-  </nav>
+  <main class="app-shell">
+    <section class="radar-card" aria-label="Weather radar">
+      <div id="map" class="map"></div>
+      <div class="map-vignette" aria-hidden="true"></div>
 
-  <aside class="insight-panel surface" id="insight-panel" aria-labelledby="mode-title">
-    <div class="insight-head">
-      <div><small id="mode-kicker">LIVE RAIN RADAR</small><h1 id="mode-title">See what is moving your way.</h1></div>
-      <button id="panel-close" type="button" aria-label="Collapse information panel">×</button>
-    </div>
+      <button class="radar-state" id="radar-state" type="button" data-state="loading">
+        <i></i>
+        <span><b id="radar-state-title">Connecting to ECCC radar</b><small id="radar-state-copy">Checking the official feed</small></span>
+      </button>
 
-    <div class="feed-status" data-state="loading" id="feed-status">
-      <i aria-hidden="true"></i>
-      <span><b id="status-text">Connecting to the radar…</b><small id="status-detail">Official public data</small></span>
-      <time id="updated-time">—</time>
-    </div>
-
-    <section class="forecast-card" id="forecast-card" aria-live="polite" aria-labelledby="forecast-headline">
-      <div class="forecast-topline">
-        <span><small id="forecast-eyebrow">AT THE MAP CENTRE</small><b id="forecast-place">Ontario</b></span>
-        <em id="forecast-kind">CONNECTING</em>
+      <div class="map-actions">
+        <button id="locate-button" type="button" aria-label="Use my location">⌖</button>
+        <button class="recenter-action" id="recenter-button" type="button" aria-label="Recenter map">◎</button>
+        <button id="zoom-in-button" type="button" aria-label="Zoom in">+</button>
+        <button id="zoom-out-button" type="button" aria-label="Zoom out">−</button>
       </div>
-      <div class="forecast-story">
-        <i id="forecast-icon" aria-hidden="true">⌁</i>
-        <div><h2 id="forecast-headline">Building your local picture…</h2><p id="forecast-copy">Matching the selected map time with official nearby conditions.</p></div>
+
+      <section class="radar-story" aria-live="polite">
+        <div class="story-meta"><span id="story-source">OBSERVED RADAR</span><time id="story-time">NOW</time></div>
+        <h1 id="story-title">Building your weather picture.</h1>
+        <p id="story-copy">Radar and forecast guidance are loading independently.</p>
+        <div class="story-facts" id="story-facts" hidden>
+          <span><small id="story-value-label">AT THIS POINT</small><b id="story-value">Reading radar…</b></span>
+          <span><small>OFFICIAL NEARBY</small><b id="story-official">Loading forecast…</b></span>
+          <span><small>GUIDANCE</small><b id="story-guidance">Connecting…</b></span>
+        </div>
+        <button class="change-pill" id="change-pill" type="button" hidden></button>
+      </section>
+
+      <div class="playback" aria-label="Radar playback">
+        <button class="play-button" id="play-button" type="button" aria-label="Play radar"><span>▶</span></button>
+        <div class="playback-main">
+          <div class="playback-readout"><b id="playback-label">NOW</b><span id="playback-clock">—</span><small id="playback-kind">OBSERVED</small></div>
+          <input id="timeline" type="range" min="0" max="0" value="0" step="1" aria-label="Radar timeline">
+          <div class="timeline-legend"><span id="timeline-past">PAST 60M</span><b>NOW</b><span id="timeline-future">NEXT 2H</span></div>
+        </div>
       </div>
-      <div class="forecast-facts" id="forecast-facts">
-        <span><small>MAP VALUE</small><b>—</b></span><span><small>NEARBY WEATHER</small><b>—</b></span><span><small>WIND</small><b>—</b></span>
-      </div>
-      <p class="forecast-foot" id="forecast-foot">Move the map or choose a time to update this explanation.</p>
     </section>
 
-    <section class="primary-card" id="primary-card">
-      <div class="primary-value" id="primary-value">—</div>
-      <div><small id="primary-label">NEAREST AQHI</small><b id="primary-title">Finding a station…</b><span id="primary-detail">Ontario</span></div>
+    <section class="forecast-stack" aria-label="Forecast">
+      <section class="summary-card">
+        <div><small>LOCAL FORECAST</small><h2 id="summary-title">Loading your forecast</h2><p id="summary-copy">Official nearby conditions appear first, then guidance fills in the week.</p></div>
+        <div class="summary-metric"><strong id="summary-temp">—</strong><span id="summary-range">— / —</span></div>
+      </section>
+
+      <section class="section-block moments-block">
+        <header class="section-header"><div><small>WEATHER SNAPSHOTS</small><h2 id="moments-heading">The next meaningful moments</h2></div><button id="forecast-details-button" type="button">Details</button></header>
+        <div class="snapshot-rail" id="snapshot-rail" aria-live="polite"></div>
+      </section>
+
+      <section class="section-block daily-block">
+        <header class="section-header"><div><small>7-DAY FORECAST</small><h2 id="daily-heading">A clear day-by-day view</h2></div><span class="model-status" id="model-status">Connecting sources</span></header>
+        <div class="daily-list" id="daily-list"></div>
+      </section>
+
+      <footer class="app-footer">
+        <span><b id="version-label">SkyMap Ontario</b><a href="https://ko-fi.com/rbt4dev" target="_blank" rel="noopener noreferrer">☕ Support</a></span>
+        <button id="refresh-button" type="button">Refresh</button>
+      </footer>
     </section>
+  </main>
 
-    <section class="legend-card" id="legend-card">
-      <div><span id="legend-title">Precipitation rate</span><small id="legend-unit">mm/h</small></div>
-      <i class="legend rain" id="legend-bar"></i>
-      <p id="legend-labels"><span>Light</span><span>Moderate</span><span>Heavy</span></p>
-    </section>
+  <div class="backdrop" id="backdrop" hidden></div>
 
-    <section class="activity-card">
-      <div class="activity-head"><span id="activity-title">Ontario now</span><b id="activity-count">LIVE</b></div>
-      <div class="activity-list" id="activity-list"><p>Loading current conditions…</p></div>
-    </section>
-
-    <div class="source-line"><span>Source</span><a id="source-link" href="https://eccc-msc.github.io/open-data/" target="_blank" rel="noopener noreferrer">Environment Canada ↗</a></div>
-    <p class="data-note" id="data-note">Radar frames are observations and can be delayed.</p>
-  </aside>
-
-  <button class="panel-restore surface" id="panel-restore" type="button" hidden><span id="restore-label">Rain</span><i>⌃</i></button>
-
-  <section class="timeline surface" id="timeline" aria-label="Layer timeline">
-    <button class="play" id="play-button" type="button" aria-label="Play animation">▶</button>
-    <div class="time-copy"><small id="relative-time">LATEST</small><b id="absolute-time">Finding available frames…</b></div>
-    <div class="range">
-      <div class="range-line"><i id="range-progress"></i><em id="now-marker"></em></div>
-      <input id="time-slider" type="range" min="0" max="0" value="0" step="1" aria-label="Weather frame">
-      <div><span id="range-start">—</span><span id="range-end">—</span></div>
-    </div>
-    <button class="refresh" id="refresh-button" type="button" aria-label="Refresh this layer">↻<span>Refresh</span></button>
+  <section class="sheet" id="location-sheet" hidden aria-modal="true" role="dialog" aria-labelledby="location-sheet-title">
+    <div class="sheet-handle"></div>
+    <header><div><small>LOCATION</small><h2 id="location-sheet-title">Where should SkyMap watch?</h2></div><button class="sheet-close" type="button" aria-label="Close">×</button></header>
+    <div class="location-grid" id="location-grid"></div>
   </section>
 
-  <button class="mobile-forecast surface" id="mobile-forecast" type="button" aria-controls="info-sheet">
-    <span class="mobile-forecast-time"><small id="mobile-forecast-kind">LOCAL PICTURE</small><b id="mobile-forecast-time">Finding the selected time…</b></span>
-    <span class="mobile-forecast-story"><b id="mobile-forecast-headline">Connecting to official data…</b><small id="mobile-forecast-copy">Move the map or choose a time for a plain-English explanation.</small></span>
-    <i aria-hidden="true">⌃</i>
-  </button>
-
-  <button class="mobile-peek surface" id="mobile-peek" type="button" aria-controls="info-sheet">
-    <span><small id="mobile-kicker">LIVE RAIN RADAR</small><b id="mobile-story">Connecting to official data…</b></span><i>⌃</i>
-  </button>
-
-  <div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
-
-  <section class="sheet" id="place-sheet" role="dialog" aria-modal="true" aria-labelledby="place-title" hidden>
-    <div class="sheet-handle" aria-hidden="true"></div>
-    <div class="sheet-head"><div><small>QUICK LOCATIONS</small><h2 id="place-title">Jump across Ontario</h2></div><button type="button" data-close aria-label="Close location picker">×</button></div>
-    <div class="place-grid" id="place-grid"></div>
-  </section>
-
-  <section class="sheet info-sheet" id="info-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" hidden>
-    <div class="sheet-handle" aria-hidden="true"></div>
-    <div class="sheet-head"><div><small>SKYMAP ONTARIO 4.4</small><h2 id="sheet-title">Your local picture</h2></div><button type="button" data-close aria-label="Close map information">×</button></div>
-    <div class="sheet-body">
-      <div class="sheet-live"><i></i><span><b id="sheet-status">Connecting to public data…</b><small id="sheet-updated">Official source</small></span></div>
-      <div class="sheet-forecast">
-        <small id="sheet-forecast-kind">LOCAL PICTURE</small>
-        <h3 id="sheet-forecast-headline">Building your local picture…</h3>
-        <p id="sheet-forecast-copy">Matching the map with official nearby conditions.</p>
-        <div id="sheet-forecast-facts"></div>
-      </div>
-      <div class="sheet-section"><small>CURRENT VIEW</small><h3 id="sheet-mode-title">Rain radar</h3><p id="sheet-mode-copy">Recent precipitation observations across Ontario.</p></div>
-      <label class="opacity-control"><span><b>Layer opacity</b><small>Adjust the environmental overlay</small></span><input id="opacity-slider" type="range" min="25" max="100" value="82"></label>
-      <button class="sheet-action" id="install-button" type="button" hidden><span>＋</span><div><b>Install browser app</b><small>Add SkyMap to your home screen</small></div></button>
-      <a class="sheet-action" href="../" target="_top"><span>⌂</span><div><b>Product website</b><small>Android download, sources and project notes</small></div></a>
-      <a class="support-card" href="https://ko-fi.com/rbt4dev" target="_blank" rel="noopener noreferrer"><span>☕</span><div><small>INDEPENDENT &amp; AD-FREE</small><b>Support SkyMap Ontario</b><p>Optional support helps keep the public-data connections maintained.</p></div><i>↗</i></a>
-      <p class="disclaimer">SkyMap Ontario is independent and not an official government app. Public data can be delayed or unavailable. Reported fire points are not fire boundaries. Follow official emergency instructions.</p>
+  <section class="sheet" id="layers-sheet" hidden aria-modal="true" role="dialog" aria-labelledby="layers-sheet-title">
+    <div class="sheet-handle"></div>
+    <header><div><small>MAP VIEW</small><h2 id="layers-sheet-title">Keep radar first. Add context when needed.</h2></div><button class="sheet-close" type="button" aria-label="Close">×</button></header>
+    <div class="layer-list" id="layer-list">
+      <button class="active" data-layer="rain" type="button"><span>◒</span><div><b>Rain radar</b><small>Observed radar and the available official short-range nowcast</small></div><i>✓</i></button>
+      <button data-layer="storm" type="button"><span>ϟ</span><div><b>Storms</b><small>Radar with lightning context</small></div><i></i></button>
+      <button data-layer="smoke" type="button"><span>≈</span><div><b>Smoke</b><small>Wildfire-related PM₂.₅ forecast guidance</small></div><i></i></button>
+      <button data-layer="temp" type="button"><span>°</span><div><b>Temperature</b><small>High-resolution temperature field</small></div><i></i></button>
     </div>
   </section>
 
-  <div class="loading-screen" id="loading-screen" role="status" aria-live="polite">
-    <div class="loading-mark"><img src="icon.svg" alt=""><i></i></div>
-    <b>SkyMap Ontario</b><span id="loading-message">Preparing the live map…</span>
-  </div>
+  <section class="sheet detail-sheet" id="details-sheet" hidden aria-modal="true" role="dialog" aria-labelledby="details-title">
+    <div class="sheet-handle"></div>
+    <header><div><small>WHY THIS FORECAST?</small><h2 id="details-title">What SkyMap is seeing</h2></div><button class="sheet-close" type="button" aria-label="Close">×</button></header>
+    <div class="detail-grid">
+      <article><small>RADAR</small><h3 id="detail-radar-title">Checking the official feed</h3><p id="detail-radar-copy">The app keeps the last successful frame if a fresh image fails.</p></article>
+      <article><small>FORECAST GUIDANCE</small><h3 id="detail-model-title">Waiting for guidance</h3><p id="detail-model-copy">Official city forecasts and model guidance load independently.</p></article>
+      <article><small>WHAT CHANGED</small><h3 id="detail-change-title">First forecast of this session</h3><p id="detail-change-copy">SkyMap will compare this forecast with the next fresh update.</p></article>
+    </div>
+    <div class="model-list" id="model-list"></div>
+    <button class="primary-action" id="details-refresh-button" type="button">Refresh weather sources</button>
+  </section>
 
-  <div class="error-banner" id="error-banner" role="alert" hidden><span><b id="error-title">A feed did not respond</b><small id="error-message">Try again in a moment.</small></span><button id="error-retry" type="button">Retry</button></div>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="toast" id="toast" role="status"></div>
 
   <script src="vendor/leaflet.js"></script>
   <script src="app.js"></script>
