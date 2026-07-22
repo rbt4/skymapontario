@@ -1,76 +1,33 @@
 (() => {
   'use strict';
 
-  const nav = document.querySelector('[data-nav]');
-  const toggle = document.querySelector('[data-nav-toggle]');
-  const menu = document.querySelector('[data-nav-menu]');
-  const year = document.querySelector('[data-year]');
-  if (year) year.textContent = String(new Date().getFullYear());
-
-  const closeMenu = () => {
-    toggle?.setAttribute('aria-expanded', 'false');
-    menu?.classList.remove('open');
+  const preview = document.querySelector('[data-preview]');
+  const tabs = [...document.querySelectorAll('[data-preview-tab]')];
+  const copy = {
+    radar: { kicker: 'OBSERVED RADAR', title: 'Rain stays west for now.', body: 'Watch the latest frames move toward your location.', time: 'NOW' },
+    moments: { kicker: 'WEATHER SNAPSHOTS', title: 'The next important change.', body: 'Meaningful moments replace repetitive hourly cards.', time: 'TONIGHT' },
+    week: { kicker: '7-DAY FORECAST', title: 'The full week stays visible.', body: 'Highs, lows, conditions and expected rainfall.', time: '7 DAYS' }
   };
 
-  toggle?.addEventListener('click', () => {
-    const open = toggle.getAttribute('aria-expanded') === 'true';
-    toggle.setAttribute('aria-expanded', String(!open));
-    menu?.classList.toggle('open', !open);
-  });
-  menu?.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
-  document.addEventListener('keydown', event => { if (event.key === 'Escape') closeMenu(); });
-  document.addEventListener('click', event => {
-    if (menu?.classList.contains('open') && !menu.contains(event.target) && !toggle?.contains(event.target)) closeMenu();
-  });
-
-  let previousY = window.scrollY;
-  let ticking = false;
-  const updateNav = () => {
-    const y = window.scrollY;
-    nav?.classList.toggle('scrolled', y > 20);
-    nav?.classList.toggle('hidden', y > 150 && y > previousY && !menu?.classList.contains('open'));
-    previousY = y;
-    ticking = false;
-  };
-  window.addEventListener('scroll', () => {
-    if (!ticking) { requestAnimationFrame(updateNav); ticking = true; }
-  }, { passive: true });
-
-  const reveals = document.querySelectorAll('.reveal');
-  if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); }
-      });
-    }, { threshold: .08, rootMargin: '0px 0px -35px' });
-    reveals.forEach(item => observer.observe(item));
-  } else reveals.forEach(item => item.classList.add('visible'));
-
-  const risk = value => value <= 3 ? 'Low risk' : value <= 6 ? 'Moderate risk' : value <= 10 ? 'High risk' : 'Very high risk';
-  const feedLabel = document.querySelector('[data-feed-status]');
-  const feedPill = feedLabel?.closest('.live-pill');
-
-  async function liveReadouts() {
-    const air = fetch('https://api.weather.gc.ca/collections/aqhi-observations-realtime/items?f=json&latest=true&bbox=-79.65,43.50,-79.10,43.90&limit=10', { signal: AbortSignal.timeout(12000), cache: 'no-store' })
-      .then(response => { if (!response.ok) throw new Error(`HTTP ${response.status}`); return response.json(); })
-      .then(data => {
-        const values = (data.features || []).map(feature => Number(feature.properties?.aqhi)).filter(Number.isFinite);
-        if (!values.length) throw new Error('No AQHI observation');
-        const value = values[0];
-        document.querySelector('[data-live-aqhi]').textContent = value > 10 ? '10+' : String(Math.round(value));
-        document.querySelector('[data-live-aqhi-risk]').textContent = risk(value);
-      });
-
-    const alerts = fetch('https://api.weather.gc.ca/collections/weather-alerts/items?f=json&province=ON&limit=1', { signal: AbortSignal.timeout(12000), cache: 'no-store' })
-      .then(response => { if (!response.ok) throw new Error(`HTTP ${response.status}`); return response.json(); })
-      .then(data => { document.querySelector('[data-live-alerts]').textContent = String(data.numberMatched ?? data.features?.length ?? 0); });
-
-    const results = await Promise.allSettled([air, alerts]);
-    const available = results.filter(result => result.status === 'fulfilled').length;
-    if (available === results.length) feedLabel.textContent = 'OFFICIAL FEEDS RESPONDING';
-    else if (available) { feedLabel.textContent = 'SOME FEEDS RESPONDING'; feedPill?.classList.add('error'); }
-    else { feedLabel.textContent = 'LIVE FEEDS TEMPORARILY DELAYED'; feedPill?.classList.add('error'); }
+  function setPreview(mode) {
+    if (!preview || !copy[mode]) return;
+    preview.dataset.preview = mode;
+    tabs.forEach(tab => tab.classList.toggle('active', tab.dataset.previewTab === mode));
+    document.querySelector('[data-preview-kicker]').textContent = copy[mode].kicker;
+    document.querySelector('[data-preview-title]').textContent = copy[mode].title;
+    document.querySelector('[data-preview-copy]').textContent = copy[mode].body;
+    document.querySelector('[data-preview-time]').textContent = copy[mode].time;
   }
 
-  liveReadouts();
+  tabs.forEach(tab => tab.addEventListener('click', () => setPreview(tab.dataset.previewTab)));
+  document.querySelector('[data-year]').textContent = String(new Date().getFullYear());
+
+  fetch('version.json', { cache: 'no-store' }).then(response => response.ok ? response.json() : null).then(version => {
+    if (!version) return;
+    const apk = `download/${version.apkBaseName || 'SkyMap-Ontario'}-v${version.version}.apk`;
+    document.querySelectorAll('[data-apk]').forEach(link => { link.href = apk; link.setAttribute('download', ''); });
+    document.querySelectorAll('[data-version]').forEach(node => { node.textContent = `${version.product || 'SkyMap Ontario'} ${version.version}`; });
+    const release = document.querySelector('[data-release]');
+    if (release) release.textContent = `Current release · ${version.version} ${version.releaseName || ''}`.trim();
+  }).catch(() => { });
 })();
