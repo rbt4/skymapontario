@@ -1,0 +1,52 @@
+name: Materialize SkyMap 14.2.0 bundle
+
+on:
+  push:
+    branches: [release/14.2.0]
+    paths:
+      - '.release-upload/**'
+      - '.github/workflows/materialize-14.2.0.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct and verify supplied bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .release-upload/part-* | base64 --decode > /tmp/skymap-14.2.0.zip
+          echo 'ac677237d17aadfa108887a999a5e6367063ca9f79e43243bbd540723ee1a18d  /tmp/skymap-14.2.0.zip' | sha256sum -c -
+          unzip -oq /tmp/skymap-14.2.0.zip -d .
+          sha256sum -c .release-upload/SHA256SUMS
+
+      - name: Run required release validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/prepare-release.mjs
+          node scripts/validate-release.mjs
+          node --check app/app.js
+          node --check app/sw.js
+          node --check assets/site.js
+          sha256sum -c .release-upload/SHA256SUMS
+
+      - name: Commit only the supplied release files
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .release-upload
+          rm -f .github/workflows/materialize-14.2.0.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = '20'
+          git commit -m 'SkyMap 14.2.0 — Plain Sight'
+          git push origin HEAD:release/14.2.0
