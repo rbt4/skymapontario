@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
@@ -58,7 +60,7 @@ public final class UpdateManager {
     public static void promptPendingUpdate(Activity activity) {
         SharedPreferences prefs = activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         int versionCode = prefs.getInt(KEY_VERSION_CODE, 0);
-        if (versionCode <= BuildConfig.VERSION_CODE) {
+        if (versionCode <= currentVersionCode(activity)) {
             clearPending(prefs, true);
             return;
         }
@@ -107,6 +109,17 @@ public final class UpdateManager {
 
         prefs.edit().putLong(KEY_LAST_PROMPT, now).apply();
         activity.startActivity(install);
+    }
+
+    static long currentVersionCode(Context context) {
+        try {
+            PackageInfo info = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) return info.getLongVersionCode();
+            return info.versionCode;
+        } catch (PackageManager.NameNotFoundException ignored) {
+            // Fail closed: never offer an update if Android cannot identify the installed package.
+            return Long.MAX_VALUE;
+        }
     }
 
     static File updateDirectory(Context context) {
