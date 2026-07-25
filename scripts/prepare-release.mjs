@@ -17,7 +17,12 @@ let appJs = fs.readFileSync(appJsPath, 'utf8');
 appJs = appJs.replace(/version: '\d+\.\d+\.\d+'/, `version: '${version.version}'`);
 fs.writeFileSync(appJsPath, appJs);
 
-const javaVersionFiles = ['MainActivity.java', 'GeoMetProxy.java', 'WeatherRefreshWorker.java'];
+const swPath = path.join(root, 'app/sw.js');
+let sw = fs.readFileSync(swPath, 'utf8');
+sw = sw.replace(/const VERSION = '\d+\.\d+\.\d+'/, `const VERSION = '${version.version}'`);
+fs.writeFileSync(swPath, sw);
+
+const javaVersionFiles = ['MainActivity.java', 'GeoMetProxy.java', 'WeatherRefreshWorker.java', 'UpdateCheckWorker.java'];
 for (const file of javaVersionFiles) {
   const javaPath = path.join(root, 'android/app/src/main/java/ca/skymapontario/app', file);
   let source = fs.readFileSync(javaPath, 'utf8');

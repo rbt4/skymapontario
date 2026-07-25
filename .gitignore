@@ -3,5 +3,7 @@
 **/build/
 _site/
 local.properties
+.private/
 *.jks
+!android/app/signing/skymap-public-release.jks
 *.keystore

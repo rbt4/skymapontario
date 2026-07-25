@@ -8,17 +8,32 @@ android {
         applicationId 'ca.skymapontario.app'
         minSdk 24
         targetSdk 35
-        versionCode 14012
-        versionName '14.1.2'
+        versionCode 14021
+        versionName '14.2.1'
     }
 
     sourceSets {
         main.assets.srcDirs = ['../../app']
     }
 
+    signingConfigs {
+        release {
+            // Deliberately public continuity key. This enables zero-setup in-place APK
+            // updates, but it is not a secure publisher identity because the private
+            // key and credentials are committed to the public repository.
+            storeFile file('signing/skymap-public-release.jks')
+            storePassword 'skymap-public-release'
+            keyAlias 'skymap-public'
+            keyPassword 'skymap-public-release'
+            storeType 'JKS'
+        }
+    }
+
     buildTypes {
         release {
-            minifyEnabled false
+            signingConfig signingConfigs.release
+            minifyEnabled true
+            debuggable false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -30,6 +45,7 @@ android {
 }
 
 dependencies {
+    implementation 'androidx.core:core:1.16.0'
     implementation 'androidx.webkit:webkit:1.16.0'
     implementation 'androidx.work:work-runtime:2.11.2'
 }
