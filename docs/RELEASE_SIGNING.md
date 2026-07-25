@@ -1,44 +1,35 @@
-# SkyMap Android release signing
+# SkyMap Android public continuity signing
 
-SkyMap production APKs are signed with one private release key. The workflow is intentionally fail-closed: pull requests use a disposable two-day CI key, while `main` and manually dispatched production builds stop before Gradle unless the real signing secrets exist.
+SkyMap 14.2.1 intentionally uses a stable Android signing keystore committed to this public repository. This removes secret setup and lets GitHub Actions publish an installable APK that keeps the same Android identity across releases.
 
-## One-time setup
+## What this provides
 
-Run this from a trusted computer with Java, OpenSSL and an authenticated GitHub CLI:
+- Every release APK is built in release mode, R8-minified and non-debuggable.
+- The same certificate is used on pull requests, `main` and future releases.
+- Android accepts a newer SkyMap APK as an in-place update when `versionCode` increases.
+- The app checks the public release receipt every 12 hours, downloads a newer APK, verifies its published SHA-256, and opens Android's installer when the app resumes.
+- GitHub Pages always exposes `SkyMap-Ontario-latest.apk` and its checksum after a successful `main` build.
 
-```bash
-./scripts/configure-release-signing.sh rbt4/skymapontario
-```
+## Explicit security trade-off
 
-The script creates a 4096-bit RSA JKS keystore locally, uploads the five required repository secrets without printing them, and displays the public certificate SHA-256 fingerprint:
+The file `android/app/signing/skymap-public-release.jks` contains the private signing key. Its password and alias are also present in `android/app/build.gradle`. Anyone who can read the repository can sign another APK that Android will recognize as SkyMap Ontario.
 
-- `SKYMAP_KEYSTORE_B64`
-- `SKYMAP_KEYSTORE_PASSWORD`
-- `SKYMAP_KEY_ALIAS`
-- `SKYMAP_KEY_PASSWORD`
-- `SKYMAP_SIGNING_CERT_SHA256`
+This means the key provides **update continuity, not publisher authenticity**. The application, WebView bridge, release-mode build, CSP and CI pinning remain hardened, but the signing identity cannot protect users from a malicious actor who obtains installation access to their device.
 
-The keystore is written under `.private/skymap-signing/`, which is ignored by Git. Back it up to at least two encrypted locations and store both passwords in a password manager. Do not commit it, attach it to an issue, put it in a release artifact, or send it through chat or email.
+Do not describe this APK as cryptographically exclusive to RBT4. The repository-held key is a deliberate convenience decision.
 
-## Pre-merge production test
+## Update behaviour
 
-After the secrets exist, open **Actions → Build and deploy SkyMap Ontario → Run workflow**, select the security-release branch, and run it. A manual branch run builds and uploads the production-signed artifact but does not deploy Pages. Confirm all of these are green:
+A normal sideloaded Android application cannot silently install its own update. SkyMap performs the maximum practical automatic flow:
 
-1. `Build Android release APK`
-2. `Verify release APK, signer and packaged experience`
-3. `Upload production release artifact`
+1. Check `release.json` automatically.
+2. Download a newer APK automatically over HTTPS.
+3. Verify the matching published SHA-256 before offering it.
+4. Ask once for Android's **Install unknown apps** permission when needed.
+5. Open the system package installer for the user's required confirmation.
 
-The signer check normalizes and compares the APK certificate fingerprint against `SKYMAP_SIGNING_CERT_SHA256`. A different key fails the build before anything can be published.
-
-## Release behaviour
-
-- Pull request: release-mode, non-debuggable APK signed only with a disposable CI key; no APK or Pages artifact is published.
-- Manual branch run: production-signed APK artifact; no Pages deployment.
-- Push to `main`: production-signed APK artifact plus GitHub Pages deployment.
-- Missing or incorrect secret: hard failure; there is no debug-key fallback.
+After confirmation, Android replaces the existing app while preserving its data because the package name and signing certificate match.
 
 ## Irreversible warning
 
-Android accepts updates only when the package name and signing identity match the installed app. Once the first production-signed APK is distributed, every later SkyMap APK must use this same keystore. If the keystore is lost, existing installations cannot be updated by a newly signed APK.
-
-The previously published debug-signed APK cannot be upgraded in place to the new production key. Anyone who installed that old build must uninstall it once before installing the first production-signed release. After that one-time migration, normal in-place updates work.
+Every future public SkyMap APK must keep this exact committed keystore. Replacing it would force users to uninstall before installing the new signing identity. Deleting or rotating the key therefore breaks in-place updates even though the key is public.
