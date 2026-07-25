@@ -8,8 +8,8 @@ android {
         applicationId 'ca.skymapontario.app'
         minSdk 24
         targetSdk 35
-        versionCode 14012
-        versionName '14.1.2'
+        versionCode 14020
+        versionName '14.2.0'
     }
 
     sourceSets {

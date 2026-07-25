@@ -95,6 +95,12 @@ jobs:
           unzip -q "$APK" -d /tmp/apk-inspect
           grep -q 'WEATHER SNAPSHOTS' /tmp/apk-inspect/assets/index.html
           grep -q '7-DAY FORECAST' /tmp/apk-inspect/assets/index.html
+          grep -q 'id="alert-banner"' /tmp/apk-inspect/assets/index.html
+          grep -q 'id="map-legend"' /tmp/apk-inspect/assets/index.html
+          grep -q 'Content-Security-Policy' /tmp/apk-inspect/assets/index.html
+          grep -q 'renderAlerts' /tmp/apk-inspect/assets/app.js
+          grep -q 'aqhi-observations-realtime' /tmp/apk-inspect/assets/app.js
+          grep -q 'dark_only_labels' /tmp/apk-inspect/assets/app.js
           grep -q 'Promise.allSettled' /tmp/apk-inspect/assets/app.js
           grep -q 'NATIVE_GEOMET' /tmp/apk-inspect/assets/app.js
           grep -q "${SKYMAP_VERSION}" /tmp/apk-inspect/assets/version.json

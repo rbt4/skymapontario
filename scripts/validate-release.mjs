@@ -64,4 +64,42 @@ assert(refreshWorker.includes('parseForecastTime'), 'Android background forecast
 assert(workflow.includes('node scripts/check-live-sources.mjs'), 'Live source validation is not wired into deployment');
 assert(!workflow.includes('git push origin HEAD:main'), 'Deployment must not rewrite its own source branch');
 assert(!workflow.includes('git fetch origin') && !workflow.includes('git checkout origin/'), 'Deployment must build the checked-out readable source directly');
+
+// --- 14.2 guarantees -------------------------------------------------------
+const sw = read('app/sw.js');
+const androidManifest = read('android/app/src/main/AndroidManifest.xml');
+
+// Legibility is a contract, not a preference. This is the regression that keeps coming back.
+const tinyApp = [...appCss.matchAll(/font-size:\s*([\d.]+)px/g)].map(match => Number(match[1])).filter(size => size < 11);
+assert(!tinyApp.length, `Unreadable type returned to the app: ${[...new Set(tinyApp)].join('px, ')}px`);
+const tinySite = [...siteCss.matchAll(/font-size:\s*([\d.]+)px/g)].map(match => Number(match[1])).filter(size => size < 11);
+assert(!tinySite.length, `Unreadable type returned to the site: ${[...new Set(tinySite)].join('px, ')}px`);
+
+// Alerts must reach the screen, not just the network layer.
+assert(app.includes('id="alert-banner"'), 'Break-through alert banner is missing');
+assert(app.includes('id="alert-list"'), 'Alert detail sheet is missing');
+assert(appJs.includes('function renderAlerts'), 'Alerts are fetched but never rendered');
+assert(appJs.includes('expiration_datetime'), 'Expired alerts are not filtered out');
+
+// Air quality and the always-visible legend are first-class, per the product brief.
+assert(app.includes('data-layer="air"'), 'Air quality view is missing');
+assert(appJs.includes('aqhi-observations-realtime'), 'Official AQHI point reading is missing');
+assert(app.includes('id="map-legend"'), 'The in-interface legend is missing');
+assert(appJs.includes('LEGENDS'), 'Per-view legend data is missing');
+
+// Geography has to stay readable underneath the weather.
+assert(appJs.includes('dark_only_labels') && appJs.includes("createPane('labelPane')"), 'Place labels are no longer drawn above the weather');
+
+// Remote strings reach innerHTML in several places.
+assert(appJs.includes('function esc('), 'HTML escaping helper is missing');
+assert(app.includes('Content-Security-Policy') && site.includes('Content-Security-Policy'), 'Content-Security-Policy is missing');
+
+// Offline shell.
+assert(sw.includes(`const VERSION = '${version.version}'`), 'Service worker version is not aligned');
+assert(app.includes('serviceWorker'), 'Service worker is never registered');
+
+// Android hardening.
+assert(geoMetProxy.includes('safeHeaders') && !geoMetProxy.includes('flattenHeaders'), 'Native relay still forwards upstream headers verbatim');
+assert(androidManifest.includes('android:allowBackup="false"'), 'Cached weather and saved location are still cloud-backed-up');
+
 console.log(`SkyMap ${version.version} validation passed`);

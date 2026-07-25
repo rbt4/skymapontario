@@ -32,14 +32,24 @@
   ];
 
   const MODES = {
-    rain: { label: 'Rain radar', layer: 'RADAR_1KM_RRAI', style: 'RADARURPPRECIPR14-LINEAR' },
-    storm: { label: 'Storm radar', layer: 'RADAR_1KM_RRAI', style: 'RADARURPPRECIPR14-LINEAR', contextLayer: 'Lightning_2.5km_Density', contextStyle: 'Lightning' },
-    smoke: { label: 'Wildfire smoke forecast', layer: 'RAQDPS.Sfc_PM2.5-WildfireSmokePlume', style: '' },
-    temp: { label: 'Temperature forecast', layer: 'HRDPS.CONTINENTAL_TT', style: '' }
+    rain: { label: 'Rain radar', layer: 'RADAR_1KM_RRAI', style: 'RADARURPPRECIPR14-LINEAR', radar: true, source: 'Observed ECCC radar' },
+    storm: { label: 'Storm radar', layer: 'RADAR_1KM_RRAI', style: 'RADARURPPRECIPR14-LINEAR', contextLayer: 'Lightning_2.5km_Density', contextStyle: 'Lightning', radar: true, source: 'Radar with lightning density' },
+    smoke: { label: 'Wildfire smoke forecast', layer: 'RAQDPS.Sfc_PM2.5-WildfireSmokePlume', style: '', radar: false, ahead: 6, source: 'Wildfire smoke guidance' },
+    air: { label: 'Air quality', layer: 'AQHI-OBS', style: 'default', radar: false, ahead: 0, observed: true, source: 'Observed air quality index' },
+    temp: { label: 'Temperature forecast', layer: 'HRDPS.CONTINENTAL_TT', style: '', radar: false, ahead: 2, source: 'High-resolution temperature' }
+  };
+
+  // The legend lives in the interface, not behind a menu.
+  const LEGENDS = {
+    rain: [['#3f6fd8', 'Light'], ['#4fd0e0', 'Steady'], ['#cdf283', 'Heavy'], ['#ffcf85', 'Intense']],
+    storm: [['#3f6fd8', 'Light rain'], ['#4fd0e0', 'Steady rain'], ['#cdf283', 'Heavy rain'], ['#ff9aa0', 'Lightning']],
+    smoke: [['#f3e6b8', 'Thin haze'], ['#e8b06a', 'Noticeable'], ['#d1705c', 'Thick'], ['#8f4757', 'Very thick']],
+    air: [['#5ac8d8', '1–3 low risk'], ['#ffcf85', '4–6 moderate'], ['#ff9aa0', '7–10 high'], ['#b06a9a', '10+ very high']],
+    temp: [['#5b8dff', 'Cold'], ['#6fdcff', 'Cool'], ['#cdf283', 'Mild'], ['#ffcf85', 'Warm']]
   };
 
   const state = {
-    version: '14.1.2',
+    version: '14.2.0',
     place: loadPlace(),
     mode: 'rain',
     map: null,
@@ -71,6 +81,7 @@
     pointValueCache: new Map(),
     pointValueRequests: new Map(),
     selectedSnapshot: null,
+    airQuality: null,
     refreshId: 0
   };
 
@@ -89,6 +100,14 @@
 
   function cacheKey(model) {
     return `skymap.model.${model.id}.${state.place.lat.toFixed(2)}.${state.place.lon.toFixed(2)}`;
+  }
+
+  // Anything that reaches innerHTML and did not originate in this file is escaped.
+  // ECCC condition strings, alert names and area names are remote input.
+  function esc(value) {
+    return String(value ?? '').replace(/[&<>"']/g, character => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[character]);
   }
 
   function text(selector, value) {
@@ -440,7 +459,12 @@
     state.map.getPane('weatherPane').style.zIndex = 340;
     state.map.createPane('contextPane');
     state.map.getPane('contextPane').style.zIndex = 350;
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 20, opacity: .98 }).addTo(state.map);
+    state.map.createPane('labelPane');
+    state.map.getPane('labelPane').style.zIndex = 380;
+    // Base geography sits under the weather; the names sit on top of it, so a heavy
+    // radar cell can never hide which town it is sitting over.
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 20, opacity: .98 }).addTo(state.map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 20, opacity: .96, pane: 'labelPane' }).addTo(state.map);
     state.map.on('moveend', () => {
       clearTimeout(state.moveTimer);
       state.moveTimer = setTimeout(() => {
@@ -480,23 +504,66 @@
     ];
     if (!state.frames.length) state.frames = [{ layer: 'RADAR_1KM_RRAI', style: 'RADARURPPRECIPR14-LINEAR', time: observedMeta.defaultTime || null, referenceTime: observedMeta.defaultReferenceTime || null, kind: 'observed' }];
     state.frameIndex = state.frames.reduce((best, frame, index) => Math.abs(new Date(frame.time || now).getTime() - now) < Math.abs(new Date(state.frames[best].time || now).getTime() - now) ? index : best, 0);
-    const slider = $('#timeline');
-    slider.max = String(Math.max(0, state.frames.length - 1));
-    slider.value = String(state.frameIndex);
-    text('#timeline-past', pastTimes.length ? fmtTime(pastTimes[0]) : 'PAST 60M');
-    text('#timeline-future', futureTimes.length ? fmtTime(futureTimes.at(-1)) : 'NEXT 2H');
+    renderRibbon();
+    text('#timeline-past', pastTimes.length ? fmtTime(pastTimes[0]) : 'Past hour');
+    text('#timeline-future', futureTimes.length ? fmtTime(futureTimes.at(-1)) : 'Next 2 hours');
     return state.frames;
   }
 
+  // Each radar frame gets its own tap target. Observed frames are solid, projected
+  // frames are hatched, and a hairline marks the moment the two meet.
+  function renderRibbon() {
+    const ribbon = $('#timeline');
+    if (!ribbon) return;
+    ribbon.innerHTML = '';
+    state.frames.forEach((frame, index) => {
+      const previous = state.frames[index - 1];
+      const tick = document.createElement('button');
+      tick.type = 'button';
+      tick.className = 'tick';
+      tick.dataset.kind = frame.kind === 'nowcast' ? 'nowcast' : 'observed';
+      if (previous && previous.kind === 'observed' && frame.kind === 'nowcast') tick.dataset.boundary = 'true';
+      tick.setAttribute('aria-pressed', String(index === state.frameIndex));
+      tick.setAttribute('aria-label', `${frame.kind === 'nowcast' ? 'Projected' : 'Observed'} radar at ${frame.time ? fmtTime(frame.time) : 'the latest available time'}`);
+      tick.addEventListener('click', () => { stopPlayback(); showRadarFrame(index, true); });
+      ribbon.append(tick);
+    });
+  }
+
+  function setRibbonMode(radarMode) {
+    const ribbon = $('#timeline');
+    const legend = $('#ribbon-legend');
+    const staticNote = $('#static-time');
+    const play = $('#play-button');
+    if (ribbon) ribbon.hidden = !radarMode;
+    if (legend) legend.hidden = !radarMode;
+    if (staticNote) staticNote.hidden = radarMode;
+    if (play) play.hidden = !radarMode;
+  }
+
+  function renderLegend() {
+    const legend = $('#map-legend');
+    if (!legend) return;
+    const entries = LEGENDS[state.mode] || [];
+    legend.innerHTML = '<b>Legend</b>';
+    entries.forEach(([colour, label]) => {
+      const item = document.createElement('i');
+      item.style.setProperty('--swatch', colour);
+      item.textContent = label;
+      legend.append(item);
+    });
+  }
+
   function renderPlayback(frame) {
-    const index = state.frameIndex;
-    const slider = $('#timeline');
-    if (slider) slider.value = String(index);
+    $$('#timeline .tick').forEach((tick, index) => tick.setAttribute('aria-pressed', String(index === state.frameIndex)));
     const frameDate = frame?.time ? new Date(frame.time) : new Date();
     const minutes = Math.round((frameDate.getTime() - Date.now()) / 60000);
-    text('#playback-label', Math.abs(minutes) <= 4 ? 'NOW' : minutes < 0 ? `${Math.abs(minutes)}m ago` : `+${minutes}m`);
+    text('#playback-label', Math.abs(minutes) <= 4 ? 'Now' : minutes < 0 ? `${Math.abs(minutes)} min ago` : `In ${minutes} min`);
     text('#playback-clock', frameStamp(frameDate));
-    text('#playback-kind', frame?.kind === 'nowcast' ? 'NOWCAST' : 'OBSERVED');
+    const kind = frame?.kind === 'nowcast' ? 'nowcast' : 'observed';
+    text('#playback-kind', kind === 'nowcast' ? 'Projected' : 'Observed');
+    const badge = $('#playback-kind');
+    if (badge) badge.dataset.kind = kind;
   }
 
   async function showRadarFrame(index, force = false) {
@@ -559,9 +626,17 @@
     stopPlayback();
     const config = MODES[mode];
     const meta = await getLayerMeta(config.layer, true);
-    const target = new Date(Date.now() + (mode === 'smoke' ? 6 : 2) * 3600000);
-    const frame = { layer: config.layer, style: config.style, time: nearest(meta.times, target) || meta.defaultTime, referenceTime: meta.defaultReferenceTime || meta.referenceTimes?.at(-1) || null, kind: 'model' };
-    setRadarState('loading', `Loading ${config.label.toLowerCase()}`, 'Official forecast guidance');
+    const target = new Date(Date.now() + (config.ahead || 0) * 3600000);
+    const frame = { layer: config.layer, style: config.style, time: nearest(meta.times, target) || meta.defaultTime, referenceTime: meta.defaultReferenceTime || meta.referenceTimes?.at(-1) || null, kind: config.observed ? 'observed' : 'model' };
+    text('#playback-label', config.label);
+    text('#playback-clock', frame.time ? frameStamp(frame.time) : 'Latest available');
+    text('#playback-kind', config.observed ? 'Observed' : 'Forecast');
+    const badge = $('#playback-kind');
+    if (badge) badge.dataset.kind = config.observed ? 'observed' : 'model';
+    text('#static-time', config.observed
+      ? 'Latest official readings. This view has no playback.'
+      : `Model guidance for about ${config.ahead} hour${config.ahead === 1 ? '' : 's'} ahead. This view has no playback.`);
+    setRadarState('loading', `Loading ${config.label.toLowerCase()}`, config.observed ? 'Official observations' : 'Official forecast guidance');
     const token = ++state.requestToken;
     try {
       const loaded = await loadFrameImage(frame);
@@ -575,9 +650,15 @@
     }
   }
 
+  function isRadarMode() {
+    return Boolean(MODES[state.mode]?.radar);
+  }
+
   async function refreshVisibleMap(force = false) {
     if (!state.map) return;
-    if (state.mode === 'rain' || state.mode === 'storm') {
+    setRibbonMode(isRadarMode());
+    renderLegend();
+    if (isRadarMode()) {
       await buildRadarFrames(force);
       await showRadarFrame(state.frameIndex, true);
     } else {
@@ -814,7 +895,7 @@
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'snapshot-card';
-      button.innerHTML = `<canvas aria-hidden="true"></canvas><span class="snapshot-shade"></span><span class="snapshot-copy"><small>${event.label}</small><h3>${event.title}</h3><p>${event.copy}</p><time>${event.when}</time></span>`;
+      button.innerHTML = `<canvas aria-hidden="true"></canvas><span class="snapshot-shade"></span><span class="snapshot-copy"><small>${esc(event.label)}</small><h3>${esc(event.title)}</h3><p>${esc(event.copy)}</p><time>${esc(event.when)}</time></span>`;
       button.addEventListener('click', () => openSnapshot(event, button));
       rail.append(button);
       requestAnimationFrame(() => drawSnapshot(button.querySelector('canvas'), event, index));
@@ -836,7 +917,7 @@
       } else {
         const rainLabel = day.rain < .1 ? 'Dry' : `${day.rain.toFixed(day.rain < 10 ? 1 : 0)} mm`;
         const rainWidth = day.rain < .1 ? 0 : clamp(day.rain / 15 * 100, 5, 100);
-        row.innerHTML = `<span class="day-name"><b>${index === 0 ? 'Today' : dayName(day.date)}</b><small>${monthDay(day.date)}</small></span><span class="day-icon">${day.weather.glyph}</span><span class="day-condition">${day.weather.name}${day.gust >= 42 ? ' · windy' : ''}</span><span class="rain-meter"><span><i style="width:${rainWidth}%"></i></span><b>${rainLabel}</b></span><span class="day-temps">${Math.round(day.high)}° <span>${Math.round(day.low)}°</span></span>`;
+        row.innerHTML = `<span class="day-name"><b>${index === 0 ? 'Today' : dayName(day.date)}</b><small>${monthDay(day.date)}</small></span><span class="day-icon">${day.weather.glyph}</span><span class="day-condition">${esc(day.weather.name)}${day.gust >= 42 ? ' · windy' : ''}</span><span class="rain-meter"><span><i style="width:${rainWidth}%"></i></span><b>${rainLabel}</b></span><span class="day-temps">${Math.round(day.high)}° <span>${Math.round(day.low)}°</span></span>`;
       }
       row.addEventListener('click', () => openDay(day));
       list.append(row);
@@ -1000,12 +1081,109 @@
     } catch (_) { return null; }
   }
 
+  const ALERT_RANK = { warning: 3, watch: 2, advisory: 1, statement: 0 };
+
+  function readAlert(feature) {
+    const p = feature?.properties || {};
+    const type = String(p.alert_type || 'statement').toLowerCase();
+    const expires = new Date(p.expiration_datetime || p.event_end_datetime || 0);
+    return {
+      id: p.id || feature?.id || '',
+      type,
+      rank: ALERT_RANK[type] ?? 0,
+      name: p.alert_name_en || p.alert_short_name_en || 'Weather alert',
+      area: p.feature_name_en || '',
+      text: (p.alert_text_en || '').trim(),
+      issued: new Date(p.publication_datetime || p.validity_datetime || 0),
+      ends: new Date(p.event_end_datetime || p.expiration_datetime || 0),
+      expires
+    };
+  }
+
   async function fetchAlerts() {
     const p = state.place;
     try {
-      const data = await fetchJson(`${WEATHER_API}/collections/weather-alerts/items?f=json&limit=20&bbox=${p.lon - 1.6},${p.lat - 1.1},${p.lon + 1.6},${p.lat + 1.1}`, 10000);
-      state.alerts = data.features || [];
+      const data = await fetchJson(`${WEATHER_API}/collections/weather-alerts/items?f=json&limit=40&bbox=${p.lon - 1.6},${p.lat - 1.1},${p.lon + 1.6},${p.lat + 1.1}`, 10000);
+      const now = Date.now();
+      const seen = new Set();
+      state.alerts = (data.features || [])
+        .map(readAlert)
+        // An expired bulletin is not an alert. The feed still carries them.
+        .filter(alert => !Number.isFinite(alert.expires.getTime()) || alert.expires.getTime() > now)
+        .filter(alert => { const key = `${alert.name}|${alert.text.slice(0, 60)}`; if (seen.has(key)) return false; seen.add(key); return true; })
+        .sort((a, b) => b.rank - a.rank || a.ends - b.ends);
     } catch (_) { state.alerts = []; }
+    renderAlerts();
+  }
+
+  function sentenceCase(value) {
+    return value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+  }
+
+  // Warnings are stated plainly. No sirens, no shouting, no red screen.
+  function renderAlerts() {
+    const banner = $('#alert-banner');
+    const list = $('#alert-list');
+    const [first, ...rest] = state.alerts;
+    if (banner) {
+      banner.hidden = !first;
+      if (first) {
+        text('#alert-headline', sentenceCase(first.name));
+        const until = Number.isFinite(first.ends.getTime()) && first.ends.getTime() > Date.now() ? ` · until ${fmtTime(first.ends)}` : '';
+        const more = rest.length ? ` · ${rest.length} more nearby` : '';
+        text('#alert-detail', `Environment Canada${first.area ? ` · ${first.area}` : ''}${until}${more}`);
+      }
+    }
+    if (!list) return;
+    list.innerHTML = '';
+    if (!state.alerts.length) {
+      const empty = document.createElement('article');
+      empty.innerHTML = '<h3>Nothing active nearby</h3><p>Environment Canada has no warnings, watches or statements in effect for this area right now.</p>';
+      list.append(empty);
+      return;
+    }
+    state.alerts.forEach(alert => {
+      const article = document.createElement('article');
+      const when = Number.isFinite(alert.ends.getTime()) && alert.ends.getTime() > Date.now() ? `In effect until ${frameStamp(alert.ends)}` : 'In effect now';
+      article.innerHTML = `<small>${esc(alert.type.toUpperCase())}${alert.area ? ` · ${esc(alert.area)}` : ''}</small><h3>${esc(sentenceCase(alert.name))}</h3><p></p><footer>${esc(when)} · Environment Canada</footer>`;
+      article.querySelector('p').textContent = alert.text || 'Open weather.gc.ca for the full bulletin.';
+      list.append(article);
+    });
+  }
+
+  const AIR_WORDS = [
+    [3, 'Low health risk', 'Air quality is good. Normal outdoor activity is fine for most people.'],
+    [6, 'Moderate health risk', 'Consider easing off strenuous outdoor activity if you notice coughing or throat irritation.'],
+    [10, 'High health risk', 'Reduce or reschedule strenuous outdoor activity, especially if you have heart or breathing trouble.'],
+    [Infinity, 'Very high health risk', 'Avoid strenuous outdoor activity. Keep windows closed if smoke is nearby.']
+  ];
+
+  function airWords(index) {
+    return AIR_WORDS.find(([ceiling]) => index <= ceiling) || AIR_WORDS.at(-1);
+  }
+
+  async function fetchAirQuality() {
+    const p = state.place;
+    try {
+      for (const radius of [0.6, 1.6, 3.5]) {
+        const bbox = `${p.lon - radius},${p.lat - radius},${p.lon + radius},${p.lat + radius}`;
+        const data = await fetchJson(`${WEATHER_API}/collections/aqhi-observations-realtime/items?f=json&limit=20&bbox=${bbox}`, 10000);
+        const features = (data.features || []).filter(item => finite(item.properties?.aqhi) !== null);
+        if (!features.length) continue;
+        const nearestStation = features.sort((a, b) => {
+          const ac = a.geometry?.coordinates || [999, 999];
+          const bc = b.geometry?.coordinates || [999, 999];
+          return ((ac[1] - p.lat) ** 2 + (ac[0] - p.lon) ** 2) - ((bc[1] - p.lat) ** 2 + (bc[0] - p.lon) ** 2);
+        })[0];
+        state.airQuality = {
+          index: Number(nearestStation.properties.aqhi),
+          station: nearestStation.properties.location_name_en || 'Nearby station',
+          observed: new Date(nearestStation.properties.observation_datetime || Date.now())
+        };
+        return state.airQuality;
+      }
+    } catch (_) { }
+    return null;
   }
 
   function numericFrom(value) {
@@ -1073,12 +1251,13 @@
   function renderStoryFacts(frame, value) {
     const facts = $('#story-facts');
     if (!facts) return;
-    if (state.mode !== 'rain' && state.mode !== 'storm') { facts.hidden = true; return; }
+    if (!isRadarMode()) { facts.hidden = true; return; }
     const target = frame?.time ? new Date(frame.time) : new Date();
     const official = nearestCitySnapshot(target);
     const blend = blendedAt(target);
     facts.hidden = false;
-    text('#story-value-label', frame?.kind === 'nowcast' ? 'NOWCAST AT THIS POINT' : 'OBSERVED AT THIS POINT');
+    const where = String(state.place.name || 'your location').slice(0, 28).toUpperCase();
+    text('#story-value-label', `${frame?.kind === 'nowcast' ? 'PROJECTED AT' : 'OBSERVED AT'} ${where}`);
     const pending = state.frameValue?.pending;
     text('#story-value', pending ? 'Rate still resolving' : value === undefined ? 'Point value unavailable' : value === null ? 'No radar return' : `${value < .05 ? '0' : value.toFixed(value < 10 ? 1 : 0)} mm/h`);
     text('#story-official', officialWeatherLabel(official));
@@ -1086,7 +1265,7 @@
   }
 
   async function updateFrameExplanation(frame) {
-    if (!frame || (state.mode !== 'rain' && state.mode !== 'storm')) return;
+    if (!frame || !isRadarMode()) return;
     const key = frameKey(frame);
     const token = ++state.frameExplanationToken;
     if (state.playing) {
@@ -1110,9 +1289,11 @@
     const future = state.frames.filter(frame => frame.kind === 'nowcast').slice(0, 4);
     const current = observed ? await featureInfo(observed) : null;
     if (current != null && current > .08) return { state: 'now', label: 'over you now', detail: 'Observed radar detects precipitation at the selected point.' };
-    for (const frame of future) {
-      const value = await featureInfo(frame);
+    const values = await Promise.all(future.map(frame => featureInfo(frame).catch(() => undefined)));
+    for (let index = 0; index < future.length; index += 1) {
+      const value = values[index];
       if (value != null && value > .08) {
+        const frame = future[index];
         const minutes = Math.max(0, Math.round((new Date(frame.time).getTime() - Date.now()) / 60000));
         return { state: 'approaching', label: minutes < 15 ? 'within 15 minutes' : `in about ${Math.max(10, minutes - 10)}–${minutes + 10} minutes`, detail: 'The official radar extrapolation reaches the selected point.' };
       }
@@ -1123,14 +1304,35 @@
   function updateStory() {
     if (state.selectedSnapshot) return;
     const frame = state.frames[state.frameIndex];
-    if (state.mode !== 'rain' && state.mode !== 'storm') {
+    if (!isRadarMode()) {
       const facts = $('#story-facts');
       if (facts) facts.hidden = true;
       const config = MODES[state.mode];
-      text('#story-source', 'FORECAST GUIDANCE');
-      text('#story-time', frame?.time ? frameStamp(frame.time) : 'LATEST');
+      text('#story-source', config.source.toUpperCase());
+      text('#story-time', config.observed ? 'LATEST READING' : 'FORECAST');
+      if (state.radar.state !== 'ok') {
+        text('#story-title', `${config.label} is delayed.`);
+        text('#story-copy', 'The map layer did not arrive, but the forecast below is unaffected. Tap the status chip to try again.');
+        return;
+      }
+      if (state.mode === 'air' && state.airQuality) {
+        const [, headline, advice] = airWords(state.airQuality.index);
+        text('#story-title', `Air quality is ${state.airQuality.index}. ${headline}.`);
+        text('#story-copy', `${advice} Measured at ${state.airQuality.station}.`);
+        return;
+      }
+      if (state.mode === 'smoke') {
+        text('#story-title', 'Where wildfire smoke is expected.');
+        text('#story-copy', 'Shaded areas show forecast fine particles from active wildfires. Darker means thicker smoke near the ground.');
+        return;
+      }
+      if (state.mode === 'temp') {
+        text('#story-title', 'Temperature across the province.');
+        text('#story-copy', 'High-resolution guidance a couple of hours ahead. Cooler colours are colder air.');
+        return;
+      }
       text('#story-title', config.label);
-      text('#story-copy', state.radar.state === 'ok' ? 'Official model guidance is displayed over the selected area.' : 'The map layer is delayed, but the forecast cards remain available.');
+      text('#story-copy', 'Official guidance is displayed over the selected area.');
       return;
     }
     text('#story-source', frame?.kind === 'nowcast' ? 'RADAR NOWCAST' : state.mode === 'storm' ? 'RADAR + LIGHTNING' : 'OBSERVED RADAR');
@@ -1178,16 +1380,16 @@
     $$('.snapshot-card').forEach(item => item.classList.toggle('selected', item === button));
     state.selectedSnapshot = event;
     text('#details-title', event.title);
-    text('#detail-change-title', event.when);
-    text('#detail-change-copy', event.copy);
+    text('#detail-radar-title', event.when);
+    text('#detail-radar-copy', event.copy);
     openSheet('details-sheet');
   }
 
   function openDay(day) {
     if (day.unavailable) return showToast('This day is not available yet');
     text('#details-title', `${dayName(day.date)}, ${monthDay(day.date)}`);
-    text('#detail-change-title', `${day.weather.name} · ${day.rain < .1 ? 'little meaningful rain' : `${day.rain.toFixed(day.rain < 10 ? 1 : 0)} mm guidance blend`}`);
-    text('#detail-change-copy', `High near ${Math.round(day.high)}°, low near ${Math.round(day.low)}°, with blended gusts peaking around ${Math.round(day.gust)} km/h.`);
+    text('#detail-radar-title', `${day.weather.name} · ${day.rain < .1 ? 'little meaningful rain' : `${day.rain.toFixed(day.rain < 10 ? 1 : 0)} mm across the guidance blend`}`);
+    text('#detail-radar-copy', `High near ${Math.round(day.high)}°, low near ${Math.round(day.low)}°, with blended gusts peaking around ${Math.round(day.gust)} km/h.`);
     openSheet('details-sheet');
   }
 
@@ -1202,6 +1404,7 @@
     $$('.sheet').forEach(sheet => { sheet.hidden = true; });
     document.body.style.overflow = '';
     state.selectedSnapshot = null;
+    $$('.snapshot-card').forEach(item => item.classList.remove('selected'));
     text('#details-title', 'What SkyMap is seeing');
     renderDetails();
   }
@@ -1214,7 +1417,7 @@
       const button = document.createElement('button');
       button.type = 'button';
       button.className = Math.abs(place.lat - state.place.lat) < .01 && Math.abs(place.lon - state.place.lon) < .01 ? 'active' : '';
-      button.innerHTML = `<span><b>${place.name}</b><small>${place.lat.toFixed(2)}, ${place.lon.toFixed(2)}</small></span><i>${button.className ? '✓' : '›'}</i>`;
+      button.innerHTML = `<span><b>${esc(place.name)}</b><small>${place.lat.toFixed(2)}, ${place.lon.toFixed(2)}</small></span><i>${button.className ? '✓' : '›'}</i>`;
       button.addEventListener('click', () => setPlace(place));
       grid.append(button);
     });
@@ -1232,6 +1435,9 @@
     state.cityWeatherKey = '';
     state.frames = [];
     state.arrival = null;
+    state.airQuality = null;
+    state.alerts = [];
+    renderAlerts();
     MODELS.forEach(readCachedModel);
     renderForecast();
     await refreshAll(true);
@@ -1273,14 +1479,14 @@
     if (button) button.disabled = true;
     text('#model-status', 'Refreshing guidance');
     const radarPromise = refreshVisibleMap(forceRadar).then(async () => {
-      if (state.mode === 'rain' || state.mode === 'storm') {
+      if (isRadarMode()) {
         state.arrival = await probeArrival().catch(() => null);
         renderForecast();
         updateStory();
       }
     });
     const forecastPromise = refreshForecastSources(refreshId);
-    const contextPromise = Promise.allSettled([fetchObservation(), fetchAlerts(), fetchCityWeather(forceRadar)]).then(() => { if (refreshId === state.refreshId) renderForecast(); });
+    const contextPromise = Promise.allSettled([fetchObservation(), fetchAlerts(), fetchAirQuality(), fetchCityWeather(forceRadar)]).then(() => { if (refreshId === state.refreshId) renderForecast(); });
     await Promise.allSettled([radarPromise, forecastPromise, contextPromise]);
     if (refreshId === state.refreshId && button) button.disabled = false;
   }
@@ -1305,7 +1511,7 @@
     $('#forecast-details-button')?.addEventListener('click', () => openSheet('details-sheet'));
     $('#radar-state')?.addEventListener('click', () => state.radar.state === 'ok' ? openSheet('details-sheet') : refreshVisibleMap(true));
     $('#play-button')?.addEventListener('click', playRadar);
-    $('#timeline')?.addEventListener('input', event => { stopPlayback(); showRadarFrame(Number(event.target.value), true); });
+    $('#alert-banner')?.addEventListener('click', () => { renderAlerts(); openSheet('alerts-sheet'); });
     $('#locate-button')?.addEventListener('click', () => {
       if (!navigator.geolocation) return showToast('Location is unavailable on this device');
       navigator.geolocation.getCurrentPosition(position => setPlace({ name: 'My location', lat: position.coords.latitude, lon: position.coords.longitude, zoom: 9 }), () => showToast('Location permission was not granted'), { enableHighAccuracy: true, timeout: 12000 });
@@ -1321,13 +1527,27 @@
     window.addEventListener('online', () => refreshAll(false));
     window.addEventListener('offline', () => { setRadarState(state.weatherOverlay ? 'stale' : 'warn', 'Offline', state.weatherOverlay ? 'Showing the last successful image' : 'Forecast cache remains available'); showToast('Offline · showing saved weather'); });
     window.addEventListener('resize', () => state.snapshots.forEach((event, index) => { const canvas = $$('.snapshot-card canvas')[index]; if (canvas) drawSnapshot(canvas, event, index); }));
-    document.addEventListener('keydown', event => { if (event.key === 'Escape') closeSheets(); });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') return closeSheets();
+      if (!isRadarMode()) return;
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        if (!$('#timeline')?.contains(document.activeElement)) return;
+        event.preventDefault();
+        stopPlayback();
+        const next = clamp(state.frameIndex + (event.key === 'ArrowRight' ? 1 : -1), 0, state.frames.length - 1);
+        showRadarFrame(next, true);
+        $$('#timeline .tick')[next]?.focus();
+      }
+    });
     window.SkyMapBack = () => { if (!$('.sheet:not([hidden])')) return false; closeSheets(); return true; };
   }
 
   async function start() {
     bindEvents();
     renderLocations();
+    renderLegend();
+    setRibbonMode(isRadarMode());
+    renderAlerts();
     text('#location-name', state.place.name);
     await loadVersion();
     initMap();
