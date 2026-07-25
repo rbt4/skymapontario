@@ -42,7 +42,7 @@ public final class UpdateCheckWorker extends Worker {
             JSONObject release = new JSONObject(readText(RELEASE_URL, 64 * 1024));
             int remoteCode = release.optInt("versionCode", 0);
             String remoteVersion = release.optString("version", String.valueOf(remoteCode));
-            if (remoteCode <= BuildConfig.VERSION_CODE) {
+            if (remoteCode <= UpdateManager.currentVersionCode(context)) {
                 UpdateManager.clearPending(context.getSharedPreferences(UpdateManager.PREFS, Context.MODE_PRIVATE), true);
                 return Result.success();
             }
