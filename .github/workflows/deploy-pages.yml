@@ -1,52 +1,180 @@
-name: Materialize SkyMap 14.2.1 Continuity
+name: Build and deploy SkyMap Ontario
 
 on:
+  push:
+    branches: [main]
   pull_request:
-    types: [synchronize, reopened]
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: skymap-release-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  materialize:
-    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'release/14.2.1-security'
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          ref: release/14.2.1-security
           fetch-depth: 0
 
-      - name: Reconstruct exact Continuity bundle
-        shell: bash
-        run: |
-          set -euo pipefail
-          cp .github/workflows/deploy-pages.yml /tmp/materializer.yml
-          cat .release-continuity-upload/part-* | base64 --decode > /tmp/skymap-14.2.1-continuity.zip
-          echo 'd54b61865cc870688b968c8d139334db3be83ea779de8139838c7b3f480f7598  /tmp/skymap-14.2.1-continuity.zip' | sha256sum -c -
-          test "$(unzip -Z1 /tmp/skymap-14.2.1-continuity.zip | grep -v '/$' | wc -l | tr -d ' ')" = '17'
-          unzip -oq /tmp/skymap-14.2.1-continuity.zip -d .
-          rm -f scripts/configure-release-signing.sh
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
 
-      - name: Validate public APK continuity contract
-        shell: bash
+      - name: Align and validate the readable release source
         run: |
-          set -euo pipefail
           node scripts/prepare-release.mjs
-          node scripts/validate-release.mjs
-          node --check app/app.js
-          node --check app/sw.js
           node --check assets/site.js
-          echo '70fc1f50ba731049dbd623f61fbe31449838dbfa16a362c26e9b62c0d2b4c0e2  android/app/signing/skymap-public-release.jks' | sha256sum -c -
+          node --check app/app.js
+          node scripts/validate-release.mjs
+          grep -q "android.useAndroidX=true" gradle.properties
 
-      - name: Commit verified non-workflow release files
+      - name: Verify every live source used by the product
+        run: node scripts/check-live-sources.mjs
+
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+
+      - name: Install Android SDK
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools" >/dev/null
+
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
+
+      - name: Verify public continuity signing key
         shell: bash
         run: |
           set -euo pipefail
-          cp /tmp/materializer.yml .github/workflows/deploy-pages.yml
-          rm -rf .release-continuity-upload
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git commit -m 'SkyMap 14.2.1 — Continuity'
-          git push origin HEAD:release/14.2.1-security
+          echo '70fc1f50ba731049dbd623f61fbe31449838dbfa16a362c26e9b62c0d2b4c0e2  android/app/signing/skymap-public-release.jks' | sha256sum -c -
+          keytool -list -v \
+            -keystore android/app/signing/skymap-public-release.jks \
+            -storepass skymap-public-release \
+            -alias skymap-public | tee /tmp/public-key.txt
+          grep -q 'SkyMap Ontario Public Release' /tmp/public-key.txt
+          grep -q 'A3:E8:72:DE:44:85:50:E7:57:54:DE:D7:32:B9:4A:40:3A:5F:D2:16:B1:7B:A0:A8:0C:9D:74:F4:F5:E4:E3:44' /tmp/public-key.txt
+
+      - name: Build Android release APK
+        id: gradle_build
+        continue-on-error: true
+        run: ./gradlew :android-app:assembleRelease --stacktrace --no-daemon --console=plain > /tmp/skymap-gradle.log 2>&1
+
+      - name: Upload Gradle diagnostic
+        if: steps.gradle_build.outcome == 'failure'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: SkyMap-Gradle-Diagnostic
+          path: /tmp/skymap-gradle.log
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Stop after concise Gradle failure
+        if: steps.gradle_build.outcome == 'failure'
+        run: |
+          tail -n 180 /tmp/skymap-gradle.log
+          exit 1
+
+      - name: Verify release APK, signer, updater and packaged experience
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=android/app/build/outputs/apk/release/android-app-release.apk
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -P 16 -v 4 "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK" | tee /tmp/apksigner.txt
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee /tmp/badging.txt
+          grep -q "versionCode='${SKYMAP_VERSION_CODE}'" /tmp/badging.txt
+          grep -q "versionName='${SKYMAP_VERSION}'" /tmp/badging.txt
+          if grep -q '^application-debuggable' /tmp/badging.txt; then
+            echo 'Release APK is debuggable' >&2
+            exit 1
+          fi
+
+          ACTUAL_CERT_SHA256="$(awk -F': ' '/Signer #1 certificate SHA-256 digest:/ {print $2; exit}' /tmp/apksigner.txt | tr -d ':[:space:]' | tr '[:lower:]' '[:upper:]')"
+          test "$ACTUAL_CERT_SHA256" = 'A3E872DE448550E75754DED732B94A403A5FD216B17BA0A80C9D74F4F5E4E344'
+          grep -q 'SkyMap Ontario Public Release' /tmp/apksigner.txt
+
+          rm -rf /tmp/apk-inspect && mkdir /tmp/apk-inspect
+          unzip -q "$APK" -d /tmp/apk-inspect
+          grep -q 'WEATHER SNAPSHOTS' /tmp/apk-inspect/assets/index.html
+          grep -q '7-DAY FORECAST' /tmp/apk-inspect/assets/index.html
+          grep -q 'id="alert-banner"' /tmp/apk-inspect/assets/index.html
+          grep -q 'id="map-legend"' /tmp/apk-inspect/assets/index.html
+          grep -q 'Content-Security-Policy' /tmp/apk-inspect/assets/index.html
+          grep -q 'renderAlerts' /tmp/apk-inspect/assets/app.js
+          grep -q 'aqhi-observations-realtime' /tmp/apk-inspect/assets/app.js
+          grep -q 'dark_only_labels' /tmp/apk-inspect/assets/app.js
+          grep -q 'Promise.allSettled' /tmp/apk-inspect/assets/app.js
+          grep -q 'NATIVE_GEOMET' /tmp/apk-inspect/assets/app.js
+          grep -q 'NativeBridge' /tmp/apk-inspect/assets/app.js
+          grep -q "${SKYMAP_VERSION}" /tmp/apk-inspect/assets/version.json
+          strings /tmp/apk-inspect/classes*.dex > /tmp/classes.txt
+          grep -q 'geomet-proxy' /tmp/classes.txt
+          grep -q 'SkyMapNative' /tmp/classes.txt
+          grep -q 'UpdateCheckWorker' /tmp/classes.txt
+          grep -q 'SkyMap-Ontario-latest.apk.sha256' /tmp/classes.txt
+
+      - name: Prepare public website and release files
+        run: |
+          mkdir -p release _site/assets _site/app _site/download
+          APK=android/app/build/outputs/apk/release/android-app-release.apk
+          cp "$APK" "release/${SKYMAP_APK}"
+          (cd release && sha256sum "${SKYMAP_APK}" > "${SKYMAP_APK}.sha256")
+          cp "release/${SKYMAP_APK}" release/SkyMap-Ontario-latest.apk
+          cp "release/${SKYMAP_APK}.sha256" release/SkyMap-Ontario-latest.apk.sha256
+          cp index.html privacy.html version.json _site/
+          cp assets/site.css assets/site.js _site/assets/
+          cp -a app/. _site/app/
+          cp "release/${SKYMAP_APK}" "release/${SKYMAP_APK}.sha256" release/SkyMap-Ontario-latest.apk release/SkyMap-Ontario-latest.apk.sha256 _site/download/
+          node - <<'NODE'
+          const fs = require('fs');
+          const version = JSON.parse(fs.readFileSync('version.json'));
+          fs.writeFileSync('_site/release.json', JSON.stringify({ ...version, commit: process.env.GITHUB_SHA, runId: process.env.GITHUB_RUN_ID, completedAt: new Date().toISOString() }, null, 2));
+          NODE
+          touch _site/.nojekyll
+          test -f _site/index.html
+          test -f _site/app/app.js
+          test -f "_site/download/${SKYMAP_APK}"
+          test -f _site/download/SkyMap-Ontario-latest.apk.sha256
+          test ! -f _site/.build/skymap13/chunk-00
+
+      - name: Upload public release artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: SkyMap-Ontario-${{ env.SKYMAP_VERSION }}
+          path: release/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload public Pages artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: _site
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+
+      - name: Deploy SkyMap Ontario
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
