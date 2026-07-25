@@ -48,6 +48,6 @@ jobs:
           git add -A
           test ! -e .release-upload
           test ! -e .github/workflows/materialize-14.2.0.yml
-          test "$(git diff --name-only origin/main...HEAD -- | wc -l | tr -d ' ')" = '20'
+          test "$(git diff --cached --name-only origin/main -- | wc -l | tr -d ' ')" = '20'
           git commit -m 'SkyMap 14.2.0 — Plain Sight'
           git push origin HEAD:release/14.2.0
