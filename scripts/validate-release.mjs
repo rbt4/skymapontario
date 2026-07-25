@@ -102,8 +102,6 @@ assert(androidManifest.includes('android:allowBackup="false"'), 'Cached weather 
 // --- 14.2.1 continuity and security guarantees ----------------------------
 assert(version.version === '14.2.1' && version.versionCode === 14021, 'Release version is not 14.2.1 / 14021');
 assert(version.releaseName === 'Continuity', 'Release name is not Continuity');
-
-// Release build hardening remains real even though the signing key is public.
 assert(buildGradle.includes("storeFile file('signing/skymap-public-release.jks')"), 'Public continuity keystore is not attached');
 assert(buildGradle.includes("storePassword 'skymap-public-release'"), 'Public keystore credentials are not explicit');
 assert(buildGradle.includes('signingConfig signingConfigs.release'), 'Release signing configuration is not attached');
@@ -119,7 +117,6 @@ assert(workflow.includes('A3E872DE448550E75754DED732B94A403A5FD216B17BA0A80C9D74
 assert(workflow.includes("grep -q '^application-debuggable'"), 'CI does not reject debuggable APKs');
 assert(crypto.createHash('sha256').update(publicKey).digest('hex') === '70fc1f50ba731049dbd623f61fbe31449838dbfa16a362c26e9b62c0d2b4c0e2', 'Committed public keystore bytes changed');
 
-// Privileged native methods remain origin-scoped and asynchronous.
 assert(!mainActivity.includes('addJavascriptInterface'), 'Unscoped addJavascriptInterface returned');
 assert(mainActivity.includes('WebViewCompat.addWebMessageListener'), 'Origin-scoped WebMessage listener is missing');
 assert(mainActivity.includes('Set.of(APP_ORIGIN)'), 'Native bridge origin allowlist is missing');
@@ -140,13 +137,15 @@ assert(application.includes('UpdateManager.promptPendingUpdate(activity)'), 'Rea
 assert(updateManager.includes('PeriodicWorkRequest.Builder(UpdateCheckWorker.class, 12, TimeUnit.HOURS)'), 'Twelve-hour update schedule is missing');
 assert(updateManager.includes('Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES'), 'Unknown-app installer permission flow is missing');
 assert(updateManager.includes('FileProvider.getUriForFile'), 'APK is not shared through FileProvider');
+assert(updateManager.includes('PackageInfo') && updateManager.includes('getLongVersionCode'), 'Installed package version lookup is missing');
+assert(updateWorker.includes('UpdateManager.currentVersionCode(context)'), 'Background updater does not compare against installed package metadata');
+assert(!`${updateManager}\n${updateWorker}`.includes('BuildConfig.VERSION_CODE'), 'Updater incorrectly depends on generated BuildConfig');
 assert(updateWorker.includes('release.json'), 'Updater does not read the published release receipt');
 assert(updateWorker.includes('SkyMap-Ontario-latest.apk'), 'Updater does not download the stable APK URL');
 assert(updateWorker.includes('SkyMap-Ontario-latest.apk.sha256'), 'Updater does not fetch the published checksum');
 assert(updateWorker.includes('downloadVerified') && updateWorker.includes('APK checksum mismatch'), 'Updater does not verify the APK checksum');
 assert(proguard.includes('WeatherRefreshWorker') && proguard.includes('UpdateCheckWorker'), 'R8 keep rules for WorkManager are incomplete');
 
-// The workflow remains immutable and least-privileged.
 const actionRefs = [...workflow.matchAll(/uses:\s*([^\s#]+)/g)].map(match => match[1]);
 assert(actionRefs.length >= 8, 'Expected GitHub Actions references are missing');
 assert(actionRefs.every(ref => /@[0-9a-f]{40}$/.test(ref)), `Mutable GitHub Action reference found: ${actionRefs.find(ref => !/@[0-9a-f]{40}$/.test(ref)) || 'unknown'}`);
@@ -154,8 +153,6 @@ const buildJob = workflow.split('\n  deploy:')[0];
 assert(!buildJob.includes('pages: write') && !buildJob.includes('id-token: write'), 'Build job still holds deployment permissions');
 assert(workflow.includes("if: github.ref == 'refs/heads/main'"), 'Pages deployment is not restricted to main');
 assert(workflow.includes('SkyMap-Ontario-latest.apk.sha256'), 'Public checksum is not deployed');
-
-// The accepted trust trade-off must remain visible, not disguised.
 assert(signingGuide.includes('private signing key') && signingGuide.includes('update continuity, not publisher authenticity'), 'Public signing risk is not documented plainly');
 assert(signingGuide.includes('cannot silently install'), 'Android install-confirmation limitation is not documented');
 assert(!fs.existsSync('scripts/configure-release-signing.sh'), 'Obsolete private-key setup script still exists');
