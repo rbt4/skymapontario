@@ -3,5 +3,6 @@
 **/build/
 _site/
 local.properties
+.private/
 *.jks
 *.keystore

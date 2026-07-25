@@ -1,8 +1,8 @@
 {
   "product": "SkyMap Ontario",
-  "version": "14.1.2",
-  "versionCode": 14012,
-  "releaseName": "Clarity Refined",
+  "version": "14.2.1",
+  "versionCode": 14021,
+  "releaseName": "Trust Boundary",
   "channel": "stable",
   "apkBaseName": "SkyMap-Ontario"
 }

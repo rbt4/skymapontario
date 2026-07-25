@@ -3,10 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#07131f">
+  <meta name="theme-color" content="#05101a">
   <meta name="color-scheme" content="dark">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://geo.weather.gc.ca; connect-src 'self' https://geo.weather.gc.ca https://api.weather.gc.ca https://api.open-meteo.com; manifest-src 'self'; worker-src 'self'">
   <title>SkyMap Ontario</title>
-  <meta name="description" content="Ontario radar, meaningful weather snapshots, and a clear seven-day forecast.">
+  <meta name="description" content="Ontario radar, active weather alerts, air quality, and a clear seven-day forecast.">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="vendor/leaflet.css">
@@ -17,30 +18,36 @@
     <button class="location-button" id="location-button" type="button" aria-label="Choose location">
       <span class="app-mark" aria-hidden="true"><i></i></span>
       <span><small>SKYMAP ONTARIO</small><b id="location-name">Toronto</b></span>
-      <span class="chevron">⌄</span>
+      <span class="chevron" aria-hidden="true">⌄</span>
     </button>
     <div class="current-brief" aria-live="polite">
       <strong id="current-temp">—</strong>
       <span id="current-condition">Loading forecast</span>
     </div>
-    <button class="icon-button" id="layers-button" type="button" aria-label="Change weather layer">
-      <span>◫</span><small>Layers</small>
+    <button class="icon-button" id="layers-button" type="button" aria-label="Change map view">
+      <span aria-hidden="true">◫</span><small>Views</small>
     </button>
   </header>
 
   <main class="app-shell">
-    <section class="radar-card" aria-label="Weather radar">
+    <section class="radar-card" aria-label="Weather map">
       <div id="map" class="map"></div>
       <div class="map-vignette" aria-hidden="true"></div>
 
+      <button class="alert-banner" id="alert-banner" type="button" hidden>
+        <i aria-hidden="true">◆</i>
+        <span><b id="alert-headline">Weather alert in your area</b><small id="alert-detail">Environment Canada</small></span>
+        <em>Read</em>
+      </button>
+
       <button class="radar-state" id="radar-state" type="button" data-state="loading">
-        <i></i>
+        <i aria-hidden="true"></i>
         <span><b id="radar-state-title">Connecting to ECCC radar</b><small id="radar-state-copy">Checking the official feed</small></span>
       </button>
 
       <div class="map-actions">
         <button id="locate-button" type="button" aria-label="Use my location">⌖</button>
-        <button class="recenter-action" id="recenter-button" type="button" aria-label="Recenter map">◎</button>
+        <button id="recenter-button" type="button" aria-label="Recentre the map">◎</button>
         <button id="zoom-in-button" type="button" aria-label="Zoom in">+</button>
         <button id="zoom-out-button" type="button" aria-label="Zoom out">−</button>
       </div>
@@ -50,19 +57,25 @@
         <h1 id="story-title">Building your weather picture.</h1>
         <p id="story-copy">Radar and forecast guidance are loading independently.</p>
         <div class="story-facts" id="story-facts" hidden>
-          <span><small id="story-value-label">AT THIS POINT</small><b id="story-value">Reading radar…</b></span>
+          <span><small id="story-value-label">AT YOUR LOCATION</small><b id="story-value">Reading radar…</b></span>
           <span><small>OFFICIAL NEARBY</small><b id="story-official">Loading forecast…</b></span>
           <span><small>GUIDANCE</small><b id="story-guidance">Connecting…</b></span>
         </div>
-        <button class="change-pill" id="change-pill" type="button" hidden></button>
       </section>
 
-      <div class="playback" aria-label="Radar playback">
+      <div class="map-legend" id="map-legend" aria-label="What the colours mean"></div>
+
+      <div class="timeflow" aria-label="Radar playback">
         <button class="play-button" id="play-button" type="button" aria-label="Play radar"><span>▶</span></button>
-        <div class="playback-main">
-          <div class="playback-readout"><b id="playback-label">NOW</b><span id="playback-clock">—</span><small id="playback-kind">OBSERVED</small></div>
-          <input id="timeline" type="range" min="0" max="0" value="0" step="1" aria-label="Radar timeline">
-          <div class="timeline-legend"><span id="timeline-past">PAST 60M</span><b>NOW</b><span id="timeline-future">NEXT 2H</span></div>
+        <div class="timeflow-main">
+          <div class="timeflow-readout">
+            <b id="playback-label">NOW</b>
+            <span id="playback-clock">—</span>
+            <small id="playback-kind" data-kind="observed">Observed</small>
+          </div>
+          <div class="ribbon" id="timeline" role="group" aria-label="Choose a radar time"></div>
+          <p class="static-time" id="static-time" hidden>Forecast layer · no playback in this view.</p>
+          <div class="ribbon-legend" id="ribbon-legend"><span id="timeline-past">Past hour</span><b>NOW</b><span id="timeline-future">Next 2 hours</span></div>
         </div>
       </div>
     </section>
@@ -73,14 +86,14 @@
         <div class="summary-metric"><strong id="summary-temp">—</strong><span id="summary-range">— / —</span></div>
       </section>
 
-      <section class="section-block moments-block">
-        <header class="section-header"><div><small>WEATHER SNAPSHOTS</small><h2 id="moments-heading">The next meaningful moments</h2></div><button id="forecast-details-button" type="button">Details</button></header>
-        <div class="snapshot-rail" id="snapshot-rail" aria-live="polite"></div>
-      </section>
-
       <section class="section-block daily-block">
         <header class="section-header"><div><small>7-DAY FORECAST</small><h2 id="daily-heading">A clear day-by-day view</h2></div><span class="model-status" id="model-status">Connecting sources</span></header>
         <div class="daily-list" id="daily-list"></div>
+      </section>
+
+      <section class="section-block moments-block">
+        <header class="section-header"><div><small>WEATHER SNAPSHOTS</small><h2 id="moments-heading">The next meaningful moments</h2></div><button id="forecast-details-button" type="button">Details</button></header>
+        <div class="snapshot-rail" id="snapshot-rail" aria-live="polite"></div>
       </section>
 
       <footer class="app-footer">
@@ -102,11 +115,18 @@
     <div class="sheet-handle"></div>
     <header><div><small>MAP VIEW</small><h2 id="layers-sheet-title">Keep radar first. Add context when needed.</h2></div><button class="sheet-close" type="button" aria-label="Close">×</button></header>
     <div class="layer-list" id="layer-list">
-      <button class="active" data-layer="rain" type="button"><span>◒</span><div><b>Rain radar</b><small>Observed radar and the available official short-range nowcast</small></div><i>✓</i></button>
-      <button data-layer="storm" type="button"><span>ϟ</span><div><b>Storms</b><small>Radar with lightning context</small></div><i></i></button>
-      <button data-layer="smoke" type="button"><span>≈</span><div><b>Smoke</b><small>Wildfire-related PM₂.₅ forecast guidance</small></div><i></i></button>
-      <button data-layer="temp" type="button"><span>°</span><div><b>Temperature</b><small>High-resolution temperature field</small></div><i></i></button>
+      <button class="active" data-layer="rain" type="button"><span aria-hidden="true">◒</span><div><b>Rain radar</b><small>Observed radar and the official short-range nowcast</small></div><i>✓</i></button>
+      <button data-layer="storm" type="button"><span aria-hidden="true">ϟ</span><div><b>Storms</b><small>Radar with lightning density on top</small></div><i></i></button>
+      <button data-layer="smoke" type="button"><span aria-hidden="true">≈</span><div><b>Wildfire smoke</b><small>Forecast fine particles from active wildfires</small></div><i></i></button>
+      <button data-layer="air" type="button"><span aria-hidden="true">◍</span><div><b>Air quality</b><small>Observed Air Quality Health Index, 1 to 10+</small></div><i></i></button>
+      <button data-layer="temp" type="button"><span aria-hidden="true">°</span><div><b>Temperature</b><small>High-resolution temperature field</small></div><i></i></button>
     </div>
+  </section>
+
+  <section class="sheet" id="alerts-sheet" hidden aria-modal="true" role="dialog" aria-labelledby="alerts-title">
+    <div class="sheet-handle"></div>
+    <header><div><small>ENVIRONMENT CANADA</small><h2 id="alerts-title">Active alerts near you</h2></div><button class="sheet-close" type="button" aria-label="Close">×</button></header>
+    <div class="alert-list" id="alert-list"></div>
   </section>
 
   <section class="sheet detail-sheet" id="details-sheet" hidden aria-modal="true" role="dialog" aria-labelledby="details-title">
@@ -125,5 +145,6 @@
 
   <script src="vendor/leaflet.js"></script>
   <script src="app.js"></script>
+  <script>if("serviceWorker"in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>
 </body>
 </html>

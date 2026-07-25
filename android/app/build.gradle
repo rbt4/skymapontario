@@ -1,4 +1,28 @@
+import java.util.Properties
+
 plugins { id 'com.android.application' }
+
+final def releaseTaskRequested = gradle.startParameter.taskNames.any { task ->
+    task.toLowerCase(Locale.ROOT).contains('release')
+}
+final def signingPropertiesPath = System.getenv('SKYMAP_SIGNING_PROPERTIES')
+final def signingProperties = new Properties()
+
+if (signingPropertiesPath) {
+    final def signingPropertiesFile = file(signingPropertiesPath)
+    if (!signingPropertiesFile.isFile()) {
+        throw new GradleException("SKYMAP_SIGNING_PROPERTIES does not point to a readable file")
+    }
+    signingPropertiesFile.withInputStream { signingProperties.load(it) }
+}
+
+if (releaseTaskRequested) {
+    final def required = ['storeFile', 'storePassword', 'keyAlias', 'keyPassword']
+    final def missing = required.findAll { !signingProperties.getProperty(it) }
+    if (!signingPropertiesPath || !missing.isEmpty()) {
+        throw new GradleException("Release signing is required. Missing signing configuration: ${missing.join(', ')}")
+    }
+}
 
 android {
     namespace 'ca.skymapontario.app'
@@ -8,17 +32,33 @@ android {
         applicationId 'ca.skymapontario.app'
         minSdk 24
         targetSdk 35
-        versionCode 14012
-        versionName '14.1.2'
+        versionCode 14021
+        versionName '14.2.1'
     }
 
     sourceSets {
         main.assets.srcDirs = ['../../app']
     }
 
+    signingConfigs {
+        release {
+            if (signingPropertiesPath) {
+                storeFile file(signingProperties.getProperty('storeFile'))
+                storePassword signingProperties.getProperty('storePassword')
+                keyAlias signingProperties.getProperty('keyAlias')
+                keyPassword signingProperties.getProperty('keyPassword')
+                storeType signingProperties.getProperty('storeType', 'JKS')
+            }
+        }
+    }
+
     buildTypes {
         release {
-            minifyEnabled false
+            signingConfig signingConfigs.release
+            debuggable false
+            jniDebuggable false
+            minifyEnabled true
+            zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
