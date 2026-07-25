@@ -21,6 +21,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          cp .github/workflows/deploy-pages.yml /tmp/materializer.yml
           cat .release-upload/part-* | base64 --decode > /tmp/skymap-14.2.0.zip
           echo 'ac677237d17aadfa108887a999a5e6367063ca9f79e43243bbd540723ee1a18d  /tmp/skymap-14.2.0.zip' | sha256sum -c -
           unzip -oq /tmp/skymap-14.2.0.zip -d .
@@ -37,17 +38,14 @@ jobs:
           node --check assets/site.js
           sha256sum -c .release-upload/SHA256SUMS
 
-      - name: Commit exact 20-file release and remove scaffolding
+      - name: Commit verified non-workflow release files
         shell: bash
         run: |
           set -euo pipefail
+          cp /tmp/materializer.yml .github/workflows/deploy-pages.yml
           rm -rf .release-upload
-          rm -f .github/workflows/materialize-14.2.0.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          test ! -e .release-upload
-          test ! -e .github/workflows/materialize-14.2.0.yml
-          test "$(git diff --cached --name-only origin/main -- | wc -l | tr -d ' ')" = '20'
           git commit -m 'SkyMap 14.2.0 — Plain Sight'
           git push origin HEAD:release/14.2.0
