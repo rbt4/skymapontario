@@ -1,8 +1,8 @@
 {
   "product": "SkyMap Ontario",
-  "version": "14.1.2",
-  "versionCode": 14012,
-  "releaseName": "Clarity Refined",
+  "version": "14.2.0",
+  "versionCode": 14020,
+  "releaseName": "Plain Sight",
   "channel": "stable",
   "apkBaseName": "SkyMap-Ontario"
 }

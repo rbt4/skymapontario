@@ -15,6 +15,8 @@ Open **Actions → Build and deploy SkyMap Ontario → the newest run → build*
 | Android SDK | Temporary runner or package download problem | Re-run failed jobs once. |
 | Build Android APK | Java/Gradle compilation failed | Download `SkyMap-Gradle-Diagnostic` and read the first compiler error. |
 | Verify APK | Version, signature, alignment, native relay or packaged app source mismatch | Fix the source/build step. Never unzip, edit and repack the APK manually. |
+| Unreadable type returned to the app/site | A font size below 11px was reintroduced | Raise it. The floor is deliberate and is enforced for both `app/app.css` and `assets/site.css`. |
+| A named 14.2 guarantee is missing | The alert banner, legend, air-quality view, label pane, CSP or service worker was removed | Restore the element or function named in the error rather than deleting the assertion. |
 | Upload or Pages deployment | The build may already be valid | Re-run the failed job. Do not rewrite app code for a temporary upload problem. |
 
 ## Versioning

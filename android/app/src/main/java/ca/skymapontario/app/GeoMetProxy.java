@@ -39,7 +39,7 @@ final class GeoMetProxy {
             connection.setInstanceFollowRedirects(true);
             connection.setUseCaches(true);
             connection.setRequestProperty("Accept", "image/png,application/json,application/xml,text/xml,*/*;q=0.8");
-            connection.setRequestProperty("User-Agent", "SkyMapOntario/14.1.2 Android GeoMet Relay");
+            connection.setRequestProperty("User-Agent", "SkyMapOntario/14.2.0 Android GeoMet Relay");
             connection.connect();
 
             int status = connection.getResponseCode();
@@ -61,7 +61,7 @@ final class GeoMetProxy {
                 }
             };
 
-            Map<String, String> headers = flattenHeaders(connection.getHeaderFields());
+            Map<String, String> headers = safeHeaders(connection.getHeaderFields());
             headers.put("Access-Control-Allow-Origin", "https://" + APP_HOST);
             headers.put("X-SkyMap-Transport", "native-geomet-relay");
             return new WebResourceResponse(mime, encoding, status, reason == null || reason.isEmpty() ? (status >= 400 ? "Upstream Error" : "OK") : reason, headers, body);
@@ -84,12 +84,27 @@ final class GeoMetProxy {
         }
     }
 
-    private static Map<String, String> flattenHeaders(@Nullable Map<String, List<String>> source) {
+    /*
+     * Only headers that are still true after relaying are forwarded.
+     * HttpURLConnection has already decompressed the body, so passing the upstream
+     * Content-Encoding or Content-Length through would corrupt every response.
+     * Cookies and authentication headers from an upstream service have no business
+     * reaching the app origin at all.
+     */
+    private static final String[] FORWARDED = { "Content-Type", "Cache-Control", "Expires", "Last-Modified", "ETag" };
+
+    private static Map<String, String> safeHeaders(@Nullable Map<String, List<String>> source) {
         Map<String, String> result = new HashMap<>();
         if (source == null) return result;
         for (Map.Entry<String, List<String>> entry : source.entrySet()) {
-            if (entry.getKey() == null || entry.getValue() == null || entry.getValue().isEmpty()) continue;
-            result.put(entry.getKey(), String.join(", ", entry.getValue()));
+            String key = entry.getKey();
+            if (key == null || entry.getValue() == null || entry.getValue().isEmpty()) continue;
+            for (String allowed : FORWARDED) {
+                if (allowed.equalsIgnoreCase(key)) {
+                    result.put(allowed, String.join(", ", entry.getValue()));
+                    break;
+                }
+            }
         }
         return result;
     }
