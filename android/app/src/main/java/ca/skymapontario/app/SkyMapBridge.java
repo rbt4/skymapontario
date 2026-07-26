@@ -111,13 +111,13 @@ public final class SkyMapBridge {
         Intent send = new Intent(Intent.ACTION_SEND)
                 .setType(mimeType)
                 .putExtra(Intent.EXTRA_STREAM, uri)
-                .setClipData(ClipData.newUri(context.getContentResolver(), "SkyMap weather window", uri))
-                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                .setClipData(ClipData.newUri(context.getContentResolver(), "SkyMap weather window", uri));
+        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         if (shareText != null && !shareText.isEmpty()) {
             send.putExtra(Intent.EXTRA_TEXT, shareText.substring(0, Math.min(2_000, shareText.length())));
         }
-        Intent chooser = Intent.createChooser(send, "Share SkyMap weather")
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Intent chooser = Intent.createChooser(send, "Share SkyMap weather");
+        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(chooser);
     }
 }
