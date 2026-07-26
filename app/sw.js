@@ -2,7 +2,7 @@
    Shell only. Weather never comes from cache — a stale radar frame is worse
    than no radar frame, so every live source goes straight to the network. */
 
-const VERSION = '16.0.0';
+const VERSION = '16.0.1';
 const SHELL = `skymap-shell-${VERSION}`;
 
 const SHELL_FILES = [
@@ -16,10 +16,19 @@ const SHELL_FILES = [
   'vendor/leaflet.js'
 ];
 
+async function cacheFreshShell(cache) {
+  await Promise.all(SHELL_FILES.map(async file => {
+    const separator = file.includes('?') ? '&' : '?';
+    const response = await fetch(`${file}${separator}release=${VERSION}`, { cache: 'reload' });
+    if (!response.ok) throw new Error(`Shell ${file}: HTTP ${response.status}`);
+    await cache.put(file, response);
+  }));
+}
+
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(SHELL)
-      .then(cache => cache.addAll(SHELL_FILES))
+      .then(cacheFreshShell)
       .then(() => self.skipWaiting())
       .catch(() => self.skipWaiting())
   );
@@ -28,8 +37,14 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(key => key !== SHELL).map(key => caches.delete(key))))
-      .then(() => self.clients.claim())
+      .then(async keys => {
+        const stale = keys.filter(key => key.startsWith('skymap-shell-') && key !== SHELL);
+        await Promise.all(stale.map(key => caches.delete(key)));
+        await self.clients.claim();
+        if (!stale.length) return;
+        const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+        await Promise.all(windows.map(client => client.navigate(client.url).catch(() => null)));
+      })
   );
 });
 

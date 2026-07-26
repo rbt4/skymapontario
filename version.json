@@ -1,7 +1,7 @@
 {
   "product": "SkyMap Ontario",
-  "version": "16.0.0",
-  "versionCode": 16000,
+  "version": "16.0.1",
+  "versionCode": 16001,
   "releaseName": "Horizon",
   "channel": "stable",
   "apkBaseName": "SkyMap-Ontario"
