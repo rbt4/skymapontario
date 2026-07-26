@@ -413,18 +413,22 @@ button { border: 0; background: transparent; color: inherit; cursor: pointer; fo
 }
 
 .preview-briefing > small,
-.preview-moment small { color: #287786; font-size: 11px; font-weight: 820; letter-spacing: .12em }
+.preview-path small { color: #287786; font-size: 11px; font-weight: 820; letter-spacing: .12em }
 .preview-now { display: flex; margin-top: 13px; align-items: center; justify-content: space-between; gap: 10px }
 .preview-now h3 { margin: 0; font-size: 20px; font-weight: 710; letter-spacing: -.035em; line-height: 1 }
 .preview-now strong { font-size: 38px; font-weight: 570; letter-spacing: -.06em }
 .preview-briefing > p { margin: 10px 0 19px; color: var(--paper-muted); font-size: 11px; line-height: 1.55 }
 
-.preview-moment { padding: 14px; border-radius: 14px; background: #10231f; color: var(--ink) }
-.preview-moment small { color: var(--radar) }
-.preview-moment b,
-.preview-moment span { display: block }
-.preview-moment b { margin-top: 8px; font-size: 14px }
-.preview-moment span { margin-top: 4px; color: var(--mist); font-size: 11px }
+.preview-path { padding: 13px; border-radius: 14px; background: #10231f; color: var(--ink) }
+.preview-path header { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px }
+.preview-path small { color: var(--radar) }
+.preview-path header b { max-width: 92px; font-size: 11px; font-weight: 680; line-height: 1.25; text-align: right }
+.preview-path > div { display: grid; height: 56px; margin-top: 10px; grid-template-columns: repeat(12, 1fr); align-items: end; gap: 3px; border-bottom: 1px solid rgba(225, 247, 239, .11) }
+.preview-path > div i { display: block; height: 8%; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, var(--radar), #367bea); box-shadow: 0 0 7px rgba(114, 228, 255, .18); transition: height .45s ease, opacity .45s ease; opacity: .42 }
+.preview-path > div i:nth-child(4n + 1) { height: 13% }
+.preview-path footer { display: flex; margin-top: 8px; align-items: center; justify-content: space-between; gap: 8px }
+.preview-path footer b { color: var(--future); font-size: 11px; font-weight: 680 }
+.preview-path footer span { color: var(--dim); font-size: 11px; white-space: nowrap }
 
 .preview-days { display: flex; margin-top: 14px; flex-direction: column }
 .preview-days > span { display: grid; min-height: 49px; padding: 8px 0; grid-template-columns: 1fr 24px 38px 32px; align-items: center; gap: 4px; border-top: 1px solid rgba(20, 32, 30, .11) }
@@ -457,6 +461,12 @@ button { border: 0; background: transparent; color: inherit; cursor: pointer; fo
 .product-preview[data-preview="six"] .preview-time > div > span { background: linear-gradient(90deg, var(--radar) 0 18%, var(--future) 18% 48%, rgba(255, 211, 138, .3) 48%) }
 .product-preview[data-preview="day"] .preview-time > div > span { background: linear-gradient(90deg, var(--radar) 0 8%, var(--future) 8% 16%, #ffd38a 16% 65%, rgba(255, 211, 138, .16) 65%) }
 .product-preview[data-preview="two-day"] .preview-time > div > span { background: linear-gradient(90deg, var(--radar) 0 5%, var(--future) 5% 10%, #ffd38a 10% 92%, rgba(255, 211, 138, .16) 92%) }
+.product-preview[data-preview="six"] .preview-path > div i:nth-child(n + 3):nth-child(-n + 6) { height: 45%; opacity: .8 }
+.product-preview[data-preview="six"] .preview-path > div i:nth-child(5) { height: 76%; opacity: 1 }
+.product-preview[data-preview="day"] .preview-path > div i:nth-child(n + 5):nth-child(-n + 9) { height: 58%; opacity: .86 }
+.product-preview[data-preview="day"] .preview-path > div i:nth-child(7) { height: 92%; opacity: 1 }
+.product-preview[data-preview="two-day"] .preview-path > div i:nth-child(n + 7):nth-child(-n + 11) { height: 42%; opacity: .72 }
+.product-preview[data-preview="two-day"] .preview-path > div i:nth-child(9) { height: 70%; opacity: .9 }
 
 /* Product difference */
 
@@ -624,7 +634,7 @@ button { border: 0; background: transparent; color: inherit; cursor: pointer; fo
   .preview-briefing { min-height: 170px; padding: 17px }
   .preview-briefing > p,
   .preview-days { display: none }
-  .preview-moment { margin-top: 14px }
+  .preview-path { margin-top: 14px }
   .preview-story h2 { font-size: 28px }
   .preview-tabs { padding: 6px }
   .preview-tabs button { padding-inline: 4px; font-size: 11px }

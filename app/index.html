@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#06110f">
   <meta name="color-scheme" content="dark">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://geo.weather.gc.ca; connect-src 'self' https://geo.weather.gc.ca https://api.weather.gc.ca https://api.open-meteo.com; manifest-src 'self'; worker-src 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://geo.weather.gc.ca; connect-src 'self' https://geo.weather.gc.ca https://api.weather.gc.ca https://api.open-meteo.com https://geocoding-api.open-meteo.com; manifest-src 'self'; worker-src 'self'">
   <title>SkyMap Ontario</title>
-  <meta name="description" content="Observed Ontario radar, official nowcast, and a 48-hour HRDPS futurecast checked against the 20-member REPS ensemble.">
+  <meta name="description" content="Observed Ontario radar, official nowcast, a connected 48-hour local weather path, and HRDPS futurecast checked against the 20-member REPS ensemble.">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="vendor/leaflet.css">
@@ -46,6 +46,10 @@
       </symbol>
       <symbol id="icon-expand" viewBox="0 0 24 24">
         <path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/>
+      </symbol>
+      <symbol id="icon-search" viewBox="0 0 24 24">
+        <circle cx="10.5" cy="10.5" r="6.5"/>
+        <path d="m15.5 15.5 5 5"/>
       </symbol>
     </defs>
   </svg>
@@ -155,6 +159,28 @@
         <div class="summary-metric"><strong id="summary-temp">—</strong><span id="summary-range">— / —</span></div>
       </section>
 
+      <section class="section-block path-block" aria-labelledby="weather-path-heading">
+        <header class="section-header path-header">
+          <div><small>NEXT 48 HOURS · AT YOUR POINT</small><h2 id="weather-path-heading">Building your weather path</h2></div>
+          <button id="weather-path-map-button" type="button">Open 48h map</button>
+        </header>
+        <div class="weather-path" id="weather-path" aria-live="polite">
+          <div class="path-insights" id="path-insights">
+            <span><small>NEXT WET WINDOW</small><b>Resolving</b></span>
+            <span><small>PEAK SIGNAL</small><b>Resolving</b></span>
+            <span><small>THEN</small><b>Resolving</b></span>
+          </div>
+          <div class="path-chart-shell">
+            <div class="path-chart" id="path-chart" role="group" aria-label="Three-hour weather windows through the next 48 hours"></div>
+          </div>
+          <footer class="path-footer">
+            <span><i aria-hidden="true"></i>3-hour precipitation</span>
+            <span><i aria-hidden="true"></i>temperature</span>
+            <b id="path-source-note">Guidance models are connecting</b>
+          </footer>
+        </div>
+      </section>
+
       <section class="section-block moments-block">
         <header class="section-header">
           <div><small>NOW · NEXT · USEFUL</small><h2 id="moments-heading">The next meaningful moments</h2></div>
@@ -183,6 +209,16 @@
   <section class="sheet" id="location-sheet" hidden aria-modal="true" role="dialog" aria-labelledby="location-sheet-title">
     <div class="sheet-handle"></div>
     <header><div><small>LOCATION</small><h2 id="location-sheet-title">Where should SkyMap watch?</h2></div><button class="sheet-close" type="button" aria-label="Close">×</button></header>
+    <div class="location-search">
+      <label for="location-search-input">
+        <svg aria-hidden="true"><use href="#icon-search"></use></svg>
+        <input id="location-search-input" type="search" inputmode="search" autocomplete="off" maxlength="80" placeholder="Search any Ontario city or town">
+        <span aria-hidden="true">SEARCH</span>
+      </label>
+      <p id="location-search-status">Search by place name, or choose a quick location below.</p>
+      <div class="location-results" id="location-search-results" aria-live="polite"></div>
+    </div>
+    <div class="location-divider"><span>QUICK LOCATIONS</span></div>
     <div class="location-grid" id="location-grid"></div>
   </section>
 
@@ -212,6 +248,7 @@
       <article><small>FORECAST GUIDANCE</small><h3 id="detail-model-title">Waiting for guidance</h3><p id="detail-model-copy">Official city forecasts and model guidance load independently.</p></article>
       <article><small>ENSEMBLE SIGNAL</small><h3 id="detail-ensemble-title">Waiting for a futurecast frame</h3><p id="detail-ensemble-copy">Official REPS probabilities test whether the deterministic map has ensemble support.</p></article>
       <article><small>WHAT CHANGED</small><h3 id="detail-change-title">First forecast of this session</h3><p id="detail-change-copy">SkyMap will compare this forecast with the next fresh update.</p></article>
+      <article class="path-receipt"><small>48-HOUR WEATHER PATH</small><h3>Local timing, connected to the map</h3><p>Each bar is a three-hour precipitation amount from the weighted guidance blend—not a probability. Tap a window and SkyMap opens the nearest official HRDPS map hour, where REPS probability is reported separately.</p></article>
     </div>
     <div class="model-list" id="model-list"></div>
     <button class="primary-action" id="details-refresh-button" type="button">Refresh weather sources</button>

@@ -7,11 +7,11 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'">
   <meta name="color-scheme" content="dark">
   <title>SkyMap Ontario — Weather, moving toward you</title>
-  <meta name="description" content="Observed Ontario radar, official short-range nowcast, and a 48-hour HRDPS futurecast checked against the 20-member REPS ensemble.">
+  <meta name="description" content="Observed Ontario radar, official short-range nowcast, a tappable 48-hour local weather path, and HRDPS futurecast checked against the 20-member REPS ensemble.">
   <link rel="canonical" href="https://rbt4.github.io/skymapontario/">
   <meta property="og:type" content="website">
   <meta property="og:title" content="SkyMap Ontario — Weather, moving toward you">
-  <meta property="og:description" content="Measured radar now. HRDPS futurecast checked against the official REPS ensemble through 48 hours.">
+  <meta property="og:description" content="Measured radar now. A clear local weather path next. HRDPS futurecast checked against the official REPS ensemble through 48 hours.">
   <meta property="og:url" content="https://rbt4.github.io/skymapontario/">
   <link rel="icon" href="app/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/site.css">
@@ -41,7 +41,7 @@
       <div class="hero-copy">
         <div class="eyebrow"><i></i><span>MEASURED NOW · ENSEMBLE-GUIDED TO 48 HOURS</span></div>
         <h1>Weather,<br><em>moving toward you.</em></h1>
-        <p>SkyMap joins measured ECCC radar, the official short-range nowcast and the 2.5 km HRDPS futurecast—then checks that forecast against the 20-member REPS ensemble at your location.</p>
+        <p>See what is happening, what reaches your point next, and how the next 48 hours unfold. SkyMap keeps the source and confidence visible as measured radar gives way to official forecast guidance.</p>
         <div class="hero-actions">
           <a class="button primary" href="app/">Open the live map <span>↗</span></a>
           <a class="button secondary" data-apk href="download/SkyMap-Ontario-latest.apk">Download Android <span>↓</span></a>
@@ -49,7 +49,7 @@
         <div class="hero-proof">
           <span><i>01</i><b>Measured radar</b></span>
           <span><i>02</i><b>Radar nowcast</b></span>
-          <span><i>03</i><b>HRDPS + REPS signal</b></span>
+          <span><i>03</i><b>Your 48h weather path</b></span>
         </div>
       </div>
 
@@ -84,7 +84,11 @@
             <small>YOUR WEATHER BRIEFING</small>
             <div class="preview-now"><h3>Mostly cloudy</h3><strong>22°</strong></div>
             <p>Dry at this point now. Guidance keeps the next few hours quiet.</p>
-            <div class="preview-moment"><small>FORECAST SIGNAL</small><b>Models converging</b><span>REPS checks the map</span></div>
+            <div class="preview-path">
+              <header><small>YOUR NEXT 48 HOURS</small><b data-preview-path>Quiet through tonight</b></header>
+              <div aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              <footer><b data-preview-peak>No strong wet window</b><span data-preview-then>Radar stays live</span></footer>
+            </div>
             <div class="preview-days">
               <span><b>Today</b><i>○</i><em>26°</em><small>16°</small></span>
               <span><b>Sun</b><i>○</i><em>28°</em><small>18°</small></span>
@@ -120,7 +124,7 @@
         </article>
         <article>
           <span>CONVERGENCE</span>
-          <div><h3>See the forecast—and whether it has support.</h3><p>Hourly 2.5 km HRDPS precipitation draws the two-day map. Official 20-member REPS probabilities reveal whether the broader forecast signal agrees at your point.</p></div>
+          <div><h3>See your weather path—and whether it has support.</h3><p>A connected 48-hour path shows when a wet window starts, peaks and eases. Hourly 2.5 km HRDPS draws the map; official 20-member REPS probabilities test the broader signal at your point.</p></div>
           <b>03</b>
         </article>
       </div>

@@ -31,6 +31,7 @@ assert(Number.isInteger(version.versionCode), 'versionCode must be an integer');
 assert(appVersion.version === version.version && appVersion.versionCode === version.versionCode, 'Web app version is not aligned');
 assert(appJs.includes(`version: '${version.version}'`), 'Web app fallback version is not aligned');
 assert(site.includes('Weather,<br><em>moving toward you.</em>'), 'Radar-first hero is missing');
+assert(site.includes('class="preview-path"') && siteJs.includes('[data-preview-path]'), 'Landing preview no longer demonstrates the connected weather path');
 assert(!site.includes('<iframe'), 'Landing page must not embed the full app');
 assert((site.match(/ko-fi\.com\/rbt4dev/g) || []).length >= 3, 'Ko-fi support must remain visible');
 assert(site.includes('data-apk'), 'Public APK link is missing');
@@ -45,7 +46,8 @@ assert(!app.includes('id="zoom-in-button"') && !app.includes('id="zoom-out-butto
 assert(app.includes('ko-fi.com/rbt4dev'), 'Restrained in-app support link is missing');
 assert(appCss.includes('grid-template-columns: minmax(0, 1.62fr)'), 'Desktop map/forecast layout is missing');
 assert(appCss.includes('@media (max-width: 980px)'), 'Mobile layout is missing');
-assert(appCss.includes('.snapshot-rail {\n  display: grid;\n  grid-template-columns: 1fr;'), 'Desktop snapshot cards can overflow their briefing column');
+assert(appCss.includes('grid-template-columns: repeat(2, minmax(0, 1fr));') && appCss.includes('.snapshot-card:first-child { min-height: 182px; grid-column: 1 / -1 }'), 'Desktop snapshot mosaic is missing or can overflow its briefing column');
+assert(appCss.includes('grid-auto-flow: column') && appCss.includes('grid-column: auto'), 'Mobile snapshot rail does not restore a swipeable, unclipped flow');
 assert(app.includes('class="map-mode-rail"') && (app.match(/data-map-mode=/g) || []).length === 5, 'Direct map-view rail is missing');
 assert(app.includes('id="focus-button"') && appJs.includes('setMapFocus'), 'Laptop map-focus mode is missing');
 assert(app.indexOf('id="snapshot-rail"') < app.indexOf('id="daily-list"'), 'Meaningful snapshots must appear before the full week');
@@ -63,6 +65,8 @@ assert(appJs.includes("replace(/\\.\\d{3}Z$/, 'Z')"), 'WMS timestamps may still 
 assert(appJs.includes('Point value unavailable'), 'Failed point queries are not distinguished from zero rain');
 assert(appJs.includes('fetchCompleteJson'), 'Point queries are not protected through complete response parsing');
 assert(appJs.includes('pointValueRequests'), 'Duplicate point queries are not coalesced');
+assert(appJs.includes('!cached.error') && appJs.includes('function scheduleTimelineRecovery') && appJs.includes('metadataRecoveryAttempts >= 3'), 'Transient GeoMet metadata failures can still strand the timeline');
+assert(appJs.includes('Radar is visible. Timeline details are reconnecting.'), 'Latest-image fallback still presents transient metadata loss as a dead radar');
 assert(appJs.includes("formatWmsTime(frame.referenceTime)"), 'Point-query reference times may still include unsupported milliseconds');
 assert(appJs.includes('await updateFrameExplanation(frame)'), 'The selected point must resolve before arrival probing begins');
 assert(appJs.includes('function frameStamp'), 'Selected radar date-and-time label is missing');
@@ -88,6 +92,14 @@ assert(appJs.includes('void prefetchFrameSignal(frame)'), 'Selected future evide
 assert(appJs.includes('A timestamped forecast must never silently degrade'), 'Timestamp precision guard is missing');
 assert(appJs.includes('function openSnapshot') && appJs.includes('shown on the weather map'), 'Forecast moments do not connect back to the map');
 assert(appJs.includes('function weatherIconMarkup') && app.includes('class="svg-defs"'), 'Code-native weather graphics are missing');
+assert(app.includes('id="weather-path"') && app.includes('id="path-chart"') && app.indexOf('id="weather-path"') < app.indexOf('id="snapshot-rail"'), 'Connected 48-hour weather path is missing or misplaced');
+assert(appJs.includes('function buildWeatherPath') && appJs.includes('function renderWeatherPath') && appJs.includes('function openWeatherPathPoint'), 'Weather-path calculation or map connection is missing');
+assert(appJs.includes("scrubber.type = 'range'") && appJs.includes('markWeatherPathPoint'), 'Weather path is no longer one large tap, drag, and keyboard target');
+assert(appJs.includes('amount, not probability'), 'Weather-path model support can be mistaken for probability');
+assert(app.includes('id="location-search-input"') && app.includes('Search any Ontario city or town'), 'Ontario place search is missing');
+assert(appJs.includes('GEOCODE_API') && appJs.includes('searchOntarioLocations') && appJs.includes("result.admin1 || '').toLowerCase() === 'ontario'"), 'Ontario-only place search guard is missing');
+assert(app.includes('https://geocoding-api.open-meteo.com'), 'Place-search endpoint is blocked by app CSP');
+assert(appCss.includes('.story-facts span:nth-child(3) { display: flex;'), 'Futurecast confidence disappears on phones');
 assert((app.match(/\sid="([^"]+)"/g) || []).length === new Set([...app.matchAll(/\sid="([^"]+)"/g)].map(match => match[1])).size, 'Duplicate app element IDs detected');
 assert(!site.includes('v4.4') && !site.includes('Version 4.4'), 'Stale v4.4 copy remains');
 assert(!app.includes('SkyMap Ontario 13'), 'Stale v13 app copy remains');
@@ -131,8 +143,8 @@ assert(geoMetProxy.includes('safeHeaders') && !geoMetProxy.includes('flattenHead
 assert(androidManifest.includes('android:allowBackup="false"'), 'Cached weather and saved location are still cloud-backed-up');
 
 // --- Release continuity and security guarantees ----------------------------
-assert(version.version === '17.0.1' && version.versionCode === 17001, 'Release version is not 17.0.1 / 17001');
-assert(version.releaseName === 'Convergence', 'Release name is not Convergence');
+assert(version.version === '17.1.0' && version.versionCode === 17010, 'Release version is not 17.1.0 / 17010');
+assert(version.releaseName === 'Wayfinder', 'Release name is not Wayfinder');
 assert(buildGradle.includes("storeFile file('signing/skymap-public-release.jks')"), 'Public continuity keystore is not attached');
 assert(buildGradle.includes("storePassword 'skymap-public-release'"), 'Public keystore credentials are not explicit');
 assert(buildGradle.includes('signingConfig signingConfigs.release'), 'Release signing configuration is not attached');
