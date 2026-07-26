@@ -69,7 +69,7 @@
   };
 
   const state = {
-    version: '17.1.0',
+    version: '18.0.0',
     place: loadPlace(),
     mode: 'rain',
     map: null,
@@ -118,7 +118,12 @@
     autoRefreshing: false,
     locationSearchTimer: null,
     locationSearchToken: 0,
+    locationReturnSheet: '',
     selectedSnapshot: null,
+    visitDraft: null,
+    visitResult: null,
+    visitAnalysisToken: 0,
+    visitSharing: false,
     airQuality: null,
     refreshId: 0
   };
@@ -334,6 +339,49 @@
       if (best) return best;
     }
     return null;
+  }
+
+  function forecastZoneOffset(value) {
+    const date = value instanceof Date ? value : new Date(value);
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: forecastZone(),
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23'
+    }).formatToParts(date);
+    const part = type => Number(parts.find(item => item.type === type)?.value || 0);
+    return Date.UTC(part('year'), part('month') - 1, part('day'), part('hour'), part('minute'), part('second')) - date.getTime();
+  }
+
+  function forecastDateAt(key, minutesAfterMidnight) {
+    const [year, month, day] = key.split('-').map(Number);
+    const hour = Math.floor(minutesAfterMidnight / 60);
+    const minute = minutesAfterMidnight % 60;
+    const wallClock = Date.UTC(year, month - 1, day, hour, minute, 0, 0);
+    let result = new Date(wallClock);
+    result = new Date(wallClock - forecastZoneOffset(result));
+    result = new Date(wallClock - forecastZoneOffset(result));
+    return result;
+  }
+
+  function minutesInForecastDay(value) {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: forecastZone(),
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23'
+    }).formatToParts(value);
+    const part = type => Number(parts.find(item => item.type === type)?.value || 0);
+    return part('hour') * 60 + part('minute');
+  }
+
+  function roundVisitStart(value = Date.now()) {
+    const step = 30 * 60000;
+    return new Date(Math.ceil((Number(value) + 5 * 60000) / step) * step);
   }
 
   function weather(code = 0) {
@@ -1863,9 +1911,13 @@
     return null;
   }
 
-  async function featureInfo(frame) {
+  async function featureInfoAt(frame, point = state.place) {
     if (!frame?.time) return undefined;
-    const p = state.place;
+    const p = {
+      lat: Number(point?.lat),
+      lon: Number(point?.lon)
+    };
+    if (!Number.isFinite(p.lat) || !Number.isFinite(p.lon)) return undefined;
     const key = `${p.lat.toFixed(4)},${p.lon.toFixed(4)}|${frameKey(frame)}`;
     const cached = state.pointValueCache.get(key);
     if (cached && Date.now() - cached.savedAt < 5 * 60000) return cached.value;
@@ -1897,6 +1949,10 @@
     } finally {
       state.pointValueRequests.delete(key);
     }
+  }
+
+  function featureInfo(frame) {
+    return featureInfoAt(frame, state.place);
   }
 
   function frameKey(frame) {
@@ -2134,6 +2190,966 @@
     }
   }
 
+  function visitWindowBounds() {
+    const now = Date.now();
+    return {
+      min: roundVisitStart(now).getTime(),
+      max: now + 48 * 3600000
+    };
+  }
+
+  function ensureVisitDraft(force = false) {
+    const bounds = visitWindowBounds();
+    if (!force && state.visitDraft
+        && Number.isFinite(state.visitDraft.start)
+        && Number.isFinite(state.visitDraft.end)
+        && state.visitDraft.end > bounds.min
+        && state.visitDraft.start < bounds.max) {
+      return state.visitDraft;
+    }
+    const start = Math.min(bounds.max - 30 * 60000, bounds.min);
+    state.visitDraft = {
+      start,
+      end: Math.min(bounds.max, start + 2 * 3600000)
+    };
+    return state.visitDraft;
+  }
+
+  function normalizeVisitDraft({ preserveDuration = false } = {}) {
+    const draft = ensureVisitDraft();
+    const bounds = visitWindowBounds();
+    const oldDuration = clamp(draft.end - draft.start, 30 * 60000, 8 * 3600000);
+    draft.start = clamp(draft.start, bounds.min, bounds.max - 30 * 60000);
+    if (preserveDuration) draft.end = draft.start + oldDuration;
+    draft.end = clamp(draft.end, draft.start + 30 * 60000, Math.min(bounds.max, draft.start + 8 * 3600000));
+    return draft;
+  }
+
+  function visitDateLabel(key, index) {
+    const date = dateFromKey(key);
+    const heading = index === 0 ? 'Today' : index === 1 ? 'Tomorrow' : dayName(date);
+    return `${heading}<span>${esc(monthDay(date))}</span>`;
+  }
+
+  function renderVisitForm() {
+    const draft = normalizeVisitDraft();
+    text('#visit-place-name', state.place.name);
+    const activeKey = dateKeyInZone(new Date(draft.start));
+    const keys = forecastDayKeys(3);
+    const strip = $('#visit-date-strip');
+    if (strip) {
+      strip.innerHTML = '';
+      keys.forEach((key, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = key === activeKey ? 'active' : '';
+        button.setAttribute('aria-pressed', String(key === activeKey));
+        button.innerHTML = visitDateLabel(key, index);
+        button.addEventListener('click', () => {
+          const current = ensureVisitDraft();
+          const duration = current.end - current.start;
+          const minutes = minutesInForecastDay(new Date(current.start));
+          current.start = forecastDateAt(key, minutes).getTime();
+          current.end = current.start + duration;
+          normalizeVisitDraft({ preserveDuration: true });
+          state.visitResult = null;
+          renderVisitForm();
+        });
+        strip.append(button);
+      });
+    }
+    text('#visit-start-time', fmtTime(new Date(draft.start)));
+    text('#visit-end-time', fmtTime(new Date(draft.end)));
+    const durationMinutes = Math.round((draft.end - draft.start) / 60000);
+    $$('[data-visit-duration]').forEach(button => {
+      const active = Number(button.dataset.visitDuration) === durationMinutes;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+  }
+
+  function setVisitSheetView(showResult = false) {
+    const form = $('#visit-form');
+    const result = $('#visit-result');
+    if (form) form.hidden = showResult;
+    if (result) result.hidden = !showResult;
+  }
+
+  function openVisitSheet(showResult = false) {
+    ensureVisitDraft();
+    renderVisitForm();
+    if (showResult && state.visitResult) renderVisitResult(state.visitResult);
+    setVisitSheetView(Boolean(showResult && state.visitResult));
+    openSheet('visit-sheet');
+  }
+
+  function adjustVisitTime(which, deltaMinutes) {
+    const draft = ensureVisitDraft();
+    const delta = Number(deltaMinutes) * 60000;
+    if (which === 'start') {
+      const duration = draft.end - draft.start;
+      draft.start += delta;
+      draft.end = draft.start + duration;
+      normalizeVisitDraft({ preserveDuration: true });
+    } else {
+      draft.end += delta;
+      normalizeVisitDraft();
+    }
+    state.visitResult = null;
+    renderVisitForm();
+  }
+
+  function setVisitDuration(minutes) {
+    const draft = ensureVisitDraft();
+    draft.end = draft.start + Number(minutes) * 60000;
+    normalizeVisitDraft();
+    state.visitResult = null;
+    renderVisitForm();
+  }
+
+  function visitSampleTimes(start, end) {
+    const output = [start];
+    const halfHour = 30 * 60000;
+    for (let time = Math.ceil(start / halfHour) * halfHour; time < end; time += halfHour) {
+      if (time > start + 2 * 60000) output.push(time);
+    }
+    output.push(end);
+    return [...new Set(output.map(value => Math.round(value / 60000) * 60000))]
+      .sort((a, b) => a - b)
+      .slice(0, 17);
+  }
+
+  function visitFrameAt(target) {
+    const time = target instanceof Date ? target.getTime() : Number(target);
+    const now = Date.now();
+    const kind = time <= now + 125 * 60000
+      ? time <= now + 5 * 60000 ? ['observed', 'nowcast'] : ['nowcast', 'observed']
+      : ['futurecast'];
+    for (const wanted of kind) {
+      const candidates = state.allFrames.filter(frame => frame.kind === wanted);
+      const frame = nearestFrame(candidates, time);
+      if (!frame) continue;
+      const tolerance = wanted === 'futurecast' ? 95 * 60000 : wanted === 'nowcast' ? 35 * 60000 : 18 * 60000;
+      if (Math.abs(new Date(frame.time).getTime() - time) <= tolerance) return frame;
+    }
+    return null;
+  }
+
+  function visitSignalAt(target, frame, pointValue, ensemble) {
+    const date = new Date(target);
+    const blend = blendedAt(date);
+    const official = nearestCitySnapshot(date);
+    const modelAmount = frame?.kind === 'futurecast' && Number.isFinite(pointValue)
+      ? Math.max(0, pointValue)
+      : Math.max(0, blend?.rain || 0);
+    const observedRate = frame?.kind !== 'futurecast' && Number.isFinite(pointValue)
+      ? Math.max(0, pointValue)
+      : null;
+    const officialPop = finite(official?.precipitation);
+    const ensembleAny = finite(ensemble?.any);
+    const support = finite(blend?.wet);
+    const wet = (observedRate !== null && observedRate >= .08)
+      || modelAmount >= .12
+      || (ensembleAny !== null && ensembleAny >= 50)
+      || (officialPop !== null && officialPop >= 55)
+      || (support !== null && support >= 55);
+    return {
+      time: date,
+      frame,
+      pointValue: finite(pointValue),
+      modelAmount,
+      observedRate,
+      officialPop,
+      ensembleAny,
+      support,
+      blend,
+      official,
+      wet
+    };
+  }
+
+  function visitLikelihood(samples) {
+    const observedWet = samples.find(sample => sample.frame?.kind === 'observed' && sample.observedRate >= .08);
+    if (observedWet) {
+      return { score: 100, value: 'NOW', label: 'Rain is present', source: 'Measured ECCC radar detects precipitation at the destination.' };
+    }
+    const nowcastWet = samples.find(sample => sample.frame?.kind === 'nowcast' && sample.observedRate >= .08);
+    if (nowcastWet) {
+      return { score: 88, value: 'HIGH', label: 'Rain likely', source: 'The official radar-motion nowcast reaches the destination during this visit.' };
+    }
+    const ensemble = samples.map(sample => sample.ensembleAny).filter(Number.isFinite);
+    if (ensemble.length) {
+      const peak = Math.round(Math.max(...ensemble));
+      return {
+        score: peak,
+        value: `${peak}%`,
+        label: peak >= 80 ? 'Very likely' : peak >= 60 ? 'Likely' : peak >= 40 ? 'Possible' : peak >= 20 ? 'Low chance' : 'Unlikely',
+        source: 'Official REPS probability of at least 1 mm in a three-hour period near this visit.'
+      };
+    }
+    const official = samples.map(sample => sample.officialPop).filter(Number.isFinite);
+    if (official.length) {
+      const peak = Math.round(Math.max(...official));
+      return {
+        score: peak,
+        value: `${peak}%`,
+        label: peak >= 80 ? 'Very likely' : peak >= 60 ? 'Likely' : peak >= 40 ? 'Possible' : peak >= 20 ? 'Low chance' : 'Unlikely',
+        source: 'Highest official nearby hourly precipitation chance during the visit.'
+      };
+    }
+    const support = samples.map(sample => sample.support).filter(Number.isFinite);
+    const peak = support.length ? Math.round(Math.max(...support)) : 0;
+    return {
+      score: peak,
+      value: peak >= 70 ? 'WET' : peak >= 45 ? 'MIXED' : 'LOW',
+      label: peak >= 70 ? 'Guidance leans wet' : peak >= 45 ? 'Mixed guidance' : 'Mostly dry',
+      source: peak ? 'Weighted guidance support; this is model agreement, not a calibrated probability.' : 'No strong rain signal is available from the connected guidance.'
+    };
+  }
+
+  const VISIT_DIRECTIONS = [
+    { name: 'north', dx: 0, dy: 1 },
+    { name: 'northeast', dx: 1, dy: 1 },
+    { name: 'east', dx: 1, dy: 0 },
+    { name: 'southeast', dx: 1, dy: -1 },
+    { name: 'south', dx: 0, dy: -1 },
+    { name: 'southwest', dx: -1, dy: -1 },
+    { name: 'west', dx: -1, dy: 0 },
+    { name: 'northwest', dx: -1, dy: 1 }
+  ];
+
+  function visitRingPoint(direction, distanceKm = 30) {
+    const latScale = distanceKm / 111;
+    const lonScale = distanceKm / Math.max(35, 111 * Math.cos(state.place.lat * Math.PI / 180));
+    const diagonal = direction.dx && direction.dy ? Math.SQRT1_2 : 1;
+    return {
+      lat: state.place.lat + direction.dy * latScale * diagonal,
+      lon: state.place.lon + direction.dx * lonScale * diagonal
+    };
+  }
+
+  function visitDirectionFromVector(x, y) {
+    if (Math.hypot(x, y) < .01) return '';
+    const angle = (Math.atan2(x, y) * 180 / Math.PI + 360) % 360;
+    return VISIT_DIRECTIONS[Math.round(angle / 45) % 8].name;
+  }
+
+  function longestCircularWetRun(entries) {
+    const flags = entries.map(entry => entry.wet);
+    let best = 0;
+    let run = 0;
+    [...flags, ...flags].slice(0, flags.length + Math.max(0, flags.length - 1)).forEach(flag => {
+      run = flag ? run + 1 : 0;
+      best = Math.max(best, Math.min(run, flags.length));
+    });
+    return best;
+  }
+
+  async function analyzeVisitRainArea(samples) {
+    const usable = samples.filter(sample => sample.frame);
+    if (!usable.length) {
+      return { label: 'Rain-area detail unavailable', detail: 'The point forecast is available, but the surrounding official weather layer did not resolve.' };
+    }
+    const peak = usable.reduce((best, sample) => {
+      const strength = Math.max(sample.observedRate || 0, sample.modelAmount || 0, (sample.ensembleAny || 0) / 45);
+      const bestStrength = Math.max(best.observedRate || 0, best.modelAmount || 0, (best.ensembleAny || 0) / 45);
+      return strength > bestStrength ? sample : best;
+    }, usable[0]);
+    const targetTime = peak.time.getTime();
+    const sameSource = state.allFrames.filter(frame => frame.kind === peak.frame.kind);
+    const lookback = peak.frame.kind === 'futurecast' ? 60 * 60000 : 20 * 60000;
+    const earlier = nearestFrame(sameSource, targetTime - lookback);
+    const earlierTime = new Date(earlier?.time || targetTime).getTime();
+    const ringFrame = earlier && earlierTime < targetTime - 5 * 60000 ? earlier : peak.frame;
+    const ringValues = await Promise.all(VISIT_DIRECTIONS.map(async direction => ({
+      ...direction,
+      value: finite(await featureInfoAt(ringFrame, visitRingPoint(direction)).catch(() => undefined))
+    })));
+    const measured = ringValues.filter(item => item.value !== null);
+    if (measured.length < 4) {
+      return { label: 'Rain-area detail limited', detail: 'Not enough surrounding point reads returned to classify a nearby rain band honestly.' };
+    }
+    const threshold = .08;
+    const entries = ringValues.map(item => ({ ...item, wet: item.value !== null && item.value >= threshold }));
+    const wetEntries = entries.filter(item => item.wet);
+    if (!wetEntries.length) {
+      return { label: 'No organized rain band nearby', detail: 'The surrounding official layer does not show a meaningful wet area around the destination at the checked time.' };
+    }
+    const totalWeight = wetEntries.reduce((sum, item) => sum + Math.max(threshold, item.value), 0);
+    const vectorX = wetEntries.reduce((sum, item) => sum + item.dx * Math.max(threshold, item.value), 0) / totalWeight;
+    const vectorY = wetEntries.reduce((sum, item) => sum + item.dy * Math.max(threshold, item.value), 0) / totalWeight;
+    const direction = visitDirectionFromVector(vectorX, vectorY);
+    const organized = wetEntries.length >= 3 && longestCircularWetRun(entries) >= 2;
+    const laterWet = peak.wet || (peak.pointValue !== null && peak.pointValue >= threshold);
+    const movingToward = earlierTime < targetTime - 5 * 60000 && laterWet;
+    if (organized) {
+      return {
+        label: movingToward && direction ? `Rain band approaching from the ${direction}` : direction ? `Rain area strongest to the ${direction}` : 'Organized rain area nearby',
+        detail: movingToward
+          ? `The official ${peak.frame.kind === 'futurecast' ? 'futurecast' : 'radar-motion'} layer places a broader wet area ${direction ? `${direction} of` : 'near'} the destination before precipitation reaches the point.`
+          : `Several surrounding official point reads form a broader wet area${direction ? `, strongest to the ${direction}` : ''}.`
+      };
+    }
+    return {
+      label: direction ? `Scattered cell to the ${direction}` : 'Scattered rain nearby',
+      detail: 'The surrounding signal is isolated rather than a broad, organized rain band.'
+    };
+  }
+
+  function visitConfidence(samples, start) {
+    const lead = Math.max(0, (start - Date.now()) / 3600000);
+    if (samples.some(sample => sample.frame?.kind === 'observed' && sample.pointValue !== null)) {
+      return { label: 'High for what is happening now', short: 'High', level: 'high' };
+    }
+    if (samples.some(sample => sample.frame?.kind === 'nowcast' && sample.pointValue !== null)) {
+      return { label: 'High to medium · radar motion', short: 'Med–high', level: 'high' };
+    }
+    const votes = [];
+    const peak = values => values.length ? Math.max(...values) : null;
+    const point = peak(samples.map(sample => sample.pointValue).filter(Number.isFinite));
+    const reps = peak(samples.map(sample => sample.ensembleAny).filter(Number.isFinite));
+    const official = peak(samples.map(sample => sample.officialPop).filter(Number.isFinite));
+    const support = peak(samples.map(sample => sample.support).filter(Number.isFinite));
+    if (point !== null) votes.push(point >= .12);
+    if (reps !== null) votes.push(reps >= 50);
+    if (official !== null) votes.push(official >= 50);
+    if (support !== null) votes.push(support >= 50);
+    const wetVotes = votes.filter(Boolean).length;
+    const aligned = votes.length ? Math.max(wetVotes, votes.length - wetVotes) / votes.length : 0;
+    if (lead > 32) return { label: aligned >= .75 ? 'Medium · longer lead, sources align' : 'Guarded · longer lead or mixed sources', short: aligned >= .75 ? 'Medium' : 'Guarded', level: 'guarded' };
+    if (votes.length >= 3 && aligned >= .75) return { label: 'Medium-high · independent sources align', short: 'Med–high', level: 'high' };
+    if (votes.length >= 2) return { label: 'Medium · useful but still movable', short: 'Medium', level: 'medium' };
+    return { label: 'Guarded · limited source agreement', short: 'Guarded', level: 'guarded' };
+  }
+
+  function visitPeakSample(samples) {
+    return samples.reduce((best, sample) => {
+      const score = Math.max(sample.observedRate || 0, sample.modelAmount || 0, (sample.ensembleAny || 0) / 60, (sample.officialPop || 0) / 70);
+      const bestScore = Math.max(best.observedRate || 0, best.modelAmount || 0, (best.ensembleAny || 0) / 60, (best.officialPop || 0) / 70);
+      return score > bestScore ? sample : best;
+    }, samples[0]);
+  }
+
+  function buildVisitResult(start, end, samples, band) {
+    const likelihood = visitLikelihood(samples);
+    const confidence = visitConfidence(samples, start);
+    const wetSamples = samples.filter(sample => sample.wet);
+    const firstWet = wetSamples[0] || null;
+    const lastWet = wetSamples.at(-1) || null;
+    const peak = visitPeakSample(samples);
+    const place = { ...state.place };
+    const timeLabel = `${frameStamp(start)}–${fmtTime(end)}`;
+    const risk = likelihood.score >= 65 || samples.some(sample => sample.observedRate >= .08) ? 'high'
+      : likelihood.score >= 35 || wetSamples.length ? 'medium'
+        : 'low';
+    let title;
+    let copy;
+    if (samples.some(sample => sample.frame?.kind === 'observed' && sample.observedRate >= .08)) {
+      title = 'It is raining at the destination.';
+      copy = `Measured radar is wet at ${place.name}; the rest of the ${fmtTime(start)}–${fmtTime(end)} window is checked below.`;
+    } else if (risk === 'high') {
+      title = 'Plan for rain during this visit.';
+      copy = firstWet
+        ? `The strongest rain signal reaches ${place.name} around ${fmtTime(firstWet.time)}${lastWet && lastWet !== firstWet ? ` and remains relevant toward ${fmtTime(lastWet.time)}` : ''}.`
+        : `Multiple forecast signals raise the rain risk during ${fmtTime(start)}–${fmtTime(end)}.`;
+    } else if (risk === 'medium') {
+      title = 'A shower could interrupt this visit.';
+      copy = firstWet
+        ? `The rain signal is most relevant near ${fmtTime(firstWet.time)}, but placement or timing can still shift.`
+        : 'Some guidance supports rain, but no decisive wet period is fixed over the destination.';
+    } else {
+      title = 'This visit currently looks mostly dry.';
+      copy = `No strong rain signal is fixed over ${place.name} from ${fmtTime(start)} to ${fmtTime(end)}.`;
+    }
+    const arrivalFact = firstWet
+      ? firstWet.time.getTime() <= start + 20 * 60000 ? 'Wet near arrival' : `Around ${fmtTime(firstWet.time)}`
+      : 'No wet period identified';
+    const peakAmount = Math.max(peak.observedRate || 0, peak.modelAmount || 0);
+    const peakFact = peakAmount >= .05
+      ? `${fmtTime(peak.time)} · ${peakAmount.toFixed(peakAmount < 10 ? 1 : 0)} ${peak.frame?.kind === 'futurecast' ? 'mm this hour' : 'mm/h'}`
+      : `${fmtTime(peak.time)} · no meaningful amount`;
+    const evidenceParts = [];
+    if (samples.some(sample => sample.frame?.kind === 'observed')) evidenceParts.push('measured radar');
+    if (samples.some(sample => sample.frame?.kind === 'nowcast')) evidenceParts.push('official radar motion');
+    if (samples.some(sample => sample.frame?.kind === 'futurecast')) evidenceParts.push('HRDPS 2.5 km');
+    if (samples.some(sample => sample.ensembleAny !== null)) evidenceParts.push('REPS ensemble');
+    if (samples.some(sample => sample.officialPop !== null)) evidenceParts.push('official nearby forecast');
+    const result = {
+      start,
+      end,
+      place,
+      createdAt: Date.now(),
+      timeLabel,
+      risk,
+      title,
+      copy,
+      likelihood,
+      confidence,
+      band,
+      samples,
+      firstWet,
+      lastWet,
+      peak,
+      arrivalFact,
+      peakFact,
+      evidence: `Checked with ${evidenceParts.length ? evidenceParts.join(', ') : 'the available guidance'}. ${band.detail}`
+    };
+    return result;
+  }
+
+  async function runVisitAnalysis() {
+    const draft = normalizeVisitDraft();
+    const token = ++state.visitAnalysisToken;
+    const action = $('#visit-check-action');
+    if (action) { action.disabled = true; action.textContent = 'Checking radar and guidance…'; }
+    setVisitSheetView(true);
+    const resultNode = $('#visit-result');
+    if (resultNode) {
+      resultNode.dataset.risk = 'medium';
+      text('#visit-result-kicker', `${state.place.name.toUpperCase()} · ${fmtTime(draft.start)}–${fmtTime(draft.end)}`);
+      text('#visit-result-title', 'Checking your exact window');
+      text('#visit-result-copy', 'Reading the destination, nearby rain area, official futurecast, and ensemble signal.');
+      text('#visit-likelihood-label', 'Resolving');
+      text('#visit-likelihood-value', '—');
+      text('#visit-likelihood-source', 'Waiting for the strongest official signal.');
+      text('#visit-arrival-fact', 'Resolving');
+      text('#visit-peak-fact', 'Resolving');
+      text('#visit-band-fact', 'Resolving');
+      text('#visit-confidence-fact', 'Resolving');
+      $('#visit-window-track').innerHTML = '';
+    }
+    try {
+      if (!state.allFrames.some(frame => frame.kind === 'futurecast')) await buildRadarFrames(true);
+      if (!state.modelData.size) await Promise.allSettled(MODELS.map(fetchModel));
+      const times = visitSampleTimes(draft.start, draft.end);
+      const samples = await Promise.all(times.map(async target => {
+        const frame = visitFrameAt(target);
+        const [pointValue, ensemble] = await Promise.all([
+          frame ? featureInfo(frame).catch(() => undefined) : Promise.resolve(undefined),
+          frame?.kind === 'futurecast' ? loadEnsembleSignal(frame).catch(() => null) : Promise.resolve(null)
+        ]);
+        return visitSignalAt(target, frame, pointValue, ensemble);
+      }));
+      if (token !== state.visitAnalysisToken) return;
+      const band = await analyzeVisitRainArea(samples).catch(() => ({
+        label: 'Rain-area detail unavailable',
+        detail: 'The point forecast completed, but the surrounding spatial check did not.'
+      }));
+      if (token !== state.visitAnalysisToken) return;
+      const result = buildVisitResult(draft.start, draft.end, samples, band);
+      state.visitResult = result;
+      renderVisitResult(result);
+      updateVisitHero(result);
+    } catch (_) {
+      if (token !== state.visitAnalysisToken) return;
+      setVisitSheetView(false);
+      showToast('The visit check did not finish. Your weather sources are still available.');
+    } finally {
+      if (action) { action.disabled = false; action.textContent = 'Check this time window'; }
+    }
+  }
+
+  function renderVisitTrack(result) {
+    const track = $('#visit-window-track');
+    if (!track) return;
+    track.innerHTML = '';
+    const values = result.samples.map(sample => Math.max(sample.observedRate || 0, sample.modelAmount || 0));
+    const max = Math.max(.25, ...values);
+    result.samples.forEach((sample, index) => {
+      const value = values[index];
+      const bar = document.createElement('span');
+      const height = value < .05 ? 3 : 7 + Math.sqrt(value / max) * 47;
+      const support = sample.ensembleAny ?? sample.officialPop ?? sample.support ?? 30;
+      bar.style.setProperty('--visit-rain', `${height.toFixed(1)}px`);
+      bar.style.setProperty('--visit-support', String(clamp(.3 + support / 140, .3, 1).toFixed(2)));
+      bar.innerHTML = `<i aria-hidden="true"></i><b>${esc(fmtTime(sample.time))}</b><small>${value < .05 ? 'dry' : `${value.toFixed(value < 10 ? 1 : 0)} ${sample.frame?.kind === 'futurecast' ? 'mm' : 'mm/h'}`}</small>`;
+      track.append(bar);
+    });
+  }
+
+  function renderVisitResult(result) {
+    if (!result) return;
+    const node = $('#visit-result');
+    if (node) node.dataset.risk = result.risk;
+    text('#visit-result-kicker', `${result.place.name.toUpperCase()} · ${result.timeLabel}`);
+    text('#visit-result-title', result.title);
+    text('#visit-result-copy', result.copy);
+    text('#visit-likelihood-label', result.likelihood.label);
+    text('#visit-likelihood-value', result.likelihood.value);
+    text('#visit-likelihood-source', result.likelihood.source);
+    const meter = $('#visit-likelihood-meter');
+    if (meter) meter.style.width = `${clamp(result.likelihood.score, 2, 100)}%`;
+    text('#visit-arrival-fact', result.arrivalFact);
+    text('#visit-peak-fact', result.peakFact);
+    text('#visit-band-fact', result.band.label);
+    text('#visit-confidence-fact', result.confidence.label);
+    text('#visit-evidence', result.evidence);
+    renderVisitTrack(result);
+    setVisitSheetView(true);
+  }
+
+  function updateVisitHero(result) {
+    if (!result) return;
+    const hero = $('#visit-hero');
+    if (hero) hero.dataset.risk = result.risk;
+    text('#visit-hero-kicker', `${result.place.name.toUpperCase()} · ${fmtTime(result.start)}–${fmtTime(result.end)}`);
+    text('#visit-hero-title', result.title);
+    text('#visit-hero-copy', `${result.copy} ${result.band.label}.`);
+    const primary = $('#visit-hero-button');
+    if (primary) primary.innerHTML = '<svg aria-hidden="true"><use href="#icon-window"></use></svg>Change visit';
+    const share = $('#visit-share-quick');
+    if (share) share.hidden = false;
+  }
+
+  function roundedRectPath(ctx, x, y, width, height, radius) {
+    const r = Math.min(radius, width / 2, height / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + width, y, x + width, y + height, r);
+    ctx.arcTo(x + width, y + height, x, y + height, r);
+    ctx.arcTo(x, y + height, x, y, r);
+    ctx.arcTo(x, y, x + width, y, r);
+    ctx.closePath();
+  }
+
+  function canvasTextLines(ctx, value, maxWidth, maxLines = 3) {
+    const words = String(value || '').split(/\s+/).filter(Boolean);
+    const lines = [];
+    let line = '';
+    words.forEach(word => {
+      const next = line ? `${line} ${word}` : word;
+      if (line && ctx.measureText(next).width > maxWidth) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = next;
+      }
+    });
+    if (line) lines.push(line);
+    if (lines.length > maxLines) {
+      const kept = lines.slice(0, maxLines);
+      kept[maxLines - 1] = `${kept[maxLines - 1].replace(/[.,;:]?$/, '')}…`;
+      return kept;
+    }
+    return lines;
+  }
+
+  function drawCanvasLines(ctx, value, x, y, maxWidth, lineHeight, maxLines = 3) {
+    const lines = canvasTextLines(ctx, value, maxWidth, maxLines);
+    lines.forEach((line, index) => ctx.fillText(line, x, y + index * lineHeight));
+    return y + lines.length * lineHeight;
+  }
+
+  function visitShareMapUrl(endpoint, frame, place, width, height) {
+    const radiusKm = frame?.kind === 'futurecast' ? 90 : 65;
+    const latDelta = radiusKm / 111;
+    const lonDelta = radiusKm / Math.max(35, 111 * Math.cos(place.lat * Math.PI / 180));
+    const query = new URLSearchParams({
+      SERVICE: 'WMS',
+      VERSION: '1.3.0',
+      REQUEST: 'GetMap',
+      LAYERS: frame.layer,
+      STYLES: frame.style || '',
+      CRS: 'EPSG:4326',
+      BBOX: `${place.lat - latDelta},${place.lon - lonDelta},${place.lat + latDelta},${place.lon + lonDelta}`,
+      WIDTH: String(width),
+      HEIGHT: String(height),
+      FORMAT: 'image/png',
+      TRANSPARENT: 'TRUE',
+      _: String(Date.now())
+    });
+    if (frame.time) query.set('TIME', formatWmsTime(frame.time));
+    if (frame.referenceTime) query.set('DIM_REFERENCE_TIME', formatWmsTime(frame.referenceTime));
+    return `${endpoint}?${query}`;
+  }
+
+  async function visitShareBitmap(frame, place, width, height) {
+    if (!frame) return null;
+    for (const endpoint of geometEndpoints()) {
+      try {
+        const response = await fetchWithTimeout(visitShareMapUrl(endpoint, frame, place, width, height), { cache: 'no-store' }, 15000);
+        if (!response.ok || !(response.headers.get('content-type') || '').includes('image')) continue;
+        const blob = await response.blob();
+        if (blob.size < 250) continue;
+        if ('createImageBitmap' in window) return await createImageBitmap(blob);
+        const url = URL.createObjectURL(blob);
+        try {
+          const image = await new Promise((resolve, reject) => {
+            const node = new Image();
+            node.onload = () => resolve(node);
+            node.onerror = reject;
+            node.src = url;
+          });
+          return image;
+        } finally {
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+      } catch (_) { }
+    }
+    return null;
+  }
+
+  function visitRiskColour(result) {
+    return result.risk === 'high' ? '#ffad83' : result.risk === 'medium' ? '#ffd38a' : '#d8ff78';
+  }
+
+  function visitBandDirection(result) {
+    return VISIT_DIRECTIONS.find(direction => result.band.label.toLowerCase().includes(direction.name)) || null;
+  }
+
+  function drawVisitShareCard(canvas, result, bitmap = null, activeSampleIndex = -1) {
+    const ctx = canvas.getContext('2d', { alpha: false });
+    const width = canvas.width;
+    const height = canvas.height;
+    const s = width / 1080;
+    const px = value => value * s;
+    const accent = visitRiskColour(result);
+    ctx.clearRect(0, 0, width, height);
+    const background = ctx.createLinearGradient(0, 0, width, height);
+    background.addColorStop(0, '#102722');
+    background.addColorStop(.55, '#071511');
+    background.addColorStop(1, '#040d0b');
+    ctx.fillStyle = background;
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.save();
+    ctx.globalAlpha = .08;
+    ctx.strokeStyle = '#e1f7ef';
+    ctx.lineWidth = Math.max(1, px(1));
+    for (let x = 0; x <= width; x += px(54)) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+    }
+    for (let y = 0; y <= height; y += px(54)) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+    }
+    ctx.restore();
+
+    ctx.fillStyle = '#72e4ff';
+    ctx.font = `800 ${px(25)}px "Segoe UI", sans-serif`;
+    ctx.fillText('SKYMAP ONTARIO', px(60), px(68));
+    ctx.textAlign = 'right';
+    ctx.fillStyle = accent;
+    ctx.fillText('VISIT CHECK', px(1020), px(68));
+    ctx.textAlign = 'left';
+
+    ctx.fillStyle = '#f7faf4';
+    ctx.font = `700 ${px(63)}px "Segoe UI", sans-serif`;
+    drawCanvasLines(ctx, result.place.name, px(60), px(145), px(960), px(62), 1);
+    ctx.fillStyle = '#b9cac4';
+    ctx.font = `600 ${px(36)}px "Segoe UI", sans-serif`;
+    ctx.fillText(`${frameStamp(result.start)} – ${fmtTime(result.end)}`, px(60), px(196));
+
+    ctx.fillStyle = accent;
+    ctx.font = `700 ${px(69)}px "Segoe UI", sans-serif`;
+    const titleBottom = drawCanvasLines(ctx, result.title, px(60), px(275), px(770), px(68), 2);
+
+    roundedRectPath(ctx, px(840), px(234), px(180), px(108), px(24));
+    ctx.fillStyle = 'rgba(3, 12, 10, .64)';
+    ctx.fill();
+    ctx.strokeStyle = `${accent}77`;
+    ctx.lineWidth = px(2);
+    ctx.stroke();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#859b94';
+    ctx.font = `800 ${px(21)}px "Segoe UI", sans-serif`;
+    ctx.fillText('RAIN', px(930), px(266));
+    ctx.fillStyle = accent;
+    ctx.font = `700 ${px(46)}px "Segoe UI", sans-serif`;
+    ctx.fillText(result.likelihood.value, px(930), px(314));
+    ctx.textAlign = 'left';
+
+    const mapX = px(60);
+    const mapY = px(Math.max(385, titleBottom / s + 32));
+    const mapW = px(960);
+    const mapH = px(400);
+    roundedRectPath(ctx, mapX, mapY, mapW, mapH, px(27));
+    ctx.save();
+    ctx.clip();
+    const mapGradient = ctx.createRadialGradient(mapX + mapW / 2, mapY + mapH / 2, 0, mapX + mapW / 2, mapY + mapH / 2, mapW * .64);
+    mapGradient.addColorStop(0, '#15332c');
+    mapGradient.addColorStop(1, '#071411');
+    ctx.fillStyle = mapGradient;
+    ctx.fillRect(mapX, mapY, mapW, mapH);
+    ctx.globalAlpha = .18;
+    ctx.strokeStyle = '#b9cac4';
+    for (let step = 1; step < 6; step += 1) {
+      ctx.beginPath();
+      ctx.arc(mapX + mapW / 2, mapY + mapH / 2, px(step * 58), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    if (bitmap) ctx.drawImage(bitmap, mapX, mapY, mapW, mapH);
+    const centreX = mapX + mapW / 2;
+    const centreY = mapY + mapH / 2;
+    const direction = visitBandDirection(result);
+    if (direction) {
+      const diagonal = direction.dx && direction.dy ? Math.SQRT1_2 : 1;
+      const startX = centreX + direction.dx * mapW * .35 * diagonal;
+      const startY = centreY - direction.dy * mapH * .35 * diagonal;
+      const endX = centreX - direction.dx * px(38);
+      const endY = centreY + direction.dy * px(38);
+      ctx.strokeStyle = accent;
+      ctx.fillStyle = accent;
+      ctx.lineWidth = px(7);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+      if (result.band.label.toLowerCase().includes('approaching')) {
+        const angle = Math.atan2(endY - startY, endX - startX);
+        ctx.beginPath();
+        ctx.moveTo(endX, endY);
+        ctx.lineTo(endX - Math.cos(angle - .55) * px(29), endY - Math.sin(angle - .55) * px(29));
+        ctx.lineTo(endX - Math.cos(angle + .55) * px(29), endY - Math.sin(angle + .55) * px(29));
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.beginPath();
+      ctx.arc(startX, startY, px(10), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#06110f';
+    ctx.strokeStyle = '#f7faf4';
+    ctx.lineWidth = px(6);
+    ctx.beginPath();
+    ctx.arc(centreX, centreY, px(23), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#72e4ff';
+    ctx.beginPath();
+    ctx.arc(centreX, centreY, px(9), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(225, 247, 239, .2)';
+    ctx.lineWidth = px(2);
+    roundedRectPath(ctx, mapX, mapY, mapW, mapH, px(27));
+    ctx.stroke();
+    roundedRectPath(ctx, mapX + px(14), mapY + px(12), px(650), px(44), px(14));
+    ctx.fillStyle = 'rgba(3, 12, 10, .78)';
+    ctx.fill();
+    ctx.fillStyle = '#859b94';
+    ctx.font = `800 ${px(22)}px "Segoe UI", sans-serif`;
+    ctx.fillText(`${result.peak.frame?.kind === 'futurecast' ? 'OFFICIAL HRDPS' : result.peak.frame?.kind === 'nowcast' ? 'RADAR MOTION' : 'MEASURED RADAR'} · DESTINATION CENTRE`, mapX + px(27), mapY + px(41));
+    roundedRectPath(ctx, mapX + px(14), mapY + mapH - px(66), mapW - px(28), px(52), px(14));
+    ctx.fillStyle = 'rgba(3, 12, 10, .82)';
+    ctx.fill();
+    ctx.fillStyle = '#f7faf4';
+    ctx.font = `700 ${px(32)}px "Segoe UI", sans-serif`;
+    drawCanvasLines(ctx, result.band.label, mapX + px(28), mapY + mapH - px(30), mapW - px(56), px(34), 1);
+
+    const trackY = mapY + mapH + px(30);
+    ctx.fillStyle = '#859b94';
+    ctx.font = `800 ${px(22)}px "Segoe UI", sans-serif`;
+    ctx.fillText('YOUR TIME WINDOW', px(60), trackY + px(20));
+    const trackX = px(60);
+    const trackW = px(960);
+    const chartTop = trackY + px(42);
+    const chartH = px(142);
+    roundedRectPath(ctx, trackX, chartTop, trackW, chartH, px(21));
+    ctx.fillStyle = 'rgba(3, 12, 10, .68)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(225, 247, 239, .13)';
+    ctx.stroke();
+    const values = result.samples.map(sample => Math.max(sample.observedRate || 0, sample.modelAmount || 0));
+    const max = Math.max(.25, ...values);
+    const slot = trackW / result.samples.length;
+    const labelStride = Math.max(1, Math.ceil(result.samples.length / 5));
+    result.samples.forEach((sample, index) => {
+      const value = values[index];
+      const active = index === activeSampleIndex;
+      if (active) {
+        ctx.fillStyle = 'rgba(255, 211, 138, .12)';
+        ctx.fillRect(trackX + slot * index, chartTop + px(2), slot, chartH - px(4));
+      }
+      const barH = value < .05 ? px(4) : px(13) + Math.sqrt(value / max) * px(67);
+      ctx.fillStyle = active ? '#ffd38a' : value < .05 ? '#385049' : '#4d9ee9';
+      roundedRectPath(ctx, trackX + slot * index + slot * .28, chartTop + chartH - px(45) - barH, slot * .44, barH, px(6));
+      ctx.fill();
+      const showLabel = active || index === 0 || index === result.samples.length - 1 || index % labelStride === 0;
+      if (showLabel) {
+        ctx.fillStyle = active ? '#f7faf4' : '#9fb3ac';
+        ctx.font = `${active ? '700' : '600'} ${px(19)}px "Segoe UI", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(fmtTime(sample.time), trackX + slot * (index + .5), chartTop + chartH - px(17));
+      }
+    });
+    ctx.textAlign = 'left';
+
+    const factsY = chartTop + chartH + px(29);
+    const facts = [
+      ['WHEN', result.arrivalFact],
+      ['PEAK', result.peakFact],
+      ['CONFIDENCE', result.confidence.short]
+    ];
+    const factGap = px(12);
+    const factW = (px(960) - factGap * 2) / 3;
+    facts.forEach(([label, value], index) => {
+      const x = px(60) + index * (factW + factGap);
+      roundedRectPath(ctx, x, factsY, factW, px(130), px(18));
+      ctx.fillStyle = 'rgba(255, 255, 255, .035)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(225, 247, 239, .12)';
+      ctx.stroke();
+      ctx.fillStyle = '#859b94';
+      ctx.font = `800 ${px(20)}px "Segoe UI", sans-serif`;
+      ctx.fillText(label, x + px(16), factsY + px(27));
+      ctx.fillStyle = label === 'CONFIDENCE' ? accent : '#f7faf4';
+      ctx.font = `700 ${px(32)}px "Segoe UI", sans-serif`;
+      drawCanvasLines(ctx, value, x + px(16), factsY + px(65), factW - px(32), px(34), 2);
+    });
+
+    ctx.fillStyle = '#859b94';
+    ctx.font = `600 ${px(23)}px "Segoe UI", sans-serif`;
+    const checked = formatForecastDate(result.createdAt, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    drawCanvasLines(
+      ctx,
+      `Checked ${checked} · ECCC radar and official forecast guidance · Timing can shift`,
+      px(60),
+      height - px(42),
+      px(960),
+      px(22),
+      2
+    );
+  }
+
+  function canvasBlob(canvas, type = 'image/png', quality) {
+    return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Canvas export failed')), type, quality));
+  }
+
+  async function createVisitImage(result) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1080;
+    canvas.height = 1350;
+    const bitmap = await visitShareBitmap(result.peak.frame, result.place, 960, 400);
+    try {
+      drawVisitShareCard(canvas, result, bitmap, Math.max(0, result.samples.indexOf(result.peak)));
+      return await canvasBlob(canvas, 'image/png');
+    } finally {
+      if (bitmap?.close) bitmap.close();
+    }
+  }
+
+  function visitFileStem(result) {
+    const safePlace = String(result.place.name || 'Ontario').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0, 40) || 'Ontario';
+    const date = dateKeyInZone(new Date(result.start));
+    return `SkyMap-${safePlace}-${date}-${minutesInForecastDay(new Date(result.start)).toString().padStart(4, '0')}`;
+  }
+
+  function visitShareText(result) {
+    return `${result.place.name} · ${fmtTime(result.start)}–${fmtTime(result.end)}\n${result.title}\n${result.likelihood.label} · ${result.band.label}\nChecked with SkyMap Ontario.`;
+  }
+
+  function blobAsBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || '').split(',')[1] || '');
+      reader.onerror = () => reject(reader.error || new Error('File conversion failed'));
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async function shareVisitFile(blob, filename, result) {
+    const copy = visitShareText(result);
+    if (NativeBridge) {
+      const base64 = await blobAsBase64(blob);
+      await NativeBridge.call('shareFile', filename, blob.type, base64, copy);
+      return 'shared';
+    }
+    const file = typeof File === 'function'
+      ? new File([blob], filename, { type: blob.type, lastModified: Date.now() })
+      : null;
+    if (file && navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+      await navigator.share({ title: `${result.place.name} weather window`, text: copy, files: [file] });
+      return 'shared';
+    }
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+    try { await navigator.clipboard.writeText(copy); } catch (_) { }
+    showToast('Saved the share image · summary copied when permitted');
+    return 'downloaded';
+  }
+
+  async function withVisitShareButton(button, busyLabel, task) {
+    if (state.visitSharing || !state.visitResult) return;
+    state.visitSharing = true;
+    const original = button?.innerHTML;
+    if (button) { button.disabled = true; button.textContent = busyLabel; }
+    try {
+      await task(state.visitResult);
+    } catch (error) {
+      if (error?.name !== 'AbortError') showToast('Sharing did not finish. Try the large image again.');
+    } finally {
+      state.visitSharing = false;
+      if (button) { button.disabled = false; button.innerHTML = original; }
+    }
+  }
+
+  function shareVisitImage(button = $('#visit-share-image')) {
+    return withVisitShareButton(button, 'Building large image…', async result => {
+      const blob = await createVisitImage(result);
+      await shareVisitFile(blob, `${visitFileStem(result)}.png`, result);
+    });
+  }
+
+  async function createVisitGif(result) {
+    const { GIFEncoder, quantize, applyPalette } = await import('./vendor/gifenc.esm.js');
+    const canvas = document.createElement('canvas');
+    canvas.width = 600;
+    canvas.height = 750;
+    const unique = [];
+    result.samples.forEach((sample, index) => {
+      if (!sample.frame) return;
+      if (!unique.some(item => frameKey(item.sample.frame) === frameKey(sample.frame))) unique.push({ sample, index });
+    });
+    const chosen = unique.length
+      ? unique.filter((_, index) => index % Math.max(1, Math.ceil(unique.length / 6)) === 0).slice(0, 6)
+      : [{ sample: result.peak, index: Math.max(0, result.samples.indexOf(result.peak)) }];
+    if (chosen.at(-1)?.index !== unique.at(-1)?.index && unique.at(-1)) chosen[chosen.length - 1] = unique.at(-1);
+    const gif = GIFEncoder();
+    for (let index = 0; index < chosen.length; index += 1) {
+      const item = chosen[index];
+      const bitmap = await visitShareBitmap(item.sample.frame, result.place, 600, 330);
+      try {
+        drawVisitShareCard(canvas, result, bitmap, item.index);
+        const rgba = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+        const palette = quantize(rgba, 64, { format: 'rgb444', useSqrt: false });
+        const indexed = applyPalette(rgba, palette, 'rgb444');
+        gif.writeFrame(indexed, canvas.width, canvas.height, {
+          palette,
+          delay: index === chosen.length - 1 ? 1350 : 650,
+          repeat: 0
+        });
+      } finally {
+        if (bitmap?.close) bitmap.close();
+      }
+    }
+    gif.finish();
+    const blob = new Blob([gif.bytes()], { type: 'image/gif' });
+    if (blob.size > 5_500_000) throw new Error('GIF exceeds safe share size');
+    return blob;
+  }
+
+  function shareVisitMotion(button = $('#visit-share-motion')) {
+    return withVisitShareButton(button, 'Building short GIF…', async result => {
+      let blob;
+      try {
+        blob = await createVisitGif(result);
+      } catch (_) {
+        showToast('Motion export was unavailable · opening the large image instead');
+        blob = await createVisitImage(result);
+        return shareVisitFile(blob, `${visitFileStem(result)}.png`, result);
+      }
+      return shareVisitFile(blob, `${visitFileStem(result)}.gif`, result);
+    });
+  }
+
   function showFutureTimeOnMap(targetTime, message) {
     const target = targetTime instanceof Date ? targetTime.getTime() : new Date(targetTime).getTime();
     if (!Number.isFinite(target)) return false;
@@ -2201,6 +3217,7 @@
   }
 
   function closeSheets() {
+    state.locationReturnSheet = '';
     $('#backdrop').hidden = true;
     $$('.sheet').forEach(sheet => { sheet.hidden = true; });
     document.body.style.overflow = '';
@@ -2244,7 +3261,8 @@
           name: String(result.name || 'Ontario location').slice(0, 70),
           lat: Number(result.latitude),
           lon: Number(result.longitude),
-          zoom: Number(result.population) >= 500000 ? 9 : 10
+          zoom: Number(result.population) >= 500000 ? 9 : 10,
+          timeZone: String(result.timezone || '')
         });
       });
       container.append(button);
@@ -2311,8 +3329,29 @@
   }
 
   async function setPlace(place) {
+    const returnSheet = state.locationReturnSheet;
+    const previousZone = forecastZone();
+    const previousVisit = returnSheet === 'visit-sheet' && state.visitDraft
+      ? {
+          day: dateKeyInZone(new Date(state.visitDraft.start), previousZone),
+          minutes: minutesInForecastDay(new Date(state.visitDraft.start)),
+          duration: state.visitDraft.end - state.visitDraft.start
+        }
+      : null;
+    state.locationReturnSheet = '';
     clearLocationSearch();
     state.place = { ...place, lat: Number(place.lat), lon: Number(place.lon), zoom: Number(place.zoom) || 9 };
+    if (place.timeZone) {
+      try {
+        new Intl.DateTimeFormat('en-CA', { timeZone: place.timeZone }).format(new Date());
+        state.forecastTimeZone = place.timeZone;
+      } catch (_) { }
+    }
+    if (previousVisit && forecastZone() !== previousZone) {
+      const start = forecastDateAt(previousVisit.day, previousVisit.minutes).getTime();
+      state.visitDraft = { start, end: start + previousVisit.duration };
+      normalizeVisitDraft({ preserveDuration: true });
+    }
     savePlace();
     text('#location-name', state.place.name);
     closeSheets();
@@ -2334,6 +3373,7 @@
     state.timelineHorizon = 'now';
     state.arrival = null;
     state.weatherPath = [];
+    state.visitResult = null;
     state.airQuality = null;
     state.alerts = [];
     state.lastLiveRefresh = 0;
@@ -2341,6 +3381,7 @@
     renderAlerts();
     await Promise.allSettled(MODELS.map(readCachedModel));
     renderForecast();
+    if (returnSheet === 'visit-sheet') openVisitSheet(false);
     await refreshAll(true);
   }
 
@@ -2482,6 +3523,30 @@
   function bindEvents() {
     $('#location-button')?.addEventListener('click', () => { renderLocations(); openSheet('location-sheet'); });
     $('#location-search-input')?.addEventListener('input', scheduleLocationSearch);
+    $('#visit-nav-button')?.addEventListener('click', () => openVisitSheet(false));
+    $('#visit-hero-button')?.addEventListener('click', () => openVisitSheet(false));
+    $('#visit-share-quick')?.addEventListener('click', () => openVisitSheet(true));
+    $('#visit-place-button')?.addEventListener('click', () => {
+      state.locationReturnSheet = 'visit-sheet';
+      renderLocations();
+      openSheet('location-sheet');
+    });
+    $$('[data-visit-adjust]').forEach(button => button.addEventListener('click', () => {
+      adjustVisitTime(button.dataset.visitAdjust, Number(button.dataset.delta));
+    }));
+    $$('[data-visit-duration]').forEach(button => button.addEventListener('click', () => setVisitDuration(Number(button.dataset.visitDuration))));
+    $('#visit-check-action')?.addEventListener('click', () => { void runVisitAnalysis(); });
+    $('#visit-edit-action')?.addEventListener('click', () => { setVisitSheetView(false); renderVisitForm(); });
+    $('#visit-map-action')?.addEventListener('click', () => {
+      const result = state.visitResult;
+      if (!result?.peak) return;
+      closeSheets();
+      if (!showFutureTimeOnMap(result.peak.time, `${result.place.name} · peak visit signal shown on the map`)) {
+        showToast('The exact weather-map frame is no longer available');
+      }
+    });
+    $('#visit-share-image')?.addEventListener('click', event => { void shareVisitImage(event.currentTarget); });
+    $('#visit-share-motion')?.addEventListener('click', event => { void shareVisitMotion(event.currentTarget); });
     $('#layers-button')?.addEventListener('click', () => openSheet('layers-sheet'));
     $('#focus-button')?.addEventListener('click', () => setMapFocus(!document.body.classList.contains('map-focus')));
     $('#forecast-details-button')?.addEventListener('click', () => openSheet('details-sheet'));
@@ -2534,6 +3599,8 @@
 
   async function start() {
     bindEvents();
+    ensureVisitDraft();
+    renderVisitForm();
     setMapFocus(location.hash === '#forecast' ? false : mapFocusPreference(), false);
     syncModeControls();
     renderLocations();

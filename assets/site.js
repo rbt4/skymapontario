@@ -5,10 +5,10 @@
   const tabs = [...document.querySelectorAll('[data-preview-tab]')];
   const playButton = document.querySelector('.preview-time button');
   const copy = {
-    now: { kicker: 'OBSERVED RADAR', title: 'Rain stays west for now.', body: 'Watch the latest measured frames move toward your location.', time: 'NOW', left: 'PAST HOUR', centre: 'NOW', right: 'NOWCAST', confidence: 'MEASURED', path: 'Quiet through tonight', peak: 'No strong wet window', then: 'Radar stays live' },
-    six: { kicker: 'RADAR → HRDPS + REPS', title: 'Showers approach this evening.', body: 'The source boundary stays visible while ensemble support checks the first forecast hours.', time: 'IN 6H', left: 'NOW', centre: 'NOWCAST', right: '+6H', confidence: 'CONVERGING', path: 'First wet window this evening', peak: 'Peak window near 9 PM', then: 'Then easing' },
-    day: { kicker: 'HRDPS + REPS SIGNAL', title: 'Tomorrow’s wettest pocket has support.', body: 'The 2.5 km map supplies the shape; the official ensemble supplies the probability signal.', time: 'TOMORROW', left: 'NOW', centre: 'HRDPS + REPS', right: '+24H', confidence: 'ALIGNED', path: 'Tomorrow carries the wettest pocket', peak: 'Map the peak window', then: 'Tap any 3h block' },
-    'two-day': { kicker: '48-HOUR CONVERGENCE', title: 'See the two-day path without fake precision.', body: 'Longer lead times remain useful, while mixed sources are labelled guarded instead of certain.', time: 'IN 48H', left: 'NOW', centre: 'MODEL + ENSEMBLE', right: '+48H', confidence: 'GUARDED', path: 'The whole two-day path at a glance', peak: 'One guarded wet pocket', then: 'Confidence fades' }
+    now: { kicker: 'OBSERVED RADAR', title: 'Dry at Oakville now.', body: 'The rain area is still west of your destination.', time: 'NOW', left: 'PAST HOUR', centre: 'NOW', right: '4 PM', confidence: 'MEASURED', path: 'No rain at arrival', peak: 'Band west of Oakville', then: 'Measured now', likelihood: '18%', decision: 'Mostly dry at arrival. Keep watching the band to the west.' },
+    four: { kicker: 'RADAR NOWCAST', title: 'Rain approaches near arrival.', body: 'Official radar motion brings the western edge closer to Oakville.', time: '4:00 PM', left: 'NOW', centre: '4 PM', right: '5 PM', confidence: 'MED–HIGH', path: 'Edge near 4:20 PM', peak: 'Approaching from west', then: 'Motion guidance', likelihood: '58%', decision: 'Rain is possible shortly after arrival. Timing can still shift.' },
+    five: { kicker: 'HRDPS + REPS', title: 'The wettest part is near 5 PM.', body: 'The high-resolution map and official ensemble both support rain.', time: '5:00 PM', left: '4 PM', centre: '5 PM', right: '6 PM', confidence: 'ALIGNED', path: 'Peak near 5:10 PM', peak: 'Light to steady rain', then: 'Easing later', likelihood: '72%', decision: 'Plan for rain during the middle of the visit.' },
+    six: { kicker: 'HRDPS FUTURECAST', title: 'The rain area starts to ease.', body: 'The local amount falls while the broader band moves east.', time: '6:00 PM', left: '5 PM', centre: '6 PM', right: 'AFTER', confidence: 'MEDIUM', path: 'Easing near departure', peak: 'Band moving east', then: 'Recheck closer', likelihood: '44%', decision: 'The visit may end drier than its middle.' }
   };
   let previewTimer = null;
 
@@ -31,9 +31,12 @@
     document.querySelector('[data-preview-path]').textContent = copy[mode].path;
     document.querySelector('[data-preview-peak]').textContent = copy[mode].peak;
     document.querySelector('[data-preview-then]').textContent = copy[mode].then;
+    document.querySelector('[data-preview-likelihood]').textContent = copy[mode].likelihood;
+    document.querySelector('[data-preview-decision]').textContent = copy[mode].decision;
   }
 
   tabs.forEach(tab => tab.addEventListener('click', () => setPreview(tab.dataset.previewTab)));
+  if (preview) setPreview(preview.dataset.preview || 'now');
   playButton?.addEventListener('click', () => {
     if (previewTimer) {
       clearInterval(previewTimer);

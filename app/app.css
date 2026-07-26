@@ -225,6 +225,7 @@ button:disabled { cursor: progress; opacity: .55 }
   gap: 8px;
 }
 
+.visit-nav-button,
 .focus-button,
 .icon-button {
   display: inline-flex;
@@ -237,6 +238,27 @@ button:disabled { cursor: progress; opacity: .55 }
   border-radius: 15px;
   background: rgba(255, 255, 255, .035);
 }
+
+.visit-nav-button {
+  border-color: rgba(216, 255, 120, .25);
+  background:
+    linear-gradient(135deg, rgba(216, 255, 120, .12), rgba(114, 228, 255, .07)),
+    rgba(255, 255, 255, .035);
+}
+
+.visit-nav-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: var(--future);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.visit-nav-button b { font-size: 12px; font-weight: 760 }
+.visit-nav-button small { display: none; color: var(--future); font-size: 11px; font-weight: 760 }
+.visit-nav-button:hover { border-color: rgba(216, 255, 120, .46); background-color: rgba(216, 255, 120, .08) }
 
 .focus-button svg { width: 17px; height: 17px; fill: none; stroke: var(--radar); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round }
 .focus-button b { font-size: 12px; font-weight: 720 }
@@ -808,6 +830,126 @@ body[data-frame-kind="futurecast"] .story-facts span:first-child b { color: var(
 
 #forecast { scroll-margin-top: calc(var(--topbar-height) + var(--safe-top)) }
 
+/* The primary product question: one place, one exact visit window. */
+
+.visit-hero {
+  --visit-accent: var(--radar);
+  position: relative;
+  display: grid;
+  min-height: 256px;
+  margin: 18px 0 0;
+  padding: 24px;
+  overflow: hidden;
+  grid-template-columns: minmax(0, 1.35fr) minmax(150px, .65fr);
+  align-items: stretch;
+  gap: 18px;
+  border: 1px solid rgba(225, 247, 239, .17);
+  border-radius: 25px;
+  background:
+    radial-gradient(circle at 5% 0, color-mix(in srgb, var(--visit-accent) 20%, transparent), transparent 34%),
+    radial-gradient(circle at 100% 100%, rgba(216, 255, 120, .09), transparent 42%),
+    linear-gradient(148deg, #102722, #06110f 74%);
+  color: var(--white);
+  box-shadow: 0 24px 54px rgba(23, 44, 39, .18);
+}
+
+.visit-hero:before {
+  position: absolute;
+  inset: 0;
+  opacity: .18;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, .045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .035) 1px, transparent 1px);
+  background-size: 38px 38px;
+  mask-image: linear-gradient(120deg, #000, transparent 72%);
+  content: "";
+  pointer-events: none;
+}
+
+.visit-hero[data-risk="low"] { --visit-accent: var(--future) }
+.visit-hero[data-risk="medium"] { --visit-accent: var(--sun) }
+.visit-hero[data-risk="high"] { --visit-accent: #ffad83 }
+
+.visit-hero-main,
+.visit-current { position: relative; z-index: 1 }
+
+.visit-hero-main {
+  display: flex;
+  min-width: 0;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.visit-hero-main > small,
+.visit-current > small {
+  color: var(--visit-accent);
+  font-size: 11px;
+  font-weight: 820;
+  letter-spacing: .13em;
+}
+
+.visit-hero-main h2 {
+  max-width: 520px;
+  margin: 12px 0 10px;
+  font-size: clamp(28px, 2.55vw, 39px);
+  font-weight: 690;
+  letter-spacing: -.05em;
+  line-height: .98;
+  text-wrap: balance;
+}
+
+.visit-hero-main > p {
+  max-width: 540px;
+  margin: 0;
+  color: var(--mist);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.visit-hero-actions { display: flex; margin-top: 18px; align-items: center; flex-wrap: wrap; gap: 8px }
+.visit-hero-actions button {
+  display: inline-flex;
+  min-height: 44px;
+  padding: 0 15px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 13px;
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.visit-hero-actions svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round }
+.visit-primary { background: var(--visit-accent); color: #04110f }
+.visit-share-quick { border: 1px solid var(--night-line-strong); background: rgba(255, 255, 255, .055); color: var(--white) }
+.visit-share-quick[hidden] { display: none }
+
+.visit-current {
+  display: flex;
+  min-width: 0;
+  padding: 17px;
+  justify-content: center;
+  flex-direction: column;
+  border: 1px solid var(--night-line);
+  border-radius: 18px;
+  background: rgba(3, 12, 10, .54);
+}
+
+.visit-current > div { display: flex; margin: 9px 0 11px; align-items: flex-end; justify-content: space-between; gap: 8px }
+.visit-current strong { font-size: 52px; font-weight: 560; letter-spacing: -.075em; line-height: .85; font-variant-numeric: tabular-nums }
+.visit-current div span { color: var(--dim); font-size: 11px; font-weight: 650; font-variant-numeric: tabular-nums; text-align: right }
+.visit-current > b { font-size: 14px; font-weight: 680; line-height: 1.2 }
+.visit-current > p {
+  display: -webkit-box;
+  margin: 7px 0 0;
+  overflow: hidden;
+  color: var(--dim);
+  font-size: 11px;
+  line-height: 1.42;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
 .summary-card {
   display: grid;
   min-height: 205px;
@@ -1319,6 +1461,209 @@ body[data-frame-kind="futurecast"] .story-facts span:first-child b { color: var(
 .location-grid i { color: var(--radar); font-style: normal }
 .location-grid button.active { border-color: rgba(114, 228, 255, .38); background: rgba(114, 228, 255, .08) }
 
+/* Visit checker */
+
+.visit-sheet {
+  right: auto;
+  left: 50%;
+  width: min(860px, calc(100% - 36px));
+  transform: translateX(-50%);
+}
+
+.visit-form { display: flex; flex-direction: column; gap: 14px }
+
+.visit-place-button {
+  display: flex;
+  min-height: 66px;
+  padding: 12px 15px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid var(--night-line-strong);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 0 50%, rgba(114, 228, 255, .1), transparent 40%),
+    rgba(255, 255, 255, .045);
+  text-align: left;
+}
+
+.visit-place-button span { display: flex; min-width: 0; flex-direction: column; gap: 4px }
+.visit-place-button small,
+.visit-time-stepper > small,
+.visit-duration-row > span,
+.visit-result-head small,
+.visit-likelihood small,
+.visit-facts small {
+  color: var(--dim);
+  font-size: 11px;
+  font-weight: 790;
+  letter-spacing: .11em;
+}
+.visit-place-button b { overflow: hidden; font-size: 19px; font-weight: 680; letter-spacing: -.025em; text-overflow: ellipsis; white-space: nowrap }
+.visit-place-button em { color: var(--radar); font-size: 12px; font-style: normal; font-weight: 750 }
+
+.visit-date-strip {
+  display: grid;
+  padding: 4px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  border: 1px solid var(--night-line);
+  border-radius: 15px;
+  background: rgba(3, 12, 10, .42);
+}
+
+.visit-date-strip button {
+  min-height: 48px;
+  padding: 5px 8px;
+  border-radius: 11px;
+  color: var(--dim);
+  font-size: 12px;
+  font-weight: 710;
+}
+.visit-date-strip button span { display: block; margin-top: 2px; color: inherit; font-size: 11px; font-weight: 570 }
+.visit-date-strip button.active { background: var(--white); color: var(--night) }
+
+.visit-time-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px }
+.visit-time-stepper {
+  padding: 13px;
+  border: 1px solid var(--night-line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .035);
+}
+.visit-time-stepper > small { display: block; margin: 0 0 9px 3px }
+.visit-time-stepper > div { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 6px }
+.visit-time-stepper button {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid var(--night-line-strong);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, .05);
+  color: var(--radar);
+  font-size: 22px;
+  line-height: 1;
+}
+.visit-time-stepper output { color: var(--white); font-size: clamp(19px, 4vw, 25px); font-weight: 670; letter-spacing: -.035em; text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums }
+
+.visit-duration-row { display: flex; min-height: 48px; padding: 5px; align-items: center; gap: 5px; border: 1px solid var(--night-line); border-radius: 14px }
+.visit-duration-row > span { margin: 0 auto 0 8px }
+.visit-duration-row button { min-height: 36px; padding: 0 11px; border-radius: 10px; color: var(--dim); font-size: 11px; font-weight: 720 }
+.visit-duration-row button.active { background: rgba(216, 255, 120, .12); color: var(--future) }
+.visit-check-action { margin-top: 2px }
+.visit-method-note,
+.visit-share-note {
+  margin: -3px 2px 0;
+  color: var(--dim);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.visit-result {
+  --result-accent: var(--radar);
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+.visit-result[hidden] { display: none }
+.visit-result[data-risk="low"] { --result-accent: var(--future) }
+.visit-result[data-risk="medium"] { --result-accent: var(--sun) }
+.visit-result[data-risk="high"] { --result-accent: #ffad83 }
+
+.visit-result-head {
+  display: grid;
+  padding: 16px;
+  grid-template-columns: 54px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  border: 1px solid color-mix(in srgb, var(--result-accent) 32%, transparent);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 0 0, color-mix(in srgb, var(--result-accent) 14%, transparent), transparent 45%),
+    rgba(255, 255, 255, .035);
+}
+
+.visit-risk-orb {
+  position: relative;
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--result-accent) 40%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--result-accent) 8%, transparent);
+  box-shadow: 0 0 28px color-mix(in srgb, var(--result-accent) 15%, transparent);
+}
+.visit-risk-orb:before,
+.visit-risk-orb:after,
+.visit-risk-orb i { position: absolute; border-radius: 50%; content: "" }
+.visit-risk-orb:before { inset: 9px; border: 1px solid color-mix(in srgb, var(--result-accent) 43%, transparent) }
+.visit-risk-orb:after { inset: 17px; border: 1px solid color-mix(in srgb, var(--result-accent) 68%, transparent) }
+.visit-risk-orb i { inset: 23px; background: var(--result-accent); box-shadow: 0 0 12px var(--result-accent) }
+.visit-result-head h3 { margin: 6px 0 5px; color: var(--white); font-size: 25px; font-weight: 680; letter-spacing: -.04em; line-height: 1 }
+.visit-result-head p { margin: 0; color: var(--mist); font-size: 12px; line-height: 1.45 }
+
+.visit-likelihood {
+  display: grid;
+  padding: 15px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px 14px;
+  border: 1px solid var(--night-line);
+  border-radius: 16px;
+  background: rgba(3, 12, 10, .45);
+}
+.visit-likelihood span { display: flex; flex-direction: column; gap: 5px }
+.visit-likelihood span b { color: var(--result-accent); font-size: 17px; font-weight: 720 }
+.visit-likelihood > strong { font-size: 34px; font-weight: 610; letter-spacing: -.055em; font-variant-numeric: tabular-nums }
+.visit-likelihood > div { position: relative; height: 8px; overflow: hidden; grid-column: 1 / -1; border-radius: 99px; background: rgba(255, 255, 255, .075) }
+.visit-likelihood > div i { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--radar), var(--result-accent)); transition: width .45s ease }
+.visit-likelihood > p { margin: 0; grid-column: 1 / -1; color: var(--dim); font-size: 11px; line-height: 1.45 }
+
+.visit-window-track {
+  display: grid;
+  min-height: 104px;
+  padding: 9px 8px 7px;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(38px, 1fr);
+  align-items: end;
+  gap: 4px;
+  overflow-x: auto;
+  border: 1px solid var(--night-line);
+  border-radius: 16px;
+  background:
+    linear-gradient(rgba(255, 255, 255, .035) 1px, transparent 1px) 0 25% / 100% 25%,
+    rgba(3, 12, 10, .44);
+  scrollbar-width: none;
+}
+.visit-window-track::-webkit-scrollbar { display: none }
+.visit-window-track span { position: relative; display: flex; min-width: 0; height: 84px; align-items: center; justify-content: flex-end; flex-direction: column; gap: 5px }
+.visit-window-track i { display: block; width: min(24px, 70%); min-height: 3px; height: var(--visit-rain, 3px); border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg, #9cecff, #2589ed 62%, #5542bb); opacity: var(--visit-support, .35); box-shadow: 0 0 10px rgba(72, 159, 255, .22) }
+.visit-window-track b { color: var(--mist); font-size: 11px; font-weight: 640; white-space: nowrap; font-variant-numeric: tabular-nums }
+.visit-window-track small { color: var(--dim); font-size: 11px; white-space: nowrap }
+
+.visit-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px }
+.visit-facts span { display: flex; min-height: 72px; padding: 12px 13px; justify-content: center; flex-direction: column; gap: 6px; border: 1px solid var(--night-line); border-radius: 14px; background: rgba(255, 255, 255, .03) }
+.visit-facts b { color: var(--white); font-size: 13px; font-weight: 670; line-height: 1.3 }
+.visit-evidence { margin: 0; padding: 0 2px; color: var(--mist); font-size: 12px; line-height: 1.55 }
+.visit-result-actions,
+.visit-share-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px }
+.visit-result-actions button,
+.visit-share-actions button {
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid var(--night-line-strong);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .04);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 730;
+}
+.visit-share-actions button { display: flex; align-items: center; justify-content: center; gap: 8px }
+.visit-share-actions button.primary-action { border: 0; background: linear-gradient(135deg, var(--radar), #68b8ff); color: #03110f }
+.visit-share-actions svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round }
+.visit-share-actions button:disabled { cursor: progress }
+
 .layer-list { display: flex; flex-direction: column; gap: 8px }
 .layer-list button { display: grid; padding: 14px; align-items: center; grid-template-columns: 48px 1fr 26px; gap: 13px; border: 1px solid var(--night-line); border-radius: var(--radius-sm); background: rgba(255, 255, 255, .035); text-align: left }
 .layer-list button > span { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 13px; background: rgba(114, 228, 255, .08); color: var(--radar); font-size: 20px }
@@ -1396,6 +1741,15 @@ body[data-frame-kind="futurecast"] .story-facts span:first-child b { color: var(
   .topbar { grid-template-columns: minmax(0, 1fr) auto auto }
   .current-brief > span { display: none }
   .focus-button { display: none }
+  .visit-nav-button {
+    width: 50px;
+    padding: 5px;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .visit-nav-button svg { width: 16px; height: 16px }
+  .visit-nav-button b { display: none }
+  .visit-nav-button small { display: block }
   .app-shell { display: block }
   .radar-stage {
     position: relative;
@@ -1406,6 +1760,7 @@ body[data-frame-kind="futurecast"] .story-facts span:first-child b { color: var(
     border-bottom: 1px solid var(--night-line);
   }
   .forecast-stack { padding-inline: 20px }
+  .visit-hero { grid-template-columns: minmax(0, 1.3fr) minmax(145px, .7fr) }
   .summary-card { min-height: 180px }
   .snapshot-rail {
     grid-auto-columns: minmax(245px, 82%);
@@ -1506,6 +1861,28 @@ body[data-frame-kind="futurecast"] .story-facts span:first-child b { color: var(
   .ribbon .tick[aria-pressed="true"]:before { height: 25px }
 
   .forecast-stack { padding: 0 14px calc(18px + var(--safe-bottom)) }
+  .visit-hero {
+    min-height: 0;
+    margin-top: 14px;
+    padding: 18px;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    border-radius: 22px;
+  }
+  .visit-hero-main h2 { font-size: 29px }
+  .visit-hero-main > p { font-size: 12px }
+  .visit-current {
+    display: grid;
+    padding: 13px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 4px 12px;
+  }
+  .visit-current > small { grid-column: 1 }
+  .visit-current > div { margin: 0; grid-column: 2; grid-row: 1 / span 3; flex-direction: column; align-items: flex-end; gap: 5px }
+  .visit-current strong { font-size: 42px }
+  .visit-current > b { grid-column: 1 }
+  .visit-current > p { margin: 0; grid-column: 1; -webkit-line-clamp: 2 }
   .summary-card { min-height: 176px; padding: 25px 1px 23px; gap: 14px }
   .summary-card h2 { font-size: 25px }
   .summary-card p { font-size: 12px }
@@ -1524,15 +1901,24 @@ body[data-frame-kind="futurecast"] .story-facts span:first-child b { color: var(
   .day-row { grid-template-columns: 58px 25px minmax(0, 1fr) 68px 62px; gap: 7px }
 
   .sheet { right: 8px; bottom: calc(8px + var(--safe-bottom)); left: 8px; padding-inline: 16px; border-radius: 24px }
+  .visit-sheet { right: auto; left: 50%; width: calc(100% - 16px); transform: translateX(-50%) }
   .sheet header h2 { font-size: 23px }
   .location-grid,
   .detail-grid { grid-template-columns: 1fr }
   .model-row { grid-template-columns: 98px 1fr auto }
+  .visit-time-grid { grid-template-columns: 1fr }
+  .visit-duration-row { flex-wrap: wrap }
+  .visit-duration-row > span { width: 100%; margin: 4px 6px 0 }
+  .visit-duration-row button { flex: 1 }
 }
 
 @media (max-width: 390px) {
   .brand-place small { display: none }
   .current-brief { display: none }
+  .visit-nav-button,
+  .icon-button { width: 44px; height: 44px }
+  .visit-nav-button small,
+  .icon-button small { font-size: 11px }
   .map-mode-rail button { min-width: 52px }
   .map-mode-rail b { font-size: 11px }
   .horizon-switch button { min-width: 32px; padding-inline: 5px }
@@ -1543,6 +1929,9 @@ body[data-frame-kind="futurecast"] .story-facts span:first-child b { color: var(
   .rain-meter { display: none }
   .app-footer a { display: none }
   .app-footer i { display: none }
+  .visit-facts,
+  .visit-result-actions,
+  .visit-share-actions { grid-template-columns: 1fr }
 }
 
 @media (max-height: 680px) and (min-width: 981px) {
