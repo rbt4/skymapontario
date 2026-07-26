@@ -12,7 +12,11 @@
   function setPreview(mode) {
     if (!preview || !copy[mode]) return;
     preview.dataset.preview = mode;
-    tabs.forEach(tab => tab.classList.toggle('active', tab.dataset.previewTab === mode));
+    tabs.forEach(tab => {
+      const active = tab.dataset.previewTab === mode;
+      tab.classList.toggle('active', active);
+      tab.setAttribute('aria-selected', String(active));
+    });
     document.querySelector('[data-preview-kicker]').textContent = copy[mode].kicker;
     document.querySelector('[data-preview-title]').textContent = copy[mode].title;
     document.querySelector('[data-preview-copy]').textContent = copy[mode].body;

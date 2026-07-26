@@ -133,4 +133,4 @@ for (const model of models) {
   await new Promise(resolve => setTimeout(resolve, 500));
 }
 
-console.log('✓ All live sources required by SkyMap 14.1 responded with usable data');
+console.log('✓ All live sources required by SkyMap 15.0 responded with usable data');
