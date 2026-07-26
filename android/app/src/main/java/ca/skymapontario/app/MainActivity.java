@@ -39,7 +39,7 @@ public final class MainActivity extends Activity {
     private static final int LOCATION_REQUEST = 4101;
     private static final String APP_ORIGIN = "https://appassets.androidplatform.net";
     private static final String BRIDGE_NAME = "SkyMapNative";
-    private static final int MAX_NATIVE_MESSAGE_CHARS = 2_000_000;
+    private static final int MAX_NATIVE_MESSAGE_CHARS = 8_500_000;
 
     private WebView webView;
     private String geoOrigin;
@@ -78,7 +78,7 @@ public final class MainActivity extends Activity {
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setMediaPlaybackRequiresUserGesture(true);
-        settings.setUserAgentString(settings.getUserAgentString() + " SkyMapOntario/17.1.0");
+        settings.setUserAgentString(settings.getUserAgentString() + " SkyMapOntario/18.0.0");
 
         WebViewCompat.addWebMessageListener(
                 webView,
@@ -180,6 +180,15 @@ public final class MainActivity extends Activity {
                         break;
                     case "refreshNow":
                         bridge.refreshNow();
+                        result = JSONObject.NULL;
+                        break;
+                    case "shareFile":
+                        bridge.shareFile(
+                                requireString(args, 0),
+                                requireString(args, 1),
+                                requireString(args, 2),
+                                requireString(args, 3)
+                        );
                         result = JSONObject.NULL;
                         break;
                     default:

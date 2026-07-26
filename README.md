@@ -1,8 +1,8 @@
 # SkyMap Ontario
 
-**Weather, moving toward you.**
+**Will rain reach your plans?**
 
-SkyMap Ontario is a radar-first Ontario weather experience. It joins measured radar, official short-range radar extrapolation and high-resolution 48-hour guidance in one honest timeline, checks deterministic precipitation against the official REPS ensemble, turns the next two days into a connected local weather path, explains every selected time in plain language, surfaces active Environment Canada alerts without shouting, and keeps meaningful snapshots ahead of a clear seven-day forecast.
+SkyMap Ontario is a radar-first Ontario weather experience built around one practical decision: choose a destination and exact visit window, see whether rain reaches it, then share a clear answer. It joins measured radar, official short-range radar extrapolation and high-resolution 48-hour guidance in one honest timeline, checks deterministic precipitation against the official REPS ensemble, inspects the nearby rain area, and produces large-format WhatsApp-ready PNG or GIF summaries.
 
 ## Current release
 
@@ -35,6 +35,11 @@ The website, app and Android bridge are all committed as readable source. The re
 - Android forecast memory makes small, bounded adjustments to the point-model blend after archived forecasts can be compared with nearby ECCC observations. The Canadian-first base weighting always remains dominant.
 - Direct Now, 6h, 24h and 48h controls change both the timeline and the useful map framing without hiding the current location.
 - A connected 48-hour weather path groups blended hourly guidance into tappable three-hour windows, identifies the first wet window, peak and easing time, and opens the matching HRDPS map hour. Model support is labelled separately and is never presented as probability.
+- The visit checker accepts an Ontario destination, arrival time and departure time, then evaluates only that window instead of repeating a generic daily forecast.
+- A bounded eight-direction spatial check distinguishes a broader organized rain area from isolated cells. Directional “approaching” wording is used only when an earlier surrounding layer and later destination layer support it.
+- Visit results show arrival, peak, rain-area position and confidence in large type. They can open the matching map frame directly.
+- The web app creates a 1080 × 1350 PNG designed to remain legible after messaging-app compression. It can also encode a short GIF from the official weather frames; a failed motion export falls back to the static image.
+- Android shares PNG and GIF files through its origin-scoped native message channel and restricted `FileProvider`; the browser uses Web Share when available and a file download otherwise.
 - Rain, storms, smoke, AQHI and temperature are exposed in a direct map-view rail instead of being buried in a dropdown.
 - Radar playback runs once and stops rather than looping endlessly.
 - Every selected time explains whether it is measured, extrapolated or model guidance and reports the value beneath the map centre when available.
@@ -56,6 +61,8 @@ The website, app and Android bridge are all committed as readable source. The re
 - The visible app refreshes live observations and the current radar timeline automatically while it is open, without jumping a user away from a selected future horizon.
 - The shell is network-first with a complete offline fallback, preventing an old cached interface from being mixed with a newer version receipt during an update.
 - Ko-fi support remains optional and the map remains free.
+
+The GIF exporter uses `gifenc` 1.0.3 under the MIT License. See [`docs/THIRD_PARTY_NOTICES.md`](docs/THIRD_PARTY_NOTICES.md).
 
 ## Android build
 

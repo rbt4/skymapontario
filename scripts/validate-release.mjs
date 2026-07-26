@@ -6,6 +6,7 @@ const version = JSON.parse(read('version.json'));
 const site = read('index.html');
 const siteCss = read('assets/site.css');
 const siteJs = read('assets/site.js');
+const privacy = read('privacy.html');
 const app = read('app/index.html');
 const appCss = read('app/app.css');
 const appJs = read('app/app.js');
@@ -23,6 +24,9 @@ const proguard = read('android/app/proguard-rules.pro');
 const signingGuide = read('docs/RELEASE_SIGNING.md');
 const androidManifest = read('android/app/src/main/AndroidManifest.xml');
 const updatePaths = read('android/app/src/main/res/xml/update_file_paths.xml');
+const gifEncoder = read('app/vendor/gifenc.esm.js');
+const thirdPartyNotices = read('docs/THIRD_PARTY_NOTICES.md');
+const visitWindowTest = read('scripts/check-visit-window.mjs');
 const publicKey = fs.readFileSync('android/app/signing/skymap-public-release.jks');
 
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
@@ -30,8 +34,10 @@ assert(/^\d+\.\d+\.\d+$/.test(version.version), 'Version must use semantic versi
 assert(Number.isInteger(version.versionCode), 'versionCode must be an integer');
 assert(appVersion.version === version.version && appVersion.versionCode === version.versionCode, 'Web app version is not aligned');
 assert(appJs.includes(`version: '${version.version}'`), 'Web app fallback version is not aligned');
-assert(site.includes('Weather,<br><em>moving toward you.</em>'), 'Radar-first hero is missing');
-assert(site.includes('class="preview-path"') && siteJs.includes('[data-preview-path]'), 'Landing preview no longer demonstrates the connected weather path');
+assert(site.includes('Will rain reach<br><em>your plans?</em>'), 'Destination-and-time hero is missing');
+assert(site.includes('class="preview-path"') && siteJs.includes('[data-preview-path]'), 'Landing preview no longer demonstrates the visit window');
+assert(site.includes('CHECK A VISIT') && site.includes('SHARE LARGE IMAGE') && siteJs.includes('data-preview-likelihood'), 'Landing page does not demonstrate the primary visit-and-share workflow');
+assert(privacy.includes('Shared visit cards') && privacy.includes('does not upload the generated file'), 'Generated-share privacy behaviour is not disclosed');
 assert(!site.includes('<iframe'), 'Landing page must not embed the full app');
 assert((site.match(/ko-fi\.com\/rbt4dev/g) || []).length >= 3, 'Ko-fi support must remain visible');
 assert(site.includes('data-apk'), 'Public APK link is missing');
@@ -98,8 +104,22 @@ assert(appJs.includes("scrubber.type = 'range'") && appJs.includes('markWeatherP
 assert(appJs.includes('amount, not probability'), 'Weather-path model support can be mistaken for probability');
 assert(app.includes('id="location-search-input"') && app.includes('Search any Ontario city or town'), 'Ontario place search is missing');
 assert(appJs.includes('GEOCODE_API') && appJs.includes('searchOntarioLocations') && appJs.includes("result.admin1 || '').toLowerCase() === 'ontario'"), 'Ontario-only place search guard is missing');
+assert(appJs.includes("timeZone: String(result.timezone || '')") && appJs.includes('previousVisit') && appJs.includes('forecastZone() !== previousZone'), 'Cross-timezone Ontario visits do not preserve their local wall-clock window');
 assert(app.includes('https://geocoding-api.open-meteo.com'), 'Place-search endpoint is blocked by app CSP');
 assert(appCss.includes('.story-facts span:nth-child(3) { display: flex;'), 'Futurecast confidence disappears on phones');
+assert(app.includes('id="visit-sheet"') && app.includes('id="visit-start-time"') && app.includes('id="visit-end-time"'), 'Exact visit-window controls are missing');
+assert(app.includes('id="visit-share-image"') && app.includes('id="visit-share-motion"'), 'Large image or motion sharing controls are missing');
+assert(appJs.includes('function runVisitAnalysis') && appJs.includes('function buildVisitResult'), 'Visit-window decision analysis is missing');
+assert(appJs.includes('function analyzeVisitRainArea') && appJs.includes('VISIT_DIRECTIONS'), 'Surrounding rain-area analysis is missing');
+assert(appJs.includes('wetEntries.length >= 3 && longestCircularWetRun(entries) >= 2'), 'Rain-band classification is no longer conservative');
+assert(appJs.includes("value: peak >= 70 ? 'WET' : peak >= 45 ? 'MIXED' : 'LOW'"), 'Uncalibrated model support can be mistaken for a rain probability');
+assert(appJs.includes('function createVisitImage') && appJs.includes('1080') && appJs.includes('1350'), 'Large-format share image is missing');
+assert(appJs.includes("import('./vendor/gifenc.esm.js')") && appJs.includes('function createVisitGif'), 'Short GIF sharing is missing');
+assert(gifEncoder.includes('GIFEncoder') && thirdPartyNotices.includes('gifenc 1.0.3') && thirdPartyNotices.includes('MIT License'), 'GIF encoder or its license notice is missing');
+const shareCanvas = appJs.slice(appJs.indexOf('function drawVisitShareCard'), appJs.indexOf('function canvasBlob'));
+assert(shareCanvas && !shareCanvas.includes('letterSpacing'), 'Share-card text depends on an inconsistently supported canvas font property');
+assert(visitWindowTest.includes('Oakville') && visitWindowTest.includes('16 * 60') && visitWindowTest.includes('18 * 60'), 'Exact Oakville 4–6 PM release test is missing');
+assert(workflow.includes('node scripts/check-visit-window.mjs'), 'Visit-window test is not wired into CI');
 assert((app.match(/\sid="([^"]+)"/g) || []).length === new Set([...app.matchAll(/\sid="([^"]+)"/g)].map(match => match[1])).size, 'Duplicate app element IDs detected');
 assert(!site.includes('v4.4') && !site.includes('Version 4.4'), 'Stale v4.4 copy remains');
 assert(!app.includes('SkyMap Ontario 13'), 'Stale v13 app copy remains');
@@ -137,14 +157,15 @@ assert(sw.includes(`const VERSION = '${version.version}'`), 'Service worker vers
 assert(appJs.includes("navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })"), 'Service worker is never registered without cache-safe update checks');
 assert(appJs.includes("'controllerchange'") && appJs.includes('controlledAtLaunch') && appJs.includes('refreshingForUpdate'), 'A newly activated app shell does not refresh an existing install safely');
 assert(sw.includes('cacheFreshShell') && sw.includes("cache: 'reload'"), 'Service-worker install can reuse stale shell bytes');
+assert(sw.includes('vendor/gifenc.esm.js'), 'Offline shell does not include the on-demand GIF encoder');
 assert(sw.includes("client.navigate(client.url)") && sw.includes("key.startsWith('skymap-shell-')"), 'Stale shell clients are not upgraded immediately');
 assert(sw.includes('return network;') && sw.includes('if (cached) return cached'), 'App shell is not network-first with an offline fallback');
 assert(geoMetProxy.includes('safeHeaders') && !geoMetProxy.includes('flattenHeaders'), 'Native relay still forwards upstream headers verbatim');
 assert(androidManifest.includes('android:allowBackup="false"'), 'Cached weather and saved location are still cloud-backed-up');
 
 // --- Release continuity and security guarantees ----------------------------
-assert(version.version === '17.1.0' && version.versionCode === 17010, 'Release version is not 17.1.0 / 17010');
-assert(version.releaseName === 'Wayfinder', 'Release name is not Wayfinder');
+assert(version.version === '18.0.0' && version.versionCode === 18000, 'Release version is not 18.0.0 / 18000');
+assert(version.releaseName === 'Arrival', 'Release name is not Arrival');
 assert(buildGradle.includes("storeFile file('signing/skymap-public-release.jks')"), 'Public continuity keystore is not attached');
 assert(buildGradle.includes("storePassword 'skymap-public-release'"), 'Public keystore credentials are not explicit');
 assert(buildGradle.includes('signingConfig signingConfigs.release'), 'Release signing configuration is not attached');
@@ -169,12 +190,18 @@ assert(!bridge.includes('@JavascriptInterface') && !bridge.includes('android.web
 assert(appJs.includes('channel.postMessage') && appJs.includes('NativeBridge.call'), 'Web app does not use the asynchronous native message channel');
 assert(appJs.includes("await NativeBridge.call('getCache'"), 'Native cache reads are not asynchronous');
 assert(appJs.includes('Promise.allSettled(MODELS.map(readCachedModel))'), 'Native cache hydration is not awaited safely');
+assert(mainActivity.includes('case "shareFile"') && bridge.includes('public void shareFile'), 'Android file-sharing bridge is missing');
+assert(bridge.includes('MAX_SHARE_BYTES') && bridge.includes('"image/png"') && bridge.includes('"image/gif"'), 'Android share payload is not bounded to approved image types');
+assert(bridge.includes('getCanonicalPath') && bridge.includes('filename.endsWith(extension)'), 'Android share filenames are not confined to the approved file type and directory');
+assert(!/\)\s*\.(?:setClipData|addFlags)\(/.test(bridge), 'Android share intents must call void mutators as separate statements');
+assert(workflow.includes("grep -q 'id=\"visit-sheet\"'") && workflow.includes("grep -q 'createVisitGif'") && workflow.includes("test -s /tmp/apk-inspect/assets/vendor/gifenc.esm.js"), 'CI does not inspect the packaged visit-and-share experience');
 
 // Automatic public APK update flow.
 assert(androidManifest.includes('android.permission.REQUEST_INSTALL_PACKAGES'), 'APK installer permission is missing');
 assert(androidManifest.includes('android:name=".SkyMapApplication"'), 'Update scheduler application is missing');
 assert(androidManifest.includes('androidx.core.content.FileProvider'), 'Update FileProvider is missing');
 assert(updatePaths.includes('<files-path name="updates" path="updates/"'), 'Update file path is not restricted');
+assert(updatePaths.includes('<files-path name="shares" path="shares/"'), 'Generated share files are not restricted to their FileProvider directory');
 assert(application.includes('UpdateManager.schedule(this)'), 'Automatic update scheduling is missing');
 assert(application.includes('UpdateManager.promptPendingUpdate(activity)'), 'Ready update is not prompted on app resume');
 assert(updateManager.includes('PeriodicWorkRequest.Builder(UpdateCheckWorker.class, 12, TimeUnit.HOURS)'), 'Twelve-hour update schedule is missing');

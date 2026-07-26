@@ -33,6 +33,7 @@ jobs:
           node --check assets/site.js
           node --check app/app.js
           node scripts/validate-release.mjs
+          node scripts/check-visit-window.mjs
           grep -q "android.useAndroidX=true" gradle.properties
 
       - name: Verify every live source used by the product
@@ -106,6 +107,11 @@ jobs:
           unzip -q "$APK" -d /tmp/apk-inspect
           grep -q 'id="snapshot-rail"' /tmp/apk-inspect/assets/index.html
           grep -q 'id="weather-path"' /tmp/apk-inspect/assets/index.html
+          grep -q 'id="visit-sheet"' /tmp/apk-inspect/assets/index.html
+          grep -q 'id="visit-start-time"' /tmp/apk-inspect/assets/index.html
+          grep -q 'id="visit-end-time"' /tmp/apk-inspect/assets/index.html
+          grep -q 'id="visit-share-image"' /tmp/apk-inspect/assets/index.html
+          grep -q 'id="visit-share-motion"' /tmp/apk-inspect/assets/index.html
           grep -q 'id="location-search-input"' /tmp/apk-inspect/assets/index.html
           grep -q 'data-map-mode="rain"' /tmp/apk-inspect/assets/index.html
           grep -q 'id="focus-button"' /tmp/apk-inspect/assets/index.html
@@ -129,6 +135,11 @@ jobs:
           grep -q 'loadEnsembleSignal' /tmp/apk-inspect/assets/app.js
           grep -q 'loadNativeIntelligence' /tmp/apk-inspect/assets/app.js
           grep -q 'renderWeatherPath' /tmp/apk-inspect/assets/app.js
+          grep -q 'runVisitAnalysis' /tmp/apk-inspect/assets/app.js
+          grep -q 'analyzeVisitRainArea' /tmp/apk-inspect/assets/app.js
+          grep -q 'createVisitImage' /tmp/apk-inspect/assets/app.js
+          grep -q 'createVisitGif' /tmp/apk-inspect/assets/app.js
+          grep -q "vendor/gifenc.esm.js" /tmp/apk-inspect/assets/app.js
           grep -q 'searchOntarioLocations' /tmp/apk-inspect/assets/app.js
           grep -q 'geocoding-api.open-meteo.com' /tmp/apk-inspect/assets/app.js
           grep -q 'scheduleTimelineRecovery' /tmp/apk-inspect/assets/app.js
@@ -136,10 +147,13 @@ jobs:
           grep -q 'OpenStreetMap contributors' /tmp/apk-inspect/assets/app.js
           grep -q 'applyTimelineHorizon' /tmp/apk-inspect/assets/app.js
           grep -q 'NativeBridge' /tmp/apk-inspect/assets/app.js
+          test -s /tmp/apk-inspect/assets/vendor/gifenc.esm.js
           grep -q "${SKYMAP_VERSION}" /tmp/apk-inspect/assets/version.json
           strings /tmp/apk-inspect/classes*.dex > /tmp/classes.txt
           grep -q 'geomet-proxy' /tmp/classes.txt
           grep -q 'SkyMapNative' /tmp/classes.txt
+          grep -q 'shareFile' /tmp/classes.txt
+          grep -q 'image/gif' /tmp/classes.txt
           grep -q 'UpdateCheckWorker' /tmp/classes.txt
           grep -q 'SkyMap-Ontario-latest.apk.sha256' /tmp/classes.txt
 

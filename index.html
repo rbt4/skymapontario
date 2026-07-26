@@ -6,12 +6,12 @@
   <meta name="theme-color" content="#06110f">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'">
   <meta name="color-scheme" content="dark">
-  <title>SkyMap Ontario — Weather, moving toward you</title>
-  <meta name="description" content="Observed Ontario radar, official short-range nowcast, a tappable 48-hour local weather path, and HRDPS futurecast checked against the 20-member REPS ensemble.">
+  <title>SkyMap Ontario — Will rain reach your plans?</title>
+  <meta name="description" content="Choose an Ontario destination and exact visit window. SkyMap checks radar, approaching rain, official futurecast and likelihood, then makes a large WhatsApp-ready image or GIF.">
   <link rel="canonical" href="https://rbt4.github.io/skymapontario/">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="SkyMap Ontario — Weather, moving toward you">
-  <meta property="og:description" content="Measured radar now. A clear local weather path next. HRDPS futurecast checked against the official REPS ensemble through 48 hours.">
+  <meta property="og:title" content="SkyMap Ontario — Will rain reach your plans?">
+  <meta property="og:description" content="Check one place during one exact time window, see when rain arrives, and share a clear large-format answer.">
   <meta property="og:url" content="https://rbt4.github.io/skymapontario/">
   <link rel="icon" href="app/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/site.css">
@@ -39,23 +39,23 @@
     <section class="hero" id="top">
       <div class="hero-glow" aria-hidden="true"></div>
       <div class="hero-copy">
-        <div class="eyebrow"><i></i><span>MEASURED NOW · ENSEMBLE-GUIDED TO 48 HOURS</span></div>
-        <h1>Weather,<br><em>moving toward you.</em></h1>
-        <p>See what is happening, what reaches your point next, and how the next 48 hours unfold. SkyMap keeps the source and confidence visible as measured radar gives way to official forecast guidance.</p>
+        <div class="eyebrow"><i></i><span>ONE PLACE · ONE TIME WINDOW · ONE CLEAR ANSWER</span></div>
+        <h1>Will rain reach<br><em>your plans?</em></h1>
+        <p>Going to Oakville from 4–6 PM? Choose the place and exact hours. SkyMap checks what is there now, what is approaching, and how likely it is—then makes a large image or short GIF you can actually read in WhatsApp.</p>
         <div class="hero-actions">
           <a class="button primary" href="app/">Open the live map <span>↗</span></a>
           <a class="button secondary" data-apk href="download/SkyMap-Ontario-latest.apk">Download Android <span>↓</span></a>
         </div>
         <div class="hero-proof">
-          <span><i>01</i><b>Measured radar</b></span>
-          <span><i>02</i><b>Radar nowcast</b></span>
-          <span><i>03</i><b>Your 48h weather path</b></span>
+          <span><i>01</i><b>Exact visit window</b></span>
+          <span><i>02</i><b>Approaching rain area</b></span>
+          <span><i>03</i><b>Large WhatsApp share</b></span>
         </div>
       </div>
 
       <div class="product-preview" data-preview="now" aria-label="Interactive SkyMap product preview">
         <div class="preview-bar">
-          <span><i></i><b>Toronto</b></span>
+          <span><i></i><b>Oakville</b></span>
           <small data-version>SkyMap Ontario</small>
           <em>22°</em>
         </div>
@@ -65,66 +65,63 @@
             <div class="preview-lake"></div>
             <div class="rain-band band-one"></div>
             <div class="rain-band band-two"></div>
-            <div class="city city-one">BARRIE</div>
-            <div class="city city-two">TORONTO</div>
+            <div class="city city-one">MILTON</div>
+            <div class="city city-two">OAKVILLE</div>
             <div class="location-dot"></div>
             <div class="preview-lenses"><span class="active">Rain</span><span>Storm</span><span>Smoke</span><span>AQHI</span></div>
             <div class="preview-story">
               <small data-preview-kicker>OBSERVED RADAR</small>
-              <h2 data-preview-title>Rain stays west for now.</h2>
-              <p data-preview-copy>Watch the latest measured frames move toward your location.</p>
+              <h2 data-preview-title>Dry at Oakville now.</h2>
+              <p data-preview-copy>The rain area is still west of your destination.</p>
               <b class="preview-confidence" data-preview-confidence>MEASURED</b>
             </div>
             <div class="preview-time">
               <button type="button" aria-label="Preview play">▶</button>
-              <div><b data-preview-time>NOW</b><span></span><small><i data-preview-left>PAST HOUR</i><em data-preview-centre>NOW</em><i data-preview-right>NOWCAST</i></small></div>
+              <div><b data-preview-time>NOW</b><span></span><small><i data-preview-left>PAST HOUR</i><em data-preview-centre>NOW</em><i data-preview-right>4 PM</i></small></div>
             </div>
           </div>
           <aside class="preview-briefing">
-            <small>YOUR WEATHER BRIEFING</small>
-            <div class="preview-now"><h3>Mostly cloudy</h3><strong>22°</strong></div>
-            <p>Dry at this point now. Guidance keeps the next few hours quiet.</p>
+            <small>CHECK A VISIT</small>
+            <div class="preview-now"><h3>Oakville</h3><strong data-preview-likelihood>18%</strong></div>
+            <div class="preview-visit-window"><span><small>ARRIVE</small><b>4:00 PM</b></span><i></i><span><small>LEAVE</small><b>6:00 PM</b></span></div>
+            <p data-preview-decision>Mostly dry at arrival. Keep watching the band to the west.</p>
             <div class="preview-path">
-              <header><small>YOUR NEXT 48 HOURS</small><b data-preview-path>Quiet through tonight</b></header>
+              <header><small>YOUR 4–6 PM WINDOW</small><b data-preview-path>No rain at arrival</b></header>
               <div aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-              <footer><b data-preview-peak>No strong wet window</b><span data-preview-then>Radar stays live</span></footer>
+              <footer><b data-preview-peak>Band west of Oakville</b><span data-preview-then>Measured now</span></footer>
             </div>
-            <div class="preview-days">
-              <span><b>Today</b><i>○</i><em>26°</em><small>16°</small></span>
-              <span><b>Sun</b><i>○</i><em>28°</em><small>18°</small></span>
-              <span><b>Mon</b><i>⌁</i><em>25°</em><small>18°</small></span>
-            </div>
+            <div class="preview-share" aria-hidden="true">SHARE LARGE IMAGE <span>↗</span></div>
           </aside>
         </div>
-        <div class="preview-tabs" role="tablist" aria-label="Preview forecast range">
+        <div class="preview-tabs" role="tablist" aria-label="Preview the visit window">
           <button class="active" data-preview-tab="now" type="button" role="tab" aria-selected="true">Now</button>
-          <button data-preview-tab="six" type="button" role="tab" aria-selected="false">6 hours</button>
-          <button data-preview-tab="day" type="button" role="tab" aria-selected="false">24 hours</button>
-          <button data-preview-tab="two-day" type="button" role="tab" aria-selected="false">48 hours</button>
+          <button data-preview-tab="four" type="button" role="tab" aria-selected="false">4 PM</button>
+          <button data-preview-tab="five" type="button" role="tab" aria-selected="false">5 PM</button>
+          <button data-preview-tab="six" type="button" role="tab" aria-selected="false">6 PM</button>
         </div>
       </div>
     </section>
 
     <section class="difference" id="difference">
       <header class="section-heading">
-        <small>ONE HONEST TIMELINE</small>
-        <h2>Reality now. Guidance next. No fake precision.</h2>
-        <p>Radar cannot see the future. SkyMap changes sources visibly as the horizon grows, then tests a single deterministic map against an official ensemble instead of pretending colour equals certainty.</p>
+        <small>BUILT AROUND THE DECISION</small>
+        <h2>“Are we getting rain while we’re there?”</h2>
+        <p>Most weather apps make you interpret a moving map and a generic daily percentage. SkyMap checks only the destination and hours that matter, while keeping every source boundary honest.</p>
       </header>
       <div class="difference-list">
         <article>
-          <span>MEASURED</span>
-          <div><h3>Start with what is actually happening.</h3><p>Recent ECCC radar remains full size, quantitative and readable, with an exact point value and geography drawn above the weather.</p></div>
+          <span>PLACE + TIME</span>
+          <div><h3>Check the actual visit—not the whole day.</h3><p>Pick any Ontario city or town, arrival time and departure time. SkyMap judges only that window and highlights the portion most likely to get wet.</p></div>
           <b>01</b>
         </article>
         <article>
-          <span>NOWCAST</span>
-          <div><h3>Follow the official radar nowcast.</h3><p>The short-range extrapolation continues the same weather motion, but changes texture and confidence at the exact boundary where observation ends.</p></div>
+          <span>RAIN AREA</span>
+          <div><h3>See whether a band is actually approaching.</h3><p>Nearby official point reads distinguish a broader organized rain area from scattered cells, and report direction only when the spatial and timing evidence supports it.</p></div>
           <b>02</b>
         </article>
         <article>
-          <span>CONVERGENCE</span>
-          <div><h3>See your weather path—and whether it has support.</h3><p>A connected 48-hour path shows when a wet window starts, peaks and eases. Hourly 2.5 km HRDPS draws the map; official 20-member REPS probabilities test the broader signal at your point.</p></div>
+          <span>SHARE CLEARLY</span>
+          <div><h3>Send the answer—not a cluttered screenshot.</h3><p>Create a portrait image with large type, exact hours, likelihood, peak and rain direction, or a short GIF that moves the official weather layer through the visit.</p></div>
           <b>03</b>
         </article>
       </div>
@@ -135,7 +132,7 @@
         <div class="install-copy">
           <small>ANDROID + WEB</small>
           <h2>Your weather room,<br>on every screen.</h2>
-          <p>Open SkyMap in any modern browser, or install the Android APK for the native radar relay, ensemble-guided 48-hour futurecast, local forecast learning and checksum-verified automatic update checks.</p>
+          <p>Open SkyMap in any modern browser, or install the Android APK for native file sharing, the resilient radar relay, ensemble-guided futurecast, local forecast learning and checksum-verified automatic update checks.</p>
           <div>
             <a class="button paper" data-apk href="download/SkyMap-Ontario-latest.apk">Download Android <span>↓</span></a>
             <a class="text-link" href="app/">Use the web app <span>↗</span></a>

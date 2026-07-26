@@ -7,7 +7,7 @@
   <meta name="color-scheme" content="dark">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://geo.weather.gc.ca; connect-src 'self' https://geo.weather.gc.ca https://api.weather.gc.ca https://api.open-meteo.com https://geocoding-api.open-meteo.com; manifest-src 'self'; worker-src 'self'">
   <title>SkyMap Ontario</title>
-  <meta name="description" content="Observed Ontario radar, official nowcast, a connected 48-hour local weather path, and HRDPS futurecast checked against the 20-member REPS ensemble.">
+  <meta name="description" content="Choose an Ontario destination and exact visit window, check whether rain reaches it, and share a clear large-format weather image or GIF.">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="vendor/leaflet.css">
@@ -51,6 +51,16 @@
         <circle cx="10.5" cy="10.5" r="6.5"/>
         <path d="m15.5 15.5 5 5"/>
       </symbol>
+      <symbol id="icon-window" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="8"/>
+        <path d="M12 7v5l3.2 2M5.5 4.8l1.6 1.6M18.5 4.8l-1.6 1.6"/>
+      </symbol>
+      <symbol id="icon-share" viewBox="0 0 24 24">
+        <circle cx="6" cy="12" r="2.2"/>
+        <circle cx="17.5" cy="6" r="2.2"/>
+        <circle cx="17.5" cy="18" r="2.2"/>
+        <path d="m8 11 7.4-3.9M8 13l7.4 3.9"/>
+      </symbol>
     </defs>
   </svg>
   <a class="skip-link" href="#forecast">Skip to forecast</a>
@@ -74,6 +84,9 @@
     </div>
 
     <div class="topbar-actions">
+      <button class="visit-nav-button" id="visit-nav-button" type="button" aria-label="Check rain for a place and time window">
+        <svg aria-hidden="true"><use href="#icon-window"></use></svg><b>Check a visit</b><small>Check</small>
+      </button>
       <button class="focus-button" id="focus-button" type="button" aria-label="Focus on the map" aria-pressed="false">
         <svg aria-hidden="true"><use href="#icon-expand"></use></svg><b>Focus map</b>
       </button>
@@ -150,13 +163,22 @@
     </section>
 
     <section class="forecast-stack" id="forecast" aria-label="Forecast briefing">
-      <section class="summary-card">
-        <div class="summary-copy">
-          <small>YOUR WEATHER BRIEFING</small>
-          <h2 id="summary-title">Loading your forecast</h2>
-          <p id="summary-copy">Official nearby conditions appear first, then guidance fills in the week.</p>
+      <section class="visit-hero" id="visit-hero" data-risk="idle">
+        <div class="visit-hero-main">
+          <small id="visit-hero-kicker">CHECK A PLACE + TIME</small>
+          <h2 id="visit-hero-title">Will it rain while you’re there?</h2>
+          <p id="visit-hero-copy">Choose an exact visit window. SkyMap checks the radar, the approaching rain area, official futurecast, and ensemble likelihood.</p>
+          <div class="visit-hero-actions">
+            <button class="visit-primary" id="visit-hero-button" type="button"><svg aria-hidden="true"><use href="#icon-window"></use></svg>Check a visit</button>
+            <button class="visit-share-quick" id="visit-share-quick" type="button" hidden><svg aria-hidden="true"><use href="#icon-share"></use></svg>Share result</button>
+          </div>
         </div>
-        <div class="summary-metric"><strong id="summary-temp">—</strong><span id="summary-range">— / —</span></div>
+        <aside class="visit-current" aria-label="Current weather summary">
+          <small>RIGHT NOW</small>
+          <div><strong id="summary-temp">—</strong><span id="summary-range">— / —</span></div>
+          <b id="summary-title">Loading your forecast</b>
+          <p id="summary-copy">Official nearby conditions and guidance are connecting.</p>
+        </aside>
       </section>
 
       <section class="section-block path-block" aria-labelledby="weather-path-heading">
@@ -220,6 +242,75 @@
     </div>
     <div class="location-divider"><span>QUICK LOCATIONS</span></div>
     <div class="location-grid" id="location-grid"></div>
+  </section>
+
+  <section class="sheet visit-sheet" id="visit-sheet" hidden aria-modal="true" role="dialog" aria-labelledby="visit-sheet-title">
+    <div class="sheet-handle"></div>
+    <header><div><small>RAIN WINDOW</small><h2 id="visit-sheet-title">Will it rain while you’re there?</h2></div><button class="sheet-close" type="button" aria-label="Close">×</button></header>
+    <div class="visit-form" id="visit-form">
+      <button class="visit-place-button" id="visit-place-button" type="button">
+        <span><small>DESTINATION</small><b id="visit-place-name">Toronto</b></span>
+        <em>Change</em>
+      </button>
+
+      <div class="visit-date-strip" id="visit-date-strip" role="group" aria-label="Choose visit day"></div>
+
+      <div class="visit-time-grid">
+        <section class="visit-time-stepper" aria-labelledby="visit-arrive-label">
+          <small id="visit-arrive-label">ARRIVE</small>
+          <div><button type="button" data-visit-adjust="start" data-delta="-30" aria-label="Arrive 30 minutes earlier">−</button><output id="visit-start-time">—</output><button type="button" data-visit-adjust="start" data-delta="30" aria-label="Arrive 30 minutes later">+</button></div>
+        </section>
+        <section class="visit-time-stepper" aria-labelledby="visit-leave-label">
+          <small id="visit-leave-label">LEAVE</small>
+          <div><button type="button" data-visit-adjust="end" data-delta="-30" aria-label="Leave 30 minutes earlier">−</button><output id="visit-end-time">—</output><button type="button" data-visit-adjust="end" data-delta="30" aria-label="Leave 30 minutes later">+</button></div>
+        </section>
+      </div>
+
+      <div class="visit-duration-row" role="group" aria-label="Quick visit length">
+        <span>STAY FOR</span>
+        <button type="button" data-visit-duration="60">1 hour</button>
+        <button class="active" type="button" data-visit-duration="120">2 hours</button>
+        <button type="button" data-visit-duration="180">3 hours</button>
+      </div>
+
+      <button class="primary-action visit-check-action" id="visit-check-action" type="button">Check this time window</button>
+      <p class="visit-method-note">Up to 2 hours: observed radar and official motion lead. Later: HRDPS 2.5 km futurecast and REPS likelihood lead. Guidance is never relabelled as observed radar.</p>
+    </div>
+
+    <div class="visit-result" id="visit-result" hidden aria-live="polite">
+      <div class="visit-result-head">
+        <span class="visit-risk-orb" aria-hidden="true"><i></i></span>
+        <div><small id="visit-result-kicker">ANALYSING</small><h3 id="visit-result-title">Checking your exact window</h3><p id="visit-result-copy">Comparing the selected point with nearby rain and official forecast guidance.</p></div>
+      </div>
+
+      <div class="visit-likelihood">
+        <span><small>RAIN LIKELIHOOD</small><b id="visit-likelihood-label">Resolving</b></span>
+        <strong id="visit-likelihood-value">—</strong>
+        <div><i id="visit-likelihood-meter"></i></div>
+        <p id="visit-likelihood-source">Waiting for the strongest official signal.</p>
+      </div>
+
+      <div class="visit-window-track" id="visit-window-track" aria-label="Rain signal during the selected visit"></div>
+
+      <div class="visit-facts">
+        <span><small>WHEN</small><b id="visit-arrival-fact">Resolving</b></span>
+        <span><small>PEAK</small><b id="visit-peak-fact">Resolving</b></span>
+        <span><small>RAIN AREA</small><b id="visit-band-fact">Resolving</b></span>
+        <span><small>CONFIDENCE</small><b id="visit-confidence-fact">Resolving</b></span>
+      </div>
+
+      <p class="visit-evidence" id="visit-evidence">SkyMap is collecting the evidence for this exact place and time.</p>
+
+      <div class="visit-result-actions">
+        <button id="visit-map-action" type="button">Show peak on map</button>
+        <button id="visit-edit-action" type="button">Change time</button>
+      </div>
+      <div class="visit-share-actions">
+        <button class="primary-action" id="visit-share-image" type="button"><svg aria-hidden="true"><use href="#icon-share"></use></svg>Share large image</button>
+        <button id="visit-share-motion" type="button"><span aria-hidden="true">▶</span>Share short GIF</button>
+      </div>
+      <p class="visit-share-note">Designed at large type for WhatsApp. The image is the fastest, clearest option; the GIF shows the weather layer moving through the visit.</p>
+    </div>
   </section>
 
   <section class="sheet" id="layers-sheet" hidden aria-modal="true" role="dialog" aria-labelledby="layers-sheet-title">
