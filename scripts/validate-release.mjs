@@ -36,14 +36,18 @@ assert((site.match(/ko-fi\.com\/rbt4dev/g) || []).length >= 3, 'Ko-fi support mu
 assert(site.includes('data-apk'), 'Public APK link is missing');
 assert(siteCss.length < 30000, 'Landing CSS has become bloated');
 assert(siteJs.length < 6000, 'Landing JavaScript has become bloated');
-assert(app.includes('WEATHER SNAPSHOTS'), 'Snapshot rail is missing');
+assert(app.includes('id="snapshot-rail"') && app.includes('NOW · NEXT · USEFUL'), 'Meaningful snapshot briefing is missing');
 assert(app.includes('7-DAY FORECAST'), 'Seven-day forecast is missing');
 assert(app.includes('Keep radar first'), 'Layer sheet is missing its radar-first hierarchy');
 assert(app.includes('id="story-facts"'), 'Selected-time explanation facts are missing');
 assert(app.includes('id="zoom-in-button"') && app.includes('id="zoom-out-button"'), 'Visible map zoom controls are missing');
 assert(app.includes('ko-fi.com/rbt4dev'), 'Restrained in-app support link is missing');
-assert(appCss.includes('grid-template-columns:minmax(0,1.45fr)'), 'Desktop map/forecast layout is missing');
-assert(appCss.includes('@media(max-width:980px)'), 'Mobile layout is missing');
+assert(appCss.includes('grid-template-columns: minmax(0, 1.62fr)'), 'Desktop map/forecast layout is missing');
+assert(appCss.includes('@media (max-width: 980px)'), 'Mobile layout is missing');
+assert(app.includes('class="map-mode-rail"') && (app.match(/data-map-mode=/g) || []).length === 5, 'Direct map-view rail is missing');
+assert(app.includes('id="focus-button"') && appJs.includes('setMapFocus'), 'Laptop map-focus mode is missing');
+assert(app.indexOf('id="snapshot-rail"') < app.indexOf('id="daily-list"'), 'Meaningful snapshots must appear before the full week');
+assert(appCss.includes('--paper: #edf1e9') && appCss.includes('--night: #06110f'), 'Instrument-and-briefing visual system is missing');
 assert(appJs.includes('NATIVE_GEOMET'), 'Native GeoMet relay is missing');
 assert(appJs.includes('Promise.allSettled'), 'Progressive source loading is missing');
 assert(appJs.includes('buildSnapshots'), 'Meaningful snapshots are missing');
@@ -77,7 +81,7 @@ assert(workflow.includes('node scripts/check-live-sources.mjs'), 'Live source va
 assert(!workflow.includes('git push origin HEAD:main'), 'Deployment must not rewrite its own source branch');
 assert(!workflow.includes('git fetch origin') && !workflow.includes('git checkout origin/'), 'Deployment must build the checked-out readable source directly');
 
-// --- 14.2 guarantees -------------------------------------------------------
+// --- Current visual and product guarantees ---------------------------------
 const sw = read('app/sw.js');
 const tinyApp = [...appCss.matchAll(/font-size:\s*([\d.]+)px/g)].map(match => Number(match[1])).filter(size => size < 11);
 assert(!tinyApp.length, `Unreadable type returned to the app: ${[...new Set(tinyApp)].join('px, ')}px`);
@@ -95,13 +99,13 @@ assert(appJs.includes('dark_only_labels') && appJs.includes("createPane('labelPa
 assert(appJs.includes('function esc('), 'HTML escaping helper is missing');
 assert(app.includes('Content-Security-Policy') && site.includes('Content-Security-Policy'), 'Content-Security-Policy is missing');
 assert(sw.includes(`const VERSION = '${version.version}'`), 'Service worker version is not aligned');
-assert(app.includes('serviceWorker'), 'Service worker is never registered');
+assert(appJs.includes("navigator.serviceWorker.register('sw.js')"), 'Service worker is never registered');
 assert(geoMetProxy.includes('safeHeaders') && !geoMetProxy.includes('flattenHeaders'), 'Native relay still forwards upstream headers verbatim');
 assert(androidManifest.includes('android:allowBackup="false"'), 'Cached weather and saved location are still cloud-backed-up');
 
-// --- 14.2.1 continuity and security guarantees ----------------------------
-assert(version.version === '14.2.1' && version.versionCode === 14021, 'Release version is not 14.2.1 / 14021');
-assert(version.releaseName === 'Continuity', 'Release name is not Continuity');
+// --- Release continuity and security guarantees ----------------------------
+assert(version.version === '15.0.0' && version.versionCode === 15000, 'Release version is not 15.0.0 / 15000');
+assert(version.releaseName === 'Signal', 'Release name is not Signal');
 assert(buildGradle.includes("storeFile file('signing/skymap-public-release.jks')"), 'Public continuity keystore is not attached');
 assert(buildGradle.includes("storePassword 'skymap-public-release'"), 'Public keystore credentials are not explicit');
 assert(buildGradle.includes('signingConfig signingConfigs.release'), 'Release signing configuration is not attached');

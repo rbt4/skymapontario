@@ -104,7 +104,9 @@ jobs:
 
           rm -rf /tmp/apk-inspect && mkdir /tmp/apk-inspect
           unzip -q "$APK" -d /tmp/apk-inspect
-          grep -q 'WEATHER SNAPSHOTS' /tmp/apk-inspect/assets/index.html
+          grep -q 'id="snapshot-rail"' /tmp/apk-inspect/assets/index.html
+          grep -q 'data-map-mode="rain"' /tmp/apk-inspect/assets/index.html
+          grep -q 'id="focus-button"' /tmp/apk-inspect/assets/index.html
           grep -q '7-DAY FORECAST' /tmp/apk-inspect/assets/index.html
           grep -q 'id="alert-banner"' /tmp/apk-inspect/assets/index.html
           grep -q 'id="map-legend"' /tmp/apk-inspect/assets/index.html

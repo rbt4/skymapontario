@@ -49,7 +49,7 @@
   };
 
   const state = {
-    version: '14.2.1',
+    version: '15.0.0',
     place: loadPlace(),
     mode: 'rain',
     map: null,
@@ -910,26 +910,26 @@
     canvas.width = width; canvas.height = height;
     const ctx = canvas.getContext('2d');
     const gradient = ctx.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, '#0b2131'); gradient.addColorStop(.55, '#0a1825'); gradient.addColorStop(1, '#06101a');
+    gradient.addColorStop(0, '#102c28'); gradient.addColorStop(.55, '#091a17'); gradient.addColorStop(1, '#06110f');
     ctx.fillStyle = gradient; ctx.fillRect(0, 0, width, height);
-    ctx.strokeStyle = 'rgba(100,219,255,.08)'; ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(114,228,255,.08)'; ctx.lineWidth = 1;
     for (let x = -height; x < width; x += 42) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + height, height); ctx.stroke(); }
-    ctx.fillStyle = 'rgba(44,113,143,.24)';
+    ctx.fillStyle = 'rgba(39,118,119,.24)';
     ctx.beginPath(); ctx.ellipse(width * .76, height * .5, width * .34, height * .26, -.24, 0, Math.PI * 2); ctx.fill();
     const wet = event.blend?.wet ?? event.day?.wet ?? 15;
     const rainBands = wet >= 50 ? 4 : wet >= 25 ? 2 : 0;
     for (let band = 0; band < rainBands; band += 1) {
       const x = width * (.05 + band * .14 + index * .015);
       const g = ctx.createLinearGradient(x, 0, x + width * .35, height);
-      g.addColorStop(0, 'rgba(100,219,255,0)'); g.addColorStop(.5, `rgba(95,137,255,${.15 + wet / 180})`); g.addColorStop(1, 'rgba(190,100,255,0)');
+      g.addColorStop(0, 'rgba(114,228,255,0)'); g.addColorStop(.5, `rgba(82,133,255,${.15 + wet / 180})`); g.addColorStop(1, 'rgba(185,99,255,0)');
       ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x + width * .16, height * .38, width * .08, height * .58, -.45, 0, Math.PI * 2); ctx.fill();
     }
     if (event.kind === 'night') {
-      ctx.fillStyle = 'rgba(217,255,118,.68)'; ctx.beginPath(); ctx.arc(width * .78, height * .22, 10, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#0a1825'; ctx.beginPath(); ctx.arc(width * .785, height * .215, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(216,255,120,.68)'; ctx.beginPath(); ctx.arc(width * .78, height * .22, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#091a17'; ctx.beginPath(); ctx.arc(width * .785, height * .215, 8, 0, Math.PI * 2); ctx.fill();
     }
     ctx.fillStyle = '#e8fbff'; ctx.beginPath(); ctx.arc(width * .58, height * .56, 4, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = 'rgba(100,219,255,.42)'; ctx.beginPath(); ctx.arc(width * .58, height * .56, 12, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(114,228,255,.42)'; ctx.beginPath(); ctx.arc(width * .58, height * .56, 12, 0, Math.PI * 2); ctx.stroke();
   }
 
   function renderSnapshots() {
@@ -1492,14 +1492,46 @@
   async function setMode(mode) {
     if (!MODES[mode] || mode === state.mode) return closeSheets();
     state.mode = mode;
+    syncModeControls();
+    closeSheets();
+    await refreshVisibleMap(true);
+  }
+
+  function syncModeControls() {
     $$('#layer-list button').forEach(button => {
-      const active = button.dataset.layer === mode;
+      const active = button.dataset.layer === state.mode;
       button.classList.toggle('active', active);
       const mark = button.querySelector('i');
       if (mark) mark.textContent = active ? '✓' : '';
     });
-    closeSheets();
-    await refreshVisibleMap(true);
+    $$('[data-map-mode]').forEach(button => {
+      const active = button.dataset.mapMode === state.mode;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+  }
+
+  function mapFocusPreference() {
+    try { return localStorage.getItem('skymap.mapFocus') === 'true'; }
+    catch (_) { return false; }
+  }
+
+  function setMapFocus(enabled, persist = true) {
+    const active = Boolean(enabled && matchMedia('(min-width: 981px)').matches);
+    document.body.classList.toggle('map-focus', active);
+    const button = $('#focus-button');
+    if (button) {
+      button.setAttribute('aria-pressed', String(active));
+      button.setAttribute('aria-label', active ? 'Show the forecast briefing' : 'Focus on the map');
+      const label = button.querySelector('b');
+      if (label) label.textContent = active ? 'Show briefing' : 'Focus map';
+      const icon = button.querySelector('span');
+      if (icon) icon.textContent = active ? '↙' : '↗';
+    }
+    if (persist) {
+      try { localStorage.setItem('skymap.mapFocus', String(Boolean(enabled))); } catch (_) { }
+    }
+    setTimeout(() => state.map?.invalidateSize(), 240);
   }
 
   function recenter() {
@@ -1554,6 +1586,7 @@
   function bindEvents() {
     $('#location-button')?.addEventListener('click', () => { renderLocations(); openSheet('location-sheet'); });
     $('#layers-button')?.addEventListener('click', () => openSheet('layers-sheet'));
+    $('#focus-button')?.addEventListener('click', () => setMapFocus(!document.body.classList.contains('map-focus')));
     $('#forecast-details-button')?.addEventListener('click', () => openSheet('details-sheet'));
     $('#radar-state')?.addEventListener('click', () => state.radar.state === 'ok' ? openSheet('details-sheet') : refreshVisibleMap(true));
     $('#play-button')?.addEventListener('click', playRadar);
@@ -1570,9 +1603,16 @@
     $('#backdrop')?.addEventListener('click', closeSheets);
     $$('.sheet-close').forEach(button => button.addEventListener('click', closeSheets));
     $$('#layer-list button').forEach(button => button.addEventListener('click', () => setMode(button.dataset.layer)));
+    $$('[data-map-mode]').forEach(button => button.addEventListener('click', () => setMode(button.dataset.mapMode)));
     window.addEventListener('online', () => refreshAll(false));
     window.addEventListener('offline', () => { setRadarState(state.weatherOverlay ? 'stale' : 'warn', 'Offline', state.weatherOverlay ? 'Showing the last successful image' : 'Forecast cache remains available'); showToast('Offline · showing saved weather'); });
-    window.addEventListener('resize', () => state.snapshots.forEach((event, index) => { const canvas = $$('.snapshot-card canvas')[index]; if (canvas) drawSnapshot(canvas, event, index); }));
+    window.addEventListener('resize', () => {
+      setMapFocus(mapFocusPreference(), false);
+      state.snapshots.forEach((event, index) => {
+        const canvas = $$('.snapshot-card canvas')[index];
+        if (canvas) drawSnapshot(canvas, event, index);
+      });
+    });
     document.addEventListener('keydown', event => {
       if (event.key === 'Escape') return closeSheets();
       if (!isRadarMode()) return;
@@ -1590,6 +1630,8 @@
 
   async function start() {
     bindEvents();
+    setMapFocus(mapFocusPreference(), false);
+    syncModeControls();
     renderLocations();
     renderLegend();
     setRibbonMode(isRadarMode());
@@ -1600,6 +1642,10 @@
     await Promise.allSettled(MODELS.map(readCachedModel));
     renderForecast();
     await refreshAll(true);
+  }
+
+  if ('serviceWorker' in navigator) {
+    addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
   }
 
   start().catch(error => {

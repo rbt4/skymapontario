@@ -143,7 +143,7 @@ public final class UpdateCheckWorker extends Worker {
         connection.setInstanceFollowRedirects(true);
         connection.setUseCaches(false);
         connection.setRequestProperty("Accept", "application/json,text/plain,application/vnd.android.package-archive,*/*;q=0.5");
-        connection.setRequestProperty("User-Agent", "SkyMapOntario/14.2.1 updater");
+        connection.setRequestProperty("User-Agent", "SkyMapOntario/15.0.0 updater");
         return connection;
     }
 
