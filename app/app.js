@@ -76,6 +76,7 @@
     timelineHorizon: 'now',
     playing: false,
     playTimer: null,
+    horizonLoadTimer: null,
     requestToken: 0,
     moveTimer: null,
     ignoreMapMoveUntil: 0,
@@ -730,12 +731,23 @@
     renderTimelineRange();
     renderPlayback(state.frames[state.frameIndex]);
     renderLegend();
-    if (autoFrame && state.map) {
+    const reframing = Boolean(autoFrame && state.map);
+    if (reframing) {
       const zoom = HORIZONS[state.timelineHorizon].zoom ?? state.place.zoom ?? 8;
       state.ignoreMapMoveUntil = Date.now() + 1200;
       state.map.flyTo([state.place.lat, state.place.lon], Math.min(state.place.zoom || zoom, zoom), { duration: .65 });
     }
-    if (load && state.frames.length) void showRadarFrame(state.frameIndex, true);
+    if (load && state.frames.length) scheduleRadarFrame(state.frameIndex, reframing);
+  }
+
+  function scheduleRadarFrame(index, afterReframe = false) {
+    clearTimeout(state.horizonLoadTimer);
+    state.horizonLoadTimer = null;
+    if (!afterReframe) return void showRadarFrame(index, true);
+    state.horizonLoadTimer = setTimeout(() => {
+      state.horizonLoadTimer = null;
+      void showRadarFrame(index, true);
+    }, 760);
   }
 
   // Each frame gets a large proportional target. Observed, extrapolated and
@@ -819,6 +831,8 @@
   }
 
   async function showRadarFrame(index, force = false) {
+    clearTimeout(state.horizonLoadTimer);
+    state.horizonLoadTimer = null;
     if (!state.frames.length) await buildRadarFrames();
     const safe = clamp(index, 0, state.frames.length - 1);
     if (!force && safe === state.frameIndex && state.weatherOverlay) return;
@@ -861,14 +875,18 @@
   function stopPlayback() {
     state.playing = false;
     clearTimeout(state.playTimer);
-    $('#play-button')?.classList.remove('playing');
+    const button = $('#play-button');
+    button?.classList.remove('playing');
+    button?.setAttribute('aria-label', 'Play radar');
   }
 
   async function playRadar() {
     if (state.playing) return stopPlayback();
     if (!state.frames.length) await buildRadarFrames();
     state.playing = true;
-    $('#play-button')?.classList.add('playing');
+    const button = $('#play-button');
+    button?.classList.add('playing');
+    button?.setAttribute('aria-label', 'Pause radar');
     if (state.frameIndex >= state.frames.length - 1) state.frameIndex = 0;
     const advance = async () => {
       if (!state.playing) return;
@@ -1563,7 +1581,7 @@
       return ['Exact local value is unavailable.', 'The weather image is live, but the official point query did not return a usable value for this frame.'];
     }
     if (kind === 'futurecast') {
-      const at = frame?.time ? frameStamp(frame.time) : 'this forecast hour';
+      const at = frame?.time ? frameStamp(frame.time).replace(/\.$/, '') : 'this forecast hour';
       if (value === null || value < .05) return ['No meaningful precipitation is forecast here.', `HRDPS keeps this point essentially dry for the hour ending ${at}. This is model guidance, not observed radar.`];
       if (value < .5) return ['A trace is forecast at this point.', `HRDPS projects about ${value.toFixed(1)} mm in the hour ending ${at}. Small cells can shift before arrival.`];
       if (value < 2.5) return ['Light precipitation is forecast here.', `HRDPS projects about ${value.toFixed(1)} mm in the hour ending ${at}. Confidence decreases as the lead time grows.`];
@@ -1743,7 +1761,7 @@
       state.frameIndex = state.frames.findIndex(frame => frameKey(frame) === frameKey(mapFrame));
       renderRibbon();
       renderTimelineRange();
-      void showRadarFrame(state.frameIndex, true);
+      scheduleRadarFrame(state.frameIndex, true);
       if (matchMedia('(max-width: 980px)').matches) $('.radar-stage')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       showToast(`${event.label.toLowerCase()} · shown on the weather map`);
       return;
@@ -1798,6 +1816,7 @@
     savePlace();
     text('#location-name', state.place.name);
     closeSheets();
+    state.ignoreMapMoveUntil = Date.now() + 1000;
     state.map.setView([state.place.lat, state.place.lon], state.place.zoom);
     placeLocationMarker();
     state.modelData.clear();

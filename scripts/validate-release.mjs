@@ -72,6 +72,7 @@ assert(appJs.includes("const FUTURECAST_LAYER = 'HRDPS.CONTINENTAL.DIAG_PR_PT1H'
 assert(appJs.includes("const FUTURE_STORM_LAYER = 'HRDPS-WEonG_2.5km_Thunderstorm-Prob'"), 'Future thunderstorm guidance is missing');
 assert((app.match(/data-horizon=/g) || []).length === 4, 'Direct Now, 6h, 24h and 48h controls are missing');
 assert(appJs.includes('function applyTimelineHorizon') && appJs.includes('function framesForHorizon'), 'Predictive timeline ranges are not implemented');
+assert(appJs.includes('function scheduleRadarFrame') && appJs.includes('afterReframe'), 'Futurecast images may load before automatic map framing finishes');
 assert(appJs.includes("frame.kind === 'observed'") && appJs.includes("frame.kind === 'nowcast'") && appJs.includes("frame.kind === 'futurecast'"), 'Measured, nowcast and futurecast source boundaries are missing');
 assert(appJs.includes('model guidance, not observed radar'), 'Futurecast is not explained honestly');
 assert(appJs.includes('A timestamped forecast must never silently degrade'), 'Timestamp precision guard is missing');
