@@ -30,6 +30,26 @@ for (const file of javaVersionFiles) {
   fs.writeFileSync(javaPath, source);
 }
 
+const mainActivityPath = path.join(root, 'android/app/src/main/java/ca/skymapontario/app/MainActivity.java');
+const mainActivity = fs.readFileSync(mainActivityPath, 'utf8');
+if (!mainActivity.includes('requestAutomaticLocation')
+    || !mainActivity.includes("document.getElementById('locate-button')")
+    || !mainActivity.includes('AUTO_LOCATE_COOLDOWN_MS')) {
+  throw new Error('Native current-location startup and resume handling is missing');
+}
+
+const validatorPath = path.join(root, 'scripts/validate-release.mjs');
+let validator = fs.readFileSync(validatorPath, 'utf8');
+validator = validator.replace(
+  /assert\(version\.version === '\d+\.\d+\.\d+' && version\.versionCode === \d+, 'Release version is not [^']+'\);/,
+  `assert(version.version === '${version.version}' && version.versionCode === ${version.versionCode}, 'Release version is not ${version.version} / ${version.versionCode}');`
+);
+validator = validator.replace(
+  /assert\(version\.releaseName === '[^']*', 'Release name is not [^']*'\);/,
+  `assert(version.releaseName === '${String(version.releaseName || '').replaceAll("'", "\\'")}', 'Release name is not ${String(version.releaseName || '').replaceAll("'", "\\'")}');`
+);
+fs.writeFileSync(validatorPath, validator);
+
 fs.writeFileSync(path.join(root, 'app/version.json'), `${JSON.stringify(version, null, 2)}\n`);
 
 const apkName = `${version.apkBaseName || 'SkyMap-Ontario'}-v${version.version}.apk`;
