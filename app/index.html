@@ -7,13 +7,48 @@
   <meta name="color-scheme" content="dark">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://geo.weather.gc.ca; connect-src 'self' https://geo.weather.gc.ca https://api.weather.gc.ca https://api.open-meteo.com; manifest-src 'self'; worker-src 'self'">
   <title>SkyMap Ontario</title>
-  <meta name="description" content="Ontario radar, active weather alerts, air quality, and a clear seven-day forecast.">
+  <meta name="description" content="Observed Ontario radar, official nowcast, and high-resolution precipitation futurecast through 48 hours.">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="vendor/leaflet.css">
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
+  <svg class="svg-defs" aria-hidden="true">
+    <defs>
+      <symbol id="icon-rain" viewBox="0 0 24 24">
+        <path d="M7 15.5h9.4a3.6 3.6 0 0 0 .6-7.15A5.5 5.5 0 0 0 6.55 9.8 2.9 2.9 0 0 0 7 15.5Z"/>
+        <path d="m8.5 18-1 2M12.5 18l-1 2M16.5 18l-1 2"/>
+      </symbol>
+      <symbol id="icon-storm" viewBox="0 0 24 24">
+        <path d="M7 13.8h9.4a3.6 3.6 0 0 0 .6-7.15A5.5 5.5 0 0 0 6.55 8.1 2.9 2.9 0 0 0 7 13.8Z"/>
+        <path d="m13 14-3.2 4h2.8l-1.4 3.2 4.4-5h-3L13 14Z"/>
+      </symbol>
+      <symbol id="icon-smoke" viewBox="0 0 24 24">
+        <path d="M4 8.2c2.8-2.3 5.1 2.2 8 .1s5.1 1.8 8-.2M4 12.2c2.8-2.3 5.1 2.2 8 .1s5.1 1.8 8-.2M4 16.2c2.8-2.3 5.1 2.2 8 .1s5.1 1.8 8-.2"/>
+      </symbol>
+      <symbol id="icon-air" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="8"/>
+        <circle cx="12" cy="12" r="4.5"/>
+        <circle cx="12" cy="12" r="1.2" class="icon-fill"/>
+      </symbol>
+      <symbol id="icon-temp" viewBox="0 0 24 24">
+        <path d="M10 5a2 2 0 0 1 4 0v8.2a4.2 4.2 0 1 1-4 0V5Z"/>
+        <path d="M12 7v8.3"/>
+      </symbol>
+      <symbol id="icon-locate" viewBox="0 0 24 24">
+        <path d="m12 3 7.2 17-7.2-3-7.2 3L12 3Z"/>
+      </symbol>
+      <symbol id="icon-target" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="7"/>
+        <circle cx="12" cy="12" r="2"/>
+        <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+      </symbol>
+      <symbol id="icon-expand" viewBox="0 0 24 24">
+        <path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/>
+      </symbol>
+    </defs>
+  </svg>
   <a class="skip-link" href="#forecast">Skip to forecast</a>
 
   <header class="topbar">
@@ -36,7 +71,7 @@
 
     <div class="topbar-actions">
       <button class="focus-button" id="focus-button" type="button" aria-label="Focus on the map" aria-pressed="false">
-        <span aria-hidden="true">↗</span><b>Focus map</b>
+        <svg aria-hidden="true"><use href="#icon-expand"></use></svg><b>Focus map</b>
       </button>
       <button class="icon-button" id="layers-button" type="button" aria-label="Open map view details">
         <span aria-hidden="true">◫</span><small>Views</small>
@@ -57,11 +92,11 @@
       </button>
 
       <nav class="map-mode-rail" aria-label="Map views">
-        <button class="active" data-map-mode="rain" type="button" aria-pressed="true"><i aria-hidden="true">◒</i><b>Rain</b></button>
-        <button data-map-mode="storm" type="button" aria-pressed="false"><i aria-hidden="true">ϟ</i><b>Storm</b></button>
-        <button data-map-mode="smoke" type="button" aria-pressed="false"><i aria-hidden="true">≈</i><b>Smoke</b></button>
-        <button data-map-mode="air" type="button" aria-pressed="false"><i aria-hidden="true">◍</i><b>AQHI</b></button>
-        <button data-map-mode="temp" type="button" aria-pressed="false"><i aria-hidden="true">°</i><b>Temp</b></button>
+        <button class="active" data-map-mode="rain" type="button" aria-pressed="true"><svg aria-hidden="true"><use href="#icon-rain"></use></svg><b>Rain</b></button>
+        <button data-map-mode="storm" type="button" aria-pressed="false"><svg aria-hidden="true"><use href="#icon-storm"></use></svg><b>Storm</b></button>
+        <button data-map-mode="smoke" type="button" aria-pressed="false"><svg aria-hidden="true"><use href="#icon-smoke"></use></svg><b>Smoke</b></button>
+        <button data-map-mode="air" type="button" aria-pressed="false"><svg aria-hidden="true"><use href="#icon-air"></use></svg><b>AQHI</b></button>
+        <button data-map-mode="temp" type="button" aria-pressed="false"><svg aria-hidden="true"><use href="#icon-temp"></use></svg><b>Temp</b></button>
       </nav>
 
       <button class="radar-state" id="radar-state" type="button" data-state="loading">
@@ -70,20 +105,20 @@
       </button>
 
       <div class="map-actions">
-        <button id="locate-button" type="button" aria-label="Use my location">⌖</button>
-        <button id="recenter-button" type="button" aria-label="Recentre the map">◎</button>
+        <button id="locate-button" type="button" aria-label="Use my location"><svg aria-hidden="true"><use href="#icon-locate"></use></svg></button>
+        <button id="recenter-button" type="button" aria-label="Recentre the map"><svg aria-hidden="true"><use href="#icon-target"></use></svg></button>
         <button id="zoom-in-button" type="button" aria-label="Zoom in">+</button>
         <button id="zoom-out-button" type="button" aria-label="Zoom out">−</button>
       </div>
 
       <section class="radar-story" aria-live="polite">
-        <div class="story-meta"><span id="story-source">OBSERVED RADAR</span><i aria-hidden="true"></i><time id="story-time">NOW</time></div>
+        <div class="story-meta"><span id="story-source">OBSERVED RADAR</span><i aria-hidden="true"></i><time id="story-time">NOW</time><b id="frame-confidence" data-kind="observed">MEASURED</b></div>
         <h1 id="story-title">Building your weather picture.</h1>
         <p id="story-copy">Radar and forecast guidance are loading independently.</p>
         <div class="story-facts" id="story-facts" hidden>
           <span><small id="story-value-label">AT YOUR LOCATION</small><b id="story-value">Reading radar…</b></span>
-          <span><small>OFFICIAL NEARBY</small><b id="story-official">Loading forecast…</b></span>
-          <span><small>GUIDANCE</small><b id="story-guidance">Connecting…</b></span>
+          <span><small id="story-official-label">OFFICIAL NEARBY</small><b id="story-official">Loading forecast…</b></span>
+          <span><small id="story-guidance-label">CONFIDENCE</small><b id="story-guidance">Connecting…</b></span>
         </div>
       </section>
 
@@ -92,14 +127,22 @@
       <div class="timeflow" aria-label="Radar playback">
         <button class="play-button" id="play-button" type="button" aria-label="Play radar"><span>▶</span></button>
         <div class="timeflow-main">
-          <div class="timeflow-readout">
-            <b id="playback-label">NOW</b>
-            <span id="playback-clock">—</span>
-            <small id="playback-kind" data-kind="observed">Observed</small>
+          <div class="timeflow-head">
+            <div class="timeflow-readout">
+              <b id="playback-label">NOW</b>
+              <span id="playback-clock">—</span>
+              <small id="playback-kind" data-kind="observed">Measured</small>
+            </div>
+            <div class="horizon-switch" role="group" aria-label="Choose forecast range">
+              <button class="active" data-horizon="now" type="button" aria-pressed="true">Now</button>
+              <button data-horizon="6" type="button" aria-pressed="false">6h</button>
+              <button data-horizon="24" type="button" aria-pressed="false">24h</button>
+              <button data-horizon="48" type="button" aria-pressed="false">48h</button>
+            </div>
           </div>
           <div class="ribbon" id="timeline" role="group" aria-label="Choose a radar time"></div>
           <p class="static-time" id="static-time" hidden>Forecast layer · no playback in this view.</p>
-          <div class="ribbon-legend" id="ribbon-legend"><span id="timeline-past">Past hour</span><b>NOW</b><span id="timeline-future">Next 2 hours</span></div>
+          <div class="ribbon-legend" id="ribbon-legend"><span id="timeline-past">Past hour</span><b id="timeline-centre">NOW</b><span id="timeline-future">Radar nowcast</span></div>
         </div>
       </div>
     </section>
@@ -149,11 +192,11 @@
     <div class="sheet-handle"></div>
     <header><div><small>MAP VIEW</small><h2 id="layers-sheet-title">Keep radar first. Add context when needed.</h2></div><button class="sheet-close" type="button" aria-label="Close">×</button></header>
     <div class="layer-list" id="layer-list">
-      <button class="active" data-layer="rain" type="button"><span aria-hidden="true">◒</span><div><b>Rain radar</b><small>Observed radar and the official short-range nowcast</small></div><i>✓</i></button>
-      <button data-layer="storm" type="button"><span aria-hidden="true">ϟ</span><div><b>Storms</b><small>Radar with lightning density on top</small></div><i></i></button>
-      <button data-layer="smoke" type="button"><span aria-hidden="true">≈</span><div><b>Wildfire smoke</b><small>Forecast fine particles from active wildfires</small></div><i></i></button>
-      <button data-layer="air" type="button"><span aria-hidden="true">◍</span><div><b>Air quality</b><small>Observed Air Quality Health Index, 1 to 10+</small></div><i></i></button>
-      <button data-layer="temp" type="button"><span aria-hidden="true">°</span><div><b>Temperature</b><small>High-resolution temperature field</small></div><i></i></button>
+      <button class="active" data-layer="rain" type="button"><span aria-hidden="true"><svg><use href="#icon-rain"></use></svg></span><div><b>Rain + futurecast</b><small>Observed radar, official nowcast, then HRDPS guidance through 48 hours</small></div><i>✓</i></button>
+      <button data-layer="storm" type="button"><span aria-hidden="true"><svg><use href="#icon-storm"></use></svg></span><div><b>Storms</b><small>Radar with lightning density on top</small></div><i></i></button>
+      <button data-layer="smoke" type="button"><span aria-hidden="true"><svg><use href="#icon-smoke"></use></svg></span><div><b>Wildfire smoke</b><small>Forecast fine particles from active wildfires</small></div><i></i></button>
+      <button data-layer="air" type="button"><span aria-hidden="true"><svg><use href="#icon-air"></use></svg></span><div><b>Air quality</b><small>Observed Air Quality Health Index, 1 to 10+</small></div><i></i></button>
+      <button data-layer="temp" type="button"><span aria-hidden="true"><svg><use href="#icon-temp"></use></svg></span><div><b>Temperature</b><small>High-resolution temperature field</small></div><i></i></button>
     </div>
   </section>
 

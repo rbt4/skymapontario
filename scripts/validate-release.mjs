@@ -40,6 +40,7 @@ assert(app.includes('id="snapshot-rail"') && app.includes('NOW · NEXT · USEFUL
 assert(app.includes('7-DAY FORECAST'), 'Seven-day forecast is missing');
 assert(app.includes('Keep radar first'), 'Layer sheet is missing its radar-first hierarchy');
 assert(app.includes('id="story-facts"'), 'Selected-time explanation facts are missing');
+assert(app.includes('id="frame-confidence"'), 'Selected-time confidence cue is missing');
 assert(app.includes('id="zoom-in-button"') && app.includes('id="zoom-out-button"'), 'Visible map zoom controls are missing');
 assert(app.includes('ko-fi.com/rbt4dev'), 'Restrained in-app support link is missing');
 assert(appCss.includes('grid-template-columns: minmax(0, 1.62fr)'), 'Desktop map/forecast layout is missing');
@@ -64,9 +65,19 @@ assert(appJs.includes('pointValueRequests'), 'Duplicate point queries are not co
 assert(appJs.includes("formatWmsTime(frame.referenceTime)"), 'Point-query reference times may still include unsupported milliseconds');
 assert(appJs.includes('await updateFrameExplanation(frame)'), 'The selected point must resolve before arrival probing begins');
 assert(appJs.includes('function frameStamp'), 'Selected radar date-and-time label is missing');
-assert(appJs.includes('crossingNow ? 1650 : 1100'), 'Calm one-pass radar timing is missing');
+assert(appJs.includes('crossingSource ? 1750') && appJs.includes("current.kind === 'futurecast' ? 1250 : 1050"), 'Calm source-aware playback timing is missing');
 assert(appJs.includes('RAQDPS.Sfc_PM2.5-WildfireSmokePlume'), 'Wildfire-specific smoke guidance is missing');
 assert(appJs.includes('if (state.frameIndex >= state.frames.length - 1)'), 'Radar playback must stop instead of looping forever');
+assert(appJs.includes("const FUTURECAST_LAYER = 'HRDPS.CONTINENTAL.DIAG_PR_PT1H'"), '48-hour HRDPS precipitation futurecast is missing');
+assert(appJs.includes("const FUTURE_STORM_LAYER = 'HRDPS-WEonG_2.5km_Thunderstorm-Prob'"), 'Future thunderstorm guidance is missing');
+assert((app.match(/data-horizon=/g) || []).length === 4, 'Direct Now, 6h, 24h and 48h controls are missing');
+assert(appJs.includes('function applyTimelineHorizon') && appJs.includes('function framesForHorizon'), 'Predictive timeline ranges are not implemented');
+assert(appJs.includes('function scheduleRadarFrame') && appJs.includes('afterReframe'), 'Futurecast images may load before automatic map framing finishes');
+assert(appJs.includes("frame.kind === 'observed'") && appJs.includes("frame.kind === 'nowcast'") && appJs.includes("frame.kind === 'futurecast'"), 'Measured, nowcast and futurecast source boundaries are missing');
+assert(appJs.includes('model guidance, not observed radar'), 'Futurecast is not explained honestly');
+assert(appJs.includes('A timestamped forecast must never silently degrade'), 'Timestamp precision guard is missing');
+assert(appJs.includes('function openSnapshot') && appJs.includes('shown on the weather map'), 'Forecast moments do not connect back to the map');
+assert(appJs.includes('function weatherIconMarkup') && app.includes('class="svg-defs"'), 'Code-native weather graphics are missing');
 assert((app.match(/\sid="([^"]+)"/g) || []).length === new Set([...app.matchAll(/\sid="([^"]+)"/g)].map(match => match[1])).size, 'Duplicate app element IDs detected');
 assert(!site.includes('v4.4') && !site.includes('Version 4.4'), 'Stale v4.4 copy remains');
 assert(!app.includes('SkyMap Ontario 13'), 'Stale v13 app copy remains');
@@ -104,8 +115,8 @@ assert(geoMetProxy.includes('safeHeaders') && !geoMetProxy.includes('flattenHead
 assert(androidManifest.includes('android:allowBackup="false"'), 'Cached weather and saved location are still cloud-backed-up');
 
 // --- Release continuity and security guarantees ----------------------------
-assert(version.version === '15.0.0' && version.versionCode === 15000, 'Release version is not 15.0.0 / 15000');
-assert(version.releaseName === 'Signal', 'Release name is not Signal');
+assert(version.version === '16.0.0' && version.versionCode === 16000, 'Release version is not 16.0.0 / 16000');
+assert(version.releaseName === 'Horizon', 'Release name is not Horizon');
 assert(buildGradle.includes("storeFile file('signing/skymap-public-release.jks')"), 'Public continuity keystore is not attached');
 assert(buildGradle.includes("storePassword 'skymap-public-release'"), 'Public keystore credentials are not explicit');
 assert(buildGradle.includes('signingConfig signingConfigs.release'), 'Release signing configuration is not attached');

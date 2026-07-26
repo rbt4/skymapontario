@@ -303,13 +303,14 @@ button { border: 0; background: transparent; color: inherit; cursor: pointer; fo
 }
 
 .rain-band {
+  --phase-shift: 0px;
   position: absolute;
   top: -20%;
   width: 22%;
   height: 104%;
   border-radius: 50%;
   filter: blur(2px);
-  transform: rotate(-26deg);
+  transform: translateX(var(--phase-shift)) rotate(-26deg);
   animation: drift 7s ease-in-out infinite alternate;
 }
 
@@ -368,6 +369,17 @@ button { border: 0; background: transparent; color: inherit; cursor: pointer; fo
 .preview-story small { color: var(--radar); font-size: 11px; font-weight: 820; letter-spacing: .12em }
 .preview-story h2 { max-width: 500px; margin: 7px 0 6px; font-size: clamp(27px, 2.7vw, 40px); font-weight: 670; letter-spacing: -.045em; line-height: .98 }
 .preview-story p { margin: 0; color: var(--mist); font-size: 11px; line-height: 1.45 }
+.preview-confidence {
+  display: inline-flex;
+  margin-top: 10px;
+  padding: 4px 7px;
+  border: 1px solid rgba(114, 228, 255, .28);
+  border-radius: 99px;
+  color: var(--radar);
+  font-size: 11px;
+  font-weight: 820;
+  letter-spacing: .08em;
+}
 
 .preview-time {
   position: absolute;
@@ -386,10 +398,12 @@ button { border: 0; background: transparent; color: inherit; cursor: pointer; fo
 
 .preview-time button { display: grid; width: 38px; height: 38px; flex: 0 0 auto; place-items: center; border: 1px solid rgba(114, 228, 255, .24); border-radius: 11px; background: rgba(114, 228, 255, .08); color: var(--radar); font-size: 0 }
 .preview-time button:before { width: 0; height: 0; margin-left: 2px; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 8px solid var(--radar); content: "" }
+.preview-time button.playing:before { width: 8px; height: 11px; margin-left: 0; border: 0; border-right: 3px solid var(--radar); border-left: 3px solid var(--radar) }
 .preview-time > div { display: grid; min-width: 0; flex: 1; grid-template-columns: auto 1fr; align-items: center; gap: 6px 9px }
 .preview-time b { font-size: 11px }
 .preview-time > div > span { height: 6px; border-radius: 99px; background: linear-gradient(90deg, var(--radar) 0 52%, var(--ink) 52% 54%, rgba(216, 255, 120, .27) 54%); box-shadow: 0 0 12px rgba(114, 228, 255, .15) }
 .preview-time small { display: flex; grid-column: 1 / -1; justify-content: space-between; color: var(--dim); font-size: 11px; font-weight: 720 }
+.preview-time small i { font-style: normal }
 .preview-time em { color: var(--mist); font-style: normal }
 
 .preview-briefing {
@@ -425,7 +439,7 @@ button { border: 0; background: transparent; color: inherit; cursor: pointer; fo
 .preview-tabs {
   display: grid;
   padding: 8px;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 5px;
   border-top: 1px solid var(--line);
   background: #071410;
@@ -434,10 +448,15 @@ button { border: 0; background: transparent; color: inherit; cursor: pointer; fo
 .preview-tabs button { min-height: 39px; border: 1px solid transparent; border-radius: 10px; color: var(--dim); font-size: 11px; font-weight: 740 }
 .preview-tabs button.active { border-color: rgba(114, 228, 255, .2); background: rgba(114, 228, 255, .07); color: var(--ink) }
 
-.product-preview[data-preview="moments"] .rain-band { opacity: .28 }
-.product-preview[data-preview="moments"] .preview-moment { box-shadow: 0 0 0 2px rgba(114, 228, 255, .32), 0 15px 34px rgba(20, 32, 30, .16) }
-.product-preview[data-preview="week"] .rain-band { opacity: .12 }
-.product-preview[data-preview="week"] .preview-days { border-radius: 12px; box-shadow: 0 0 0 2px rgba(40, 119, 134, .28) }
+.product-preview[data-preview="six"] .rain-band { --phase-shift: 28px; opacity: .86 }
+.product-preview[data-preview="day"] .rain-band { --phase-shift: 62px }
+.product-preview[data-preview="two-day"] .rain-band { --phase-shift: 102px; opacity: .58 }
+.product-preview[data-preview="six"] .preview-confidence { border-color: rgba(216, 255, 120, .3); color: var(--future) }
+.product-preview[data-preview="day"] .preview-confidence,
+.product-preview[data-preview="two-day"] .preview-confidence { border-color: rgba(255, 211, 138, .3); color: #ffd38a }
+.product-preview[data-preview="six"] .preview-time > div > span { background: linear-gradient(90deg, var(--radar) 0 18%, var(--future) 18% 48%, rgba(255, 211, 138, .3) 48%) }
+.product-preview[data-preview="day"] .preview-time > div > span { background: linear-gradient(90deg, var(--radar) 0 8%, var(--future) 8% 16%, #ffd38a 16% 65%, rgba(255, 211, 138, .16) 65%) }
+.product-preview[data-preview="two-day"] .preview-time > div > span { background: linear-gradient(90deg, var(--radar) 0 5%, var(--future) 5% 10%, #ffd38a 10% 92%, rgba(255, 211, 138, .16) 92%) }
 
 /* Product difference */
 
@@ -543,7 +562,8 @@ button { border: 0; background: transparent; color: inherit; cursor: pointer; fo
 .footer > span { grid-column: 1 / -1; color: var(--dim); font-size: 11px }
 
 @keyframes drift {
-  to { transform: translateX(44px) rotate(-26deg) }
+  from { transform: translateX(var(--phase-shift)) rotate(-26deg) }
+  to { transform: translateX(calc(var(--phase-shift) + 44px)) rotate(-26deg) }
 }
 
 /* Responsive */
