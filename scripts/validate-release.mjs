@@ -193,7 +193,7 @@ assert(appJs.includes('Promise.allSettled(MODELS.map(readCachedModel))'), 'Nativ
 assert(mainActivity.includes('case "shareFile"') && bridge.includes('public void shareFile'), 'Android file-sharing bridge is missing');
 assert(bridge.includes('MAX_SHARE_BYTES') && bridge.includes('"image/png"') && bridge.includes('"image/gif"'), 'Android share payload is not bounded to approved image types');
 assert(bridge.includes('getCanonicalPath') && bridge.includes('filename.endsWith(extension)'), 'Android share filenames are not confined to the approved file type and directory');
-assert(!/\)\s*\.addFlags\(/.test(bridge), 'Android share intents must call void addFlags() as a separate statement');
+assert(!/\)\s*\.(?:setClipData|addFlags)\(/.test(bridge), 'Android share intents must call void mutators as separate statements');
 assert(workflow.includes("grep -q 'id=\"visit-sheet\"'") && workflow.includes("grep -q 'createVisitGif'") && workflow.includes("test -s /tmp/apk-inspect/assets/vendor/gifenc.esm.js"), 'CI does not inspect the packaged visit-and-share experience');
 
 // Automatic public APK update flow.

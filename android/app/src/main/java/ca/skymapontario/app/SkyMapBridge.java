@@ -108,10 +108,10 @@ public final class SkyMapBridge {
                 context.getPackageName() + ".files",
                 output
         );
-        Intent send = new Intent(Intent.ACTION_SEND)
-                .setType(mimeType)
-                .putExtra(Intent.EXTRA_STREAM, uri)
-                .setClipData(ClipData.newUri(context.getContentResolver(), "SkyMap weather window", uri));
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.setType(mimeType);
+        send.putExtra(Intent.EXTRA_STREAM, uri);
+        send.setClipData(ClipData.newUri(context.getContentResolver(), "SkyMap weather window", uri));
         send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         if (shareText != null && !shareText.isEmpty()) {
             send.putExtra(Intent.EXTRA_TEXT, shareText.substring(0, Math.min(2_000, shareText.length())));
