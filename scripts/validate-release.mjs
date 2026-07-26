@@ -110,12 +110,15 @@ assert(appJs.includes('dark_only_labels') && appJs.includes("createPane('labelPa
 assert(appJs.includes('function esc('), 'HTML escaping helper is missing');
 assert(app.includes('Content-Security-Policy') && site.includes('Content-Security-Policy'), 'Content-Security-Policy is missing');
 assert(sw.includes(`const VERSION = '${version.version}'`), 'Service worker version is not aligned');
-assert(appJs.includes("navigator.serviceWorker.register('sw.js')"), 'Service worker is never registered');
+assert(appJs.includes("navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })"), 'Service worker is never registered without cache-safe update checks');
+assert(appJs.includes("'controllerchange'") && appJs.includes('controlledAtLaunch') && appJs.includes('refreshingForUpdate'), 'A newly activated app shell does not refresh an existing install safely');
+assert(sw.includes('cacheFreshShell') && sw.includes("cache: 'reload'"), 'Service-worker install can reuse stale shell bytes');
+assert(sw.includes("client.navigate(client.url)") && sw.includes("key.startsWith('skymap-shell-')"), 'Stale shell clients are not upgraded immediately');
 assert(geoMetProxy.includes('safeHeaders') && !geoMetProxy.includes('flattenHeaders'), 'Native relay still forwards upstream headers verbatim');
 assert(androidManifest.includes('android:allowBackup="false"'), 'Cached weather and saved location are still cloud-backed-up');
 
 // --- Release continuity and security guarantees ----------------------------
-assert(version.version === '16.0.0' && version.versionCode === 16000, 'Release version is not 16.0.0 / 16000');
+assert(version.version === '16.0.1' && version.versionCode === 16001, 'Release version is not 16.0.1 / 16001');
 assert(version.releaseName === 'Horizon', 'Release name is not Horizon');
 assert(buildGradle.includes("storeFile file('signing/skymap-public-release.jks')"), 'Public continuity keystore is not attached');
 assert(buildGradle.includes("storePassword 'skymap-public-release'"), 'Public keystore credentials are not explicit');

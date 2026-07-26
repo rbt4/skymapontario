@@ -62,7 +62,7 @@
   };
 
   const state = {
-    version: '16.0.0',
+    version: '16.0.1',
     place: loadPlace(),
     mode: 'rain',
     map: null,
@@ -1998,7 +1998,14 @@
   }
 
   if ('serviceWorker' in navigator) {
-    addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
+    const controlledAtLaunch = Boolean(navigator.serviceWorker.controller);
+    let refreshingForUpdate = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!controlledAtLaunch || refreshingForUpdate) return;
+      refreshingForUpdate = true;
+      location.reload();
+    });
+    addEventListener('load', () => navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => { }));
   }
 
   start().catch(error => {
