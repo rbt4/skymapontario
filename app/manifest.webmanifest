@@ -2,7 +2,7 @@
   "id": "/skymapontario/app/",
   "name": "SkyMap Ontario",
   "short_name": "SkyMap",
-  "description": "Ontario radar, active weather alerts, air quality, and a clear seven-day forecast.",
+  "description": "Measured Ontario radar, official nowcast, 48-hour futurecast, alerts, air quality, and a clear seven-day forecast.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

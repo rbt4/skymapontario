@@ -39,9 +39,9 @@ The repository intentionally contains `android/app/signing/skymap-public-release
 
 Use semantic versions in `version.json`:
 
-- Visual or feature release: `14.2.0`
-- Security or bug fix: `14.2.1`
-- Major architecture change: `15.0.0`
+- Visual or feature release: `16.1.0`
+- Security or bug fix: `16.1.1`
+- Major architecture change: `16.0.0`
 
 `versionCode` must always increase. A release is not aligned unless the APK badging, site release file, artifact name and `version.json` all match.
 

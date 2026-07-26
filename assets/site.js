@@ -3,11 +3,14 @@
 
   const preview = document.querySelector('[data-preview]');
   const tabs = [...document.querySelectorAll('[data-preview-tab]')];
+  const playButton = document.querySelector('.preview-time button');
   const copy = {
-    radar: { kicker: 'OBSERVED RADAR', title: 'Rain stays west for now.', body: 'Watch the latest frames move toward your location.', time: 'NOW' },
-    moments: { kicker: 'WEATHER SNAPSHOTS', title: 'The next important change.', body: 'Meaningful moments replace repetitive hourly cards.', time: 'TONIGHT' },
-    week: { kicker: '7-DAY FORECAST', title: 'The full week stays visible.', body: 'Highs, lows, conditions and expected rainfall.', time: '7 DAYS' }
+    now: { kicker: 'OBSERVED RADAR', title: 'Rain stays west for now.', body: 'Watch the latest measured frames move toward your location.', time: 'NOW', left: 'PAST HOUR', centre: 'NOW', right: 'NOWCAST', confidence: 'MEASURED' },
+    six: { kicker: 'RADAR → HRDPS', title: 'Showers approach this evening.', body: 'The source and confidence change visibly where the nowcast hands off to model guidance.', time: 'IN 6H', left: 'NOW', centre: 'NOWCAST', right: '+6H', confidence: 'MED–HIGH' },
+    day: { kicker: 'HRDPS 2.5 KM FUTURECAST', title: 'Tomorrow’s wettest pocket has a shape.', body: 'Tap any forecast hour for the local amount and a plain-language confidence cue.', time: 'TOMORROW', left: 'NOW', centre: 'HRDPS', right: '+24H', confidence: 'MEDIUM' },
+    'two-day': { kicker: '48-HOUR FUTURECAST', title: 'See the two-day path without fake precision.', body: 'Longer lead times stay useful, but the interface becomes more cautious as confidence falls.', time: 'IN 48H', left: 'NOW', centre: 'MODEL GUIDANCE', right: '+48H', confidence: 'LOWER' }
   };
+  let previewTimer = null;
 
   function setPreview(mode) {
     if (!preview || !copy[mode]) return;
@@ -21,9 +24,41 @@
     document.querySelector('[data-preview-title]').textContent = copy[mode].title;
     document.querySelector('[data-preview-copy]').textContent = copy[mode].body;
     document.querySelector('[data-preview-time]').textContent = copy[mode].time;
+    document.querySelector('[data-preview-left]').textContent = copy[mode].left;
+    document.querySelector('[data-preview-centre]').textContent = copy[mode].centre;
+    document.querySelector('[data-preview-right]').textContent = copy[mode].right;
+    document.querySelector('[data-preview-confidence]').textContent = copy[mode].confidence;
   }
 
   tabs.forEach(tab => tab.addEventListener('click', () => setPreview(tab.dataset.previewTab)));
+  playButton?.addEventListener('click', () => {
+    if (previewTimer) {
+      clearInterval(previewTimer);
+      previewTimer = null;
+      playButton.classList.remove('playing');
+      playButton.setAttribute('aria-label', 'Preview play');
+      return;
+    }
+    const modes = tabs.map(tab => tab.dataset.previewTab);
+    let index = Math.max(0, modes.indexOf(preview?.dataset.preview));
+    if (index >= modes.length - 1) {
+      index = 0;
+      setPreview(modes[index]);
+    }
+    playButton.classList.add('playing');
+    playButton.setAttribute('aria-label', 'Pause preview');
+    previewTimer = setInterval(() => {
+      index += 1;
+      if (index >= modes.length) {
+        clearInterval(previewTimer);
+        previewTimer = null;
+        playButton.classList.remove('playing');
+        playButton.setAttribute('aria-label', 'Preview play');
+        return;
+      }
+      setPreview(modes[index]);
+    }, 1250);
+  });
   document.querySelector('[data-year]').textContent = String(new Date().getFullYear());
 
   fetch('version.json', { cache: 'no-store' }).then(response => response.ok ? response.json() : null).then(version => {

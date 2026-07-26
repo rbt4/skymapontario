@@ -1,6 +1,6 @@
-/* SkyMap Ontario 15 — weather instrument + editorial briefing.
-   Observed and projected weather are visually distinct.
-   Geography, time and plain-language meaning stay visible together. */
+/* SkyMap Ontario — weather instrument + editorial briefing.
+   Measured radar, extrapolated nowcast and model futurecast are visually
+   distinct. Geography, time and meaning stay visible together. */
 
 :root {
   color-scheme: dark;
@@ -56,6 +56,7 @@ button,
 input { color: inherit; font: inherit }
 button { border: 0; background: transparent; cursor: pointer }
 button:disabled { cursor: progress; opacity: .55 }
+.svg-defs { position: absolute; width: 0; height: 0; overflow: hidden }
 
 :focus-visible {
   outline: 2px solid var(--radar);
@@ -226,9 +227,10 @@ button:disabled { cursor: progress; opacity: .55 }
   background: rgba(255, 255, 255, .035);
 }
 
-.focus-button span { color: var(--radar); font-size: 16px }
+.focus-button svg { width: 17px; height: 17px; fill: none; stroke: var(--radar); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round }
 .focus-button b { font-size: 12px; font-weight: 720 }
 .focus-button[aria-pressed="true"] { border-color: rgba(114, 228, 255, .36); background: rgba(114, 228, 255, .1) }
+.focus-button[data-active="true"] svg { transform: rotate(180deg) }
 
 .icon-button {
   width: 50px;
@@ -355,11 +357,22 @@ button:disabled { cursor: progress; opacity: .55 }
   color: var(--dim);
 }
 
-.map-mode-rail i { font-size: 15px; font-style: normal }
+.map-mode-rail svg {
+  width: 16px;
+  height: 16px;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.map-mode-rail .icon-fill { fill: currentColor; stroke: none }
 .map-mode-rail b { font-size: 11px; font-weight: 750; letter-spacing: .02em }
 .map-mode-rail button:hover { color: var(--white); background: rgba(255, 255, 255, .05) }
 .map-mode-rail button.active { background: var(--white); color: var(--night); box-shadow: 0 7px 18px rgba(0, 0, 0, .26) }
-.map-mode-rail button.active i { color: #0088a8 }
+.map-mode-rail button.active svg { color: #0088a8 }
 
 /* Map status and controls */
 
@@ -428,31 +441,53 @@ button:disabled { cursor: progress; opacity: .55 }
   backdrop-filter: blur(16px);
 }
 
+.map-actions svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: var(--radar);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .map-actions button:hover,
 .map-actions button:active { border-color: rgba(114, 228, 255, .34); background: rgba(114, 228, 255, .1) }
 
-#locate-button,
-#recenter-button { font-size: 0 }
+.skymap-location-marker {
+  display: grid;
+  place-items: center;
+  background: transparent;
+}
 
-#locate-button:before,
-#recenter-button:before {
-  display: block;
-  width: 14px;
-  height: 14px;
-  border: 1px solid var(--mist);
+.skymap-location-marker > span {
+  position: relative;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+}
+
+.skymap-location-marker > span:before,
+.skymap-location-marker > span:after {
+  position: absolute;
+  border: 1px solid rgba(114, 228, 255, .44);
   border-radius: 50%;
   content: "";
 }
 
-#locate-button:before {
-  box-shadow:
-    0 -6px 0 -5px var(--radar),
-    0 6px 0 -5px var(--radar),
-    -6px 0 0 -5px var(--radar),
-    6px 0 0 -5px var(--radar);
+.skymap-location-marker > span:before { inset: 4px; animation: location-breathe 2.8s ease-out infinite }
+.skymap-location-marker > span:after { inset: 11px; border-color: rgba(247, 250, 244, .5) }
+.skymap-location-marker i { width: 8px; height: 8px; border: 2px solid #06110f; border-radius: 50%; background: var(--radar); box-shadow: 0 0 14px rgba(114, 228, 255, .95) }
+
+@keyframes location-breathe {
+  0% { transform: scale(.72); opacity: .9 }
+  80%, 100% { transform: scale(1.18); opacity: 0 }
 }
 
-#recenter-button:before { border: 4px double var(--radar) }
+@media (prefers-reduced-motion: reduce) {
+  .skymap-location-marker > span:before { animation: none; opacity: .45 }
+}
 
 /* Selected-time explanation */
 
@@ -480,6 +515,21 @@ button:disabled { cursor: progress; opacity: .55 }
 .story-meta span { color: var(--radar) }
 .story-meta i { width: 3px; height: 3px; border-radius: 50%; background: var(--dim) }
 .story-meta time { color: var(--mist); font-variant-numeric: tabular-nums }
+.story-meta > b {
+  margin-left: 3px;
+  padding: 4px 7px;
+  border: 1px solid rgba(114, 228, 255, .2);
+  border-radius: 99px;
+  color: var(--radar);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.story-meta > b[data-kind="high"],
+.story-meta > b[data-kind="medium-high"] { border-color: rgba(216, 255, 120, .24); color: var(--future) }
+.story-meta > b[data-kind="medium"],
+.story-meta > b[data-kind="lower"] { border-color: rgba(255, 211, 138, .25); color: var(--sun) }
 
 .radar-story h1 {
   max-width: 680px;
@@ -530,6 +580,8 @@ button:disabled { cursor: progress; opacity: .55 }
 .story-facts small { color: var(--dim); font-size: 11px; font-weight: 760; letter-spacing: .1em }
 .story-facts b { overflow: hidden; font-size: 13px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums }
 .story-facts span:first-child b { color: var(--radar) }
+body[data-frame-kind="nowcast"] .story-facts span:first-child b { color: var(--future) }
+body[data-frame-kind="futurecast"] .story-facts span:first-child b { color: var(--sun) }
 
 /* Legend */
 
@@ -548,9 +600,20 @@ button:disabled { cursor: progress; opacity: .55 }
 }
 
 .map-legend::-webkit-scrollbar { display: none }
-.map-legend > b { flex: 0 0 auto; color: var(--dim); font-size: 11px; font-weight: 780; letter-spacing: .12em; text-transform: uppercase }
-.map-legend i { display: flex; flex: 0 0 auto; align-items: center; gap: 6px; color: var(--mist); font-size: 11px; font-style: normal; white-space: nowrap }
-.map-legend i:before { width: 16px; height: 8px; border-radius: 3px; background: var(--swatch, var(--radar)); content: "" }
+.legend-heading { display: flex; flex: 0 0 auto; flex-direction: column; gap: 2px }
+.legend-heading b { color: var(--mist); font-size: 11px; font-weight: 780; letter-spacing: .08em; text-transform: uppercase }
+.legend-heading small { color: var(--dim); font-size: 11px; font-weight: 720; letter-spacing: .08em }
+.legend-scale { display: grid; width: min(320px, 48vw); gap: 4px }
+.legend-scale > i {
+  display: block;
+  width: 100%;
+  height: 7px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--legend-stops));
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .12);
+}
+.legend-scale > em { display: flex; justify-content: space-between; color: var(--dim); font-style: normal }
+.legend-scale > em b { font-size: 11px; font-weight: 640; white-space: nowrap; font-variant-numeric: tabular-nums }
 
 /* Timeflow */
 
@@ -618,6 +681,7 @@ button:disabled { cursor: progress; opacity: .55 }
 .play-button.playing span:after { right: 1px }
 
 .timeflow-main { display: grid; min-width: 0; flex: 1; gap: 7px }
+.timeflow-head { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px }
 .timeflow-readout { display: flex; min-width: 0; align-items: baseline; gap: 9px }
 .timeflow-readout b { font-size: 17px; font-weight: 690; letter-spacing: -.02em; white-space: nowrap; font-variant-numeric: tabular-nums }
 .timeflow-readout span { overflow: hidden; color: var(--mist); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums }
@@ -635,7 +699,35 @@ button:disabled { cursor: progress; opacity: .55 }
 
 .timeflow-readout small[data-kind="observed"] { background: rgba(114, 228, 255, .14); color: var(--radar) }
 .timeflow-readout small[data-kind="nowcast"] { background: rgba(216, 255, 120, .14); color: var(--future) }
-.timeflow-readout small[data-kind="model"] { background: rgba(255, 211, 138, .14); color: var(--sun) }
+.timeflow-readout small[data-kind="model"],
+.timeflow-readout small[data-kind="futurecast"] { background: rgba(255, 211, 138, .14); color: var(--sun) }
+
+.horizon-switch {
+  display: grid;
+  padding: 3px;
+  grid-template-columns: repeat(4, minmax(38px, 1fr));
+  gap: 2px;
+  border: 1px solid var(--night-line);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, .025);
+}
+
+.horizon-switch[hidden] { display: none }
+.horizon-switch button {
+  min-width: 38px;
+  min-height: 32px;
+  padding: 0 8px;
+  border-radius: 8px;
+  color: var(--dim);
+  font-size: 11px;
+  font-weight: 760;
+  font-variant-numeric: tabular-nums;
+}
+
+.horizon-switch button:hover { color: var(--white) }
+.horizon-switch button.active { background: rgba(255, 211, 138, .13); color: var(--sun); box-shadow: inset 0 0 0 1px rgba(255, 211, 138, .14) }
+.horizon-switch button:first-child.active { background: rgba(114, 228, 255, .13); color: var(--radar); box-shadow: inset 0 0 0 1px rgba(114, 228, 255, .14) }
+.horizon-switch button:disabled { cursor: wait; opacity: .28 }
 
 .ribbon { display: flex; height: 36px; align-items: stretch; gap: 3px }
 .ribbon[hidden] { display: none }
@@ -663,8 +755,16 @@ button:disabled { cursor: progress; opacity: .55 }
   box-shadow: inset 0 0 0 1px rgba(216, 255, 120, .26);
 }
 
+.ribbon .tick[data-kind="futurecast"]:before {
+  background:
+    radial-gradient(circle at 2px 50%, rgba(255, 211, 138, .68) 0 1.6px, transparent 1.8px) 0 0 / 7px 100%,
+    rgba(255, 211, 138, .06);
+  box-shadow: inset 0 0 0 1px rgba(255, 211, 138, .22);
+}
+
 .ribbon .tick[aria-pressed="true"]:before { height: 28px; background: var(--radar) }
 .ribbon .tick[data-kind="nowcast"][aria-pressed="true"]:before { background: var(--future); box-shadow: none }
+.ribbon .tick[data-kind="futurecast"][aria-pressed="true"]:before { background: var(--sun); box-shadow: 0 0 18px rgba(255, 211, 138, .24) }
 .ribbon .tick[data-boundary="true"] { position: relative; margin-left: 9px }
 
 .ribbon .tick[data-boundary="true"]:after {
@@ -821,7 +921,9 @@ button:disabled { cursor: progress; opacity: .55 }
 .snapshot-copy small { color: var(--radar); font-size: 11px; font-weight: 800; letter-spacing: .12em }
 .snapshot-copy h3 { margin: 7px 0 6px; font-size: 22px; font-weight: 670; letter-spacing: -.04em; line-height: 1 }
 .snapshot-copy p { margin: 0; color: var(--mist); font-size: 12px; line-height: 1.45 }
-.snapshot-copy time { display: inline-block; margin-top: 10px; color: var(--future); font-size: 11px; font-weight: 750 }
+.snapshot-foot { display: flex; margin-top: 12px; align-items: center; justify-content: space-between; gap: 12px }
+.snapshot-foot time { color: var(--future); font-size: 11px; font-weight: 750 }
+.snapshot-foot b { color: var(--radar); font-size: 11px; font-weight: 800; letter-spacing: .07em }
 .snapshot-card:hover,
 .snapshot-card.selected { border-color: rgba(40, 119, 134, .65); transform: translateY(-1px) }
 
@@ -847,7 +949,17 @@ button:disabled { cursor: progress; opacity: .55 }
 .day-name { display: flex; flex-direction: column; gap: 2px }
 .day-name b { font-size: 13px; font-weight: 730 }
 .day-name small { color: var(--paper-dim); font-size: 11px; font-variant-numeric: tabular-nums }
-.day-icon { color: #216f7e; font-size: 19px; text-align: center }
+.day-icon { display: grid; color: #216f7e; place-items: center }
+.weather-glyph {
+  width: 22px;
+  height: 22px;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 .day-condition { overflow: hidden; color: var(--paper-muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap }
 .rain-meter { display: flex; align-items: center; gap: 7px }
 .rain-meter > span { position: relative; width: 30px; height: 5px; overflow: hidden; border-radius: 99px; background: rgba(20, 32, 30, .1) }
@@ -931,6 +1043,8 @@ button:disabled { cursor: progress; opacity: .55 }
 .layer-list { display: flex; flex-direction: column; gap: 8px }
 .layer-list button { display: grid; padding: 14px; align-items: center; grid-template-columns: 48px 1fr 26px; gap: 13px; border: 1px solid var(--night-line); border-radius: var(--radius-sm); background: rgba(255, 255, 255, .035); text-align: left }
 .layer-list button > span { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 13px; background: rgba(114, 228, 255, .08); color: var(--radar); font-size: 20px }
+.layer-list button > span svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round }
+.layer-list button > span .icon-fill { fill: currentColor; stroke: none }
 .layer-list b { font-size: 14px; font-weight: 670 }
 .layer-list small { display: block; margin-top: 4px; color: var(--dim); font-size: 12px; line-height: 1.4 }
 .layer-list i { color: var(--future); font-size: 15px; font-style: normal; text-align: center }
@@ -1030,7 +1144,7 @@ button:disabled { cursor: progress; opacity: .55 }
   .current-brief strong { font-size: 24px }
   .icon-button { width: 46px; height: 46px; border-radius: 14px }
 
-  .radar-stage { height: 70dvh; min-height: 560px; max-height: 700px }
+  .radar-stage { height: 74dvh; min-height: 620px; max-height: 760px }
 
   .map-mode-rail {
     top: 10px;
@@ -1068,8 +1182,8 @@ button:disabled { cursor: progress; opacity: .55 }
   .alert-banner b { font-size: 13px }
   .alert-banner em { font-size: 11px }
 
-  .radar-story { right: 13px; bottom: 155px; left: 13px }
-  .story-meta { margin-bottom: 7px }
+  .radar-story { right: 13px; bottom: 196px; left: 13px }
+  .story-meta { margin-bottom: 7px; flex-wrap: wrap }
   .radar-story h1 { max-width: 92%; font-size: clamp(27px, 8vw, 38px); line-height: 1 }
   .radar-story p {
     display: -webkit-box;
@@ -1087,13 +1201,16 @@ button:disabled { cursor: progress; opacity: .55 }
   .story-facts span:not(:first-child) { display: none }
   .story-facts b { font-size: 12px }
 
-  .map-legend { right: 15px; bottom: 119px; left: 15px; gap: 10px }
-  .map-legend i { font-size: 11px }
+  .map-legend { right: 15px; bottom: 158px; left: 15px; gap: 10px }
+  .legend-scale { width: min(270px, 64vw) }
 
   .timeflow { right: 8px; bottom: 8px; left: 8px; padding: 11px; gap: 11px; border-radius: 19px }
   .play-button { width: 48px; height: 48px; border-radius: 15px }
+  .timeflow-head { grid-template-columns: 1fr; gap: 6px }
   .timeflow-readout b { font-size: 16px }
   .timeflow-readout span { font-size: 11px }
+  .horizon-switch { width: 100%; grid-template-columns: repeat(4, 1fr) }
+  .horizon-switch button { min-height: 34px }
   .ribbon { height: 32px }
   .ribbon .tick[aria-pressed="true"]:before { height: 25px }
 
@@ -1121,6 +1238,9 @@ button:disabled { cursor: progress; opacity: .55 }
   .current-brief { display: none }
   .map-mode-rail button { min-width: 52px }
   .map-mode-rail b { font-size: 11px }
+  .horizon-switch button { min-width: 32px; padding-inline: 5px }
+  .legend-heading small { display: none }
+  .legend-scale { width: 62vw }
   .snapshot-rail { grid-auto-columns: 88% }
   .day-row { grid-template-columns: 54px 23px minmax(0, 1fr) 58px; gap: 6px }
   .rain-meter { display: none }
@@ -1129,7 +1249,7 @@ button:disabled { cursor: progress; opacity: .55 }
 }
 
 @media (max-height: 680px) and (min-width: 981px) {
-  .radar-story { bottom: 150px }
+  .radar-story { bottom: 155px }
   .radar-story p { display: none }
   .story-facts { margin-top: 9px }
   .map-legend { bottom: 116px }

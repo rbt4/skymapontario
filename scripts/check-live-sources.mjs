@@ -52,11 +52,22 @@ function latestDimensionTime(value) {
   return value;
 }
 
+function dimensionBounds(value) {
+  if (!value) return [];
+  if (value.includes(',')) {
+    const values = value.split(',').map(item => item.trim()).filter(Boolean);
+    return [values[0], values.at(-1)];
+  }
+  if (value.includes('/')) return value.split('/').slice(0, 2).map(item => item.trim());
+  return [value, value];
+}
+
 async function checkWms(name, layer, style = '') {
-  const capabilitiesUrl = `${sources.geomet}?${new URLSearchParams({ SERVICE: 'WMS', VERSION: '1.3.0', REQUEST: 'GetCapabilities', layer })}`;
+  const capabilitiesUrl = `${sources.geomet}?${new URLSearchParams({ SERVICE: 'WMS', VERSION: '1.3.0', REQUEST: 'GetCapabilities', LAYERS: layer, layer })}`;
   const capabilities = await request(capabilitiesUrl);
   const xml = await capabilities.text();
-  const time = latestDimensionTime(timeDimension(xml, layer));
+  const dimension = timeDimension(xml, layer);
+  const time = latestDimensionTime(dimension);
   const query = new URLSearchParams({
     SERVICE: 'WMS', VERSION: '1.3.0', REQUEST: 'GetMap', LAYERS: layer, STYLES: style,
     CRS: 'EPSG:4326', BBOX: '41,-84,47,-74', WIDTH: '640', HEIGHT: '480',
@@ -69,7 +80,7 @@ async function checkWms(name, layer, style = '') {
   assert(bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])), `${name}: invalid PNG signature`);
   assert(bytes.length > 500, `${name}: image was empty`);
   console.log(`✓ ${name}: ${time || 'default time'} · ${bytes.length.toLocaleString()} bytes`);
-  return time;
+  return { time, dimension };
 }
 
 async function checkRadarPoint(time) {
@@ -86,6 +97,38 @@ async function checkRadarPoint(time) {
   const value = data.features[0]?.properties?.value;
   assert(value === undefined || value === null || Number.isFinite(Number(value)), 'Observed radar point query: invalid rain rate');
   console.log(`✓ Exact radar point: ${value == null ? 'no measurable return' : `${Number(value)} mm/h`} near Toronto`);
+}
+
+async function checkForecastHorizon(name, layer, style = '') {
+  const result = await checkWms(name, layer, style);
+  const [startValue, endValue] = dimensionBounds(result.dimension);
+  const start = new Date(startValue).getTime();
+  const end = new Date(endValue).getTime();
+  assert(Number.isFinite(start) && Number.isFinite(end), `${name}: forecast time range is invalid`);
+  const spanHours = (end - start) / 3600000;
+  const aheadHours = (end - Date.now()) / 3600000;
+  assert(spanHours >= 42, `${name}: only ${spanHours.toFixed(1)} hours are exposed`);
+  assert(aheadHours >= 30, `${name}: live guidance ends only ${aheadHours.toFixed(1)} hours from now`);
+  console.log(`✓ ${name} horizon: ${spanHours.toFixed(0)} hourly steps · ends ${aheadHours.toFixed(0)}h ahead`);
+  return { ...result, start, end };
+}
+
+async function checkForecastPoint(layer, style, range) {
+  const target = Math.min(range.end, Math.max(range.start, Date.now() + 6 * 3600000));
+  const hour = new Date(range.start + Math.round((target - range.start) / 3600000) * 3600000).toISOString().replace('.000Z', 'Z');
+  const query = new URLSearchParams({
+    SERVICE: 'WMS', VERSION: '1.1.1', REQUEST: 'GetFeatureInfo', SRS: 'EPSG:4326',
+    BBOX: '-79.4232,43.6132,-79.3432,43.6932', WIDTH: '20', HEIGHT: '20', X: '10', Y: '10',
+    LAYERS: layer, QUERY_LAYERS: layer, STYLES: style,
+    INFO_FORMAT: 'application/json', FORMAT: 'image/png', TIME: hour
+  });
+  const response = await request(`${sources.geomet}?${query}`);
+  const data = await response.json();
+  const properties = data.features?.[0]?.properties;
+  assert(data.type === 'FeatureCollection' && properties && Object.hasOwn(properties, 'value'), 'HRDPS point query: forecast value is missing');
+  const value = properties.value;
+  assert(value === null || Number.isFinite(Number(value)), 'HRDPS point query: precipitation amount is invalid');
+  console.log(`✓ Exact futurecast point: ${value == null ? 'no model return' : `${Number(value)} mm`} near Toronto at ${hour}`);
 }
 
 async function checkCityWeather() {
@@ -120,9 +163,12 @@ async function checkModel([name, endpoint, model]) {
   console.log(`✓ ${name}: ${data.hourly.time.length} hours · ${data.timezone}`);
 }
 
-const observedTime = await checkWms('Observed rain radar', 'RADAR_1KM_RRAI', 'RADARURPPRECIPR14-LINEAR');
-await checkRadarPoint(observedTime);
+const observed = await checkWms('Observed rain radar', 'RADAR_1KM_RRAI', 'RADARURPPRECIPR14-LINEAR');
+await checkRadarPoint(observed.time);
 await checkWms('Short-range rain nowcast', 'Radar_1km_RainPrecipRate-Extrapolation');
+const rainFuturecast = await checkForecastHorizon('48-hour HRDPS precipitation futurecast', 'HRDPS.CONTINENTAL.DIAG_PR_PT1H', 'RDPA-WXO');
+await checkForecastPoint('HRDPS.CONTINENTAL.DIAG_PR_PT1H', 'RDPA-WXO', rainFuturecast);
+await checkForecastHorizon('48-hour HRDPS thunderstorm guidance', 'HRDPS-WEonG_2.5km_Thunderstorm-Prob', 'Thunderstorm-Prob_Dis');
 await checkWms('Wildfire smoke guidance', 'RAQDPS.Sfc_PM2.5-WildfireSmokePlume');
 await checkWms('High-resolution temperature', 'HRDPS.CONTINENTAL_TT');
 await checkWms('Lightning density', 'Lightning_2.5km_Density', 'Lightning');
@@ -133,4 +179,4 @@ for (const model of models) {
   await new Promise(resolve => setTimeout(resolve, 500));
 }
 
-console.log('✓ All live sources required by SkyMap 15.0 responded with usable data');
+console.log('✓ All live sources required by SkyMap 16.0 responded with usable data');
