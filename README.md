@@ -51,6 +51,7 @@ The website, app and Android bridge are all committed as readable source. The re
 - No type below 11px ships. The release validator fails the build if it reappears.
 - The Android app checks for a newer public APK every 12 hours, downloads it, verifies its SHA-256 and opens Android's installer when the app resumes.
 - The visible app refreshes live observations and the current radar timeline automatically while it is open, without jumping a user away from a selected future horizon.
+- The shell is network-first with a complete offline fallback, preventing an old cached interface from being mixed with a newer version receipt during an update.
 - Ko-fi support remains optional and the map remains free.
 
 ## Android build

@@ -2,7 +2,7 @@
    Shell only. Weather never comes from cache — a stale radar frame is worse
    than no radar frame, so every live source goes straight to the network. */
 
-const VERSION = '17.0.0';
+const VERSION = '17.0.1';
 const SHELL = `skymap-shell-${VERSION}`;
 
 const SHELL_FILES = [
@@ -70,9 +70,14 @@ self.addEventListener('fetch', event => {
           }
           return response;
         })
-        .catch(() => cached);
-      // Serve the cached shell instantly, then quietly refresh it for next launch.
-      return cached || network;
+        .catch(error => {
+          if (cached) return cached;
+          throw error;
+        });
+      // Online launches use one coherent release instead of briefly mixing an
+      // old cached shell with a new version receipt. The cache remains the
+      // complete offline fallback.
+      return network;
     })
   );
 });
