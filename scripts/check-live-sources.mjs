@@ -131,6 +131,24 @@ async function checkForecastPoint(layer, style, range) {
   console.log(`✓ Exact futurecast point: ${value == null ? 'no model return' : `${Number(value)} mm`} near Toronto at ${hour}`);
 }
 
+async function checkEnsembleProbability(name, layer, range) {
+  const target = Math.min(range.end, Math.max(range.start, Date.now() + 6 * 3600000));
+  const step = 3 * 3600000;
+  const time = new Date(range.start + Math.round((target - range.start) / step) * step).toISOString().replace('.000Z', 'Z');
+  const query = new URLSearchParams({
+    SERVICE: 'WMS', VERSION: '1.1.1', REQUEST: 'GetFeatureInfo', SRS: 'EPSG:4326',
+    BBOX: '-79.4232,43.6132,-79.3432,43.6932', WIDTH: '20', HEIGHT: '20', X: '10', Y: '10',
+    LAYERS: layer, QUERY_LAYERS: layer, STYLES: 'REPS_PROB-LINEAR',
+    INFO_FORMAT: 'application/json', FORMAT: 'image/png', TIME: time
+  });
+  const response = await request(`${sources.geomet}?${query}`);
+  const data = await response.json();
+  const value = data.features?.[0]?.properties?.value;
+  assert(value !== undefined && value !== null && Number.isFinite(Number(value)), `${name}: probability value is missing`);
+  assert(Number(value) >= 0 && Number(value) <= 100, `${name}: probability is outside 0–100`);
+  console.log(`✓ ${name}: ${Number(value)}% near Toronto at ${time}`);
+}
+
 async function checkCityWeather() {
   const response = await request(`${sources.weather}/collections/citypageweather-realtime/items?f=json&bbox=-80.2,43.2,-78.8,44.1&limit=12`);
   const data = await response.json();
@@ -168,6 +186,10 @@ await checkRadarPoint(observed.time);
 await checkWms('Short-range rain nowcast', 'Radar_1km_RainPrecipRate-Extrapolation');
 const rainFuturecast = await checkForecastHorizon('48-hour HRDPS precipitation futurecast', 'HRDPS.CONTINENTAL.DIAG_PR_PT1H', 'RDPA-WXO');
 await checkForecastPoint('HRDPS.CONTINENTAL.DIAG_PR_PT1H', 'RDPA-WXO', rainFuturecast);
+const repsOne = await checkForecastHorizon('REPS probability of at least 1 mm in 3 hours', 'REPS.DIAG.3_PRMM.ERGE1', 'REPS_PROB-LINEAR');
+await checkEnsembleProbability('REPS ≥1 mm ensemble signal', 'REPS.DIAG.3_PRMM.ERGE1', repsOne);
+const repsFive = await checkForecastHorizon('REPS probability of at least 5 mm in 3 hours', 'REPS.DIAG.3_PRMM.ERGE5', 'REPS_PROB-LINEAR');
+await checkEnsembleProbability('REPS ≥5 mm ensemble signal', 'REPS.DIAG.3_PRMM.ERGE5', repsFive);
 await checkForecastHorizon('48-hour HRDPS thunderstorm guidance', 'HRDPS-WEonG_2.5km_Thunderstorm-Prob', 'Thunderstorm-Prob_Dis');
 await checkWms('Wildfire smoke guidance', 'RAQDPS.Sfc_PM2.5-WildfireSmokePlume');
 await checkWms('High-resolution temperature', 'HRDPS.CONTINENTAL_TT');
@@ -179,4 +201,4 @@ for (const model of models) {
   await new Promise(resolve => setTimeout(resolve, 500));
 }
 
-console.log('✓ All live sources required by SkyMap 16.0 responded with usable data');
+console.log('✓ All live sources required by SkyMap 17.0 responded with usable data');

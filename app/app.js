@@ -8,6 +8,12 @@
   const FUTURECAST_STYLE = 'RDPA-WXO';
   const FUTURE_STORM_LAYER = 'HRDPS-WEonG_2.5km_Thunderstorm-Prob';
   const FUTURE_STORM_STYLE = 'Thunderstorm-Prob_Dis';
+  const REPS_SIGNALS = [
+    { id: 'any', layer: 'REPS.DIAG.3_PRMM.ERGE1', style: 'REPS_PROB-LINEAR', threshold: 1 },
+    { id: 'heavy', layer: 'REPS.DIAG.3_PRMM.ERGE5', style: 'REPS_PROB-LINEAR', threshold: 5 }
+  ];
+  const LIVE_REFRESH_MS = 6 * 60 * 1000;
+  const GUIDANCE_REFRESH_MS = 30 * 60 * 1000;
   const IS_NATIVE = location.hostname === 'appassets.androidplatform.net';
   const $ = selector => document.querySelector(selector);
   const $$ = selector => [...document.querySelectorAll(selector)];
@@ -29,10 +35,10 @@
   ];
 
   const MODELS = [
-    { id: 'gem', name: 'Canada GEM', endpoint: 'https://api.open-meteo.com/v1/gem', model: 'gem_seamless', weight: .36, accent: '#64dbff' },
-    { id: 'ifs', name: 'ECMWF IFS', endpoint: 'https://api.open-meteo.com/v1/ecmwf', model: 'ecmwf_ifs025', weight: .28, accent: '#d9ff76' },
-    { id: 'gfs', name: 'NOAA GFS', endpoint: 'https://api.open-meteo.com/v1/gfs', model: 'gfs_seamless', weight: .20, accent: '#ffc96b' },
-    { id: 'aifs', name: 'ECMWF AIFS', endpoint: 'https://api.open-meteo.com/v1/ecmwf', model: 'ecmwf_aifs025_single', weight: .16, accent: '#bca2ff' }
+    { id: 'gem', name: 'Canada GEM', endpoint: 'https://api.open-meteo.com/v1/gem', model: 'gem_seamless', baseWeight: .36, accent: '#64dbff' },
+    { id: 'ifs', name: 'ECMWF IFS', endpoint: 'https://api.open-meteo.com/v1/ecmwf', model: 'ecmwf_ifs025', baseWeight: .28, accent: '#d9ff76' },
+    { id: 'gfs', name: 'NOAA GFS', endpoint: 'https://api.open-meteo.com/v1/gfs', model: 'gfs_seamless', baseWeight: .20, accent: '#ffc96b' },
+    { id: 'aifs', name: 'ECMWF AIFS', endpoint: 'https://api.open-meteo.com/v1/ecmwf', model: 'ecmwf_aifs025_single', baseWeight: .16, accent: '#bca2ff' }
   ];
 
   const MODES = {
@@ -62,7 +68,7 @@
   };
 
   const state = {
-    version: '16.0.1',
+    version: '17.0.0',
     place: loadPlace(),
     mode: 'rain',
     map: null,
@@ -98,6 +104,14 @@
     frameExplanationToken: 0,
     pointValueCache: new Map(),
     pointValueRequests: new Map(),
+    ensembleSignals: new Map(),
+    ensembleRequests: new Map(),
+    nativeSkills: {},
+    nativeArchiveCount: 0,
+    lastLiveRefresh: 0,
+    lastGuidanceRefresh: 0,
+    autoRefreshTimer: null,
+    autoRefreshing: false,
     selectedSnapshot: null,
     airQuality: null,
     refreshId: 0
@@ -164,6 +178,20 @@
     return `skymap.model.${model.id}.${state.place.lat.toFixed(2)}.${state.place.lon.toFixed(2)}`;
   }
 
+  async function loadNativeIntelligence() {
+    if (!NativeBridge) return null;
+    try {
+      const raw = await NativeBridge.call('getBootstrap');
+      const bootstrap = raw ? JSON.parse(raw) : null;
+      if (!bootstrap || typeof bootstrap !== 'object') return null;
+      state.nativeSkills = bootstrap.skills && typeof bootstrap.skills === 'object' ? bootstrap.skills : {};
+      state.nativeArchiveCount = Number(bootstrap.archiveCount) || 0;
+      return bootstrap;
+    } catch (_) {
+      return null;
+    }
+  }
+
   // Anything that reaches innerHTML and did not originate in this file is escaped.
   // ECCC condition strings, alert names and area names are remote input.
   function esc(value) {
@@ -216,11 +244,27 @@
 
   function frameConfidence(frame) {
     if (frame?.kind === 'observed') return { short: 'MEASURED', detail: 'Measured by radar', level: 'measured' };
-    if (frame?.kind === 'nowcast') return { short: 'HIGH', detail: 'High · radar motion', level: 'high' };
+    if (frame?.kind === 'nowcast') {
+      const minutes = leadHours(frame) * 60;
+      if (minutes <= 35) return { short: 'HIGH', detail: 'High · radar motion', level: 'high' };
+      if (minutes <= 75) return { short: 'MED–HIGH', detail: 'Medium-high · radar motion', level: 'medium-high' };
+      return { short: 'MEDIUM', detail: 'Medium · extended radar motion', level: 'medium' };
+    }
+    if (frame?.kind !== 'futurecast') return { short: 'GUIDANCE', detail: 'Official forecast guidance', level: 'medium' };
+
     const hours = leadHours(frame);
-    if (hours <= 9) return { short: 'MED–HIGH', detail: 'Medium-high · HRDPS', level: 'medium-high' };
-    if (hours <= 27) return { short: 'MEDIUM', detail: 'Medium · HRDPS', level: 'medium' };
-    return { short: 'LOWER', detail: 'Lower · long lead', level: 'lower' };
+    const alignment = forecastAlignment(frame);
+    if (!alignment.total) {
+      if (hours <= 9) return { short: 'GUIDANCE', detail: 'HRDPS · checking REPS ensemble', level: 'medium-high' };
+      if (hours <= 27) return { short: 'GUIDANCE', detail: 'HRDPS · ensemble signal pending', level: 'medium' };
+      return { short: 'GUARDED', detail: 'Long lead · ensemble signal pending', level: 'lower' };
+    }
+
+    const detail = `${alignment.aligned}/${alignment.total} sources align · ${hours <= 12 ? 'near term' : hours <= 30 ? 'day ahead' : 'longer lead'}`;
+    if (hours > 36) return { short: alignment.ratio >= .75 ? 'ALIGNED' : 'GUARDED', detail, level: alignment.ratio >= .75 ? 'medium' : 'lower' };
+    if (alignment.ratio >= .99 && hours <= 18) return { short: 'CONVERGING', detail, level: 'high' };
+    if (alignment.ratio >= .74) return { short: 'ALIGNED', detail, level: 'medium-high' };
+    return { short: 'MIXED', detail, level: 'lower' };
   }
 
   function frameAriaLabel(frame) {
@@ -589,7 +633,8 @@
   }
 
   function initMap() {
-    state.map = L.map('map', { zoomControl: false, attributionControl: false, minZoom: 4, maxZoom: 13, doubleClickZoom: true, preferCanvas: true, fadeAnimation: false }).setView([state.place.lat, state.place.lon], state.place.zoom || 8);
+    state.map = L.map('map', { zoomControl: false, attributionControl: true, minZoom: 4, maxZoom: 13, doubleClickZoom: true, preferCanvas: true, fadeAnimation: false }).setView([state.place.lat, state.place.lon], state.place.zoom || 8);
+    state.map.attributionControl.setPrefix(false);
     state.map.createPane('weatherPane');
     state.map.getPane('weatherPane').style.zIndex = 340;
     state.map.createPane('contextPane');
@@ -598,7 +643,12 @@
     state.map.getPane('labelPane').style.zIndex = 380;
     // Base geography sits under the weather; the names sit on top of it, so a heavy
     // radar cell can never hide which town it is sitting over.
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 20, opacity: .98 }).addTo(state.map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
+      subdomains: 'abcd',
+      maxZoom: 20,
+      opacity: .98,
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+    }).addTo(state.map);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 20, opacity: .96, pane: 'labelPane' }).addTo(state.map);
     placeLocationMarker();
     state.map.on('moveend', () => {
@@ -840,6 +890,7 @@
     const frame = state.frames[safe];
     const token = ++state.requestToken;
     renderPlayback(frame);
+    void prefetchFrameSignal(frame);
     const loadingTitle = frame.kind === 'futurecast'
       ? 'Loading 48-hour futurecast'
       : frame.kind === 'nowcast'
@@ -870,6 +921,14 @@
       setRadarState(hasPrevious ? 'stale' : 'error', hasPrevious ? 'Fresh radar delayed' : 'Radar could not load', hasPrevious ? 'Keeping the last successful frame · tap to retry' : 'Forecasts still work · tap to retry', { error: String(error) });
       updateStory();
     }
+  }
+
+  async function prefetchFrameSignal(frame) {
+    if (!isRadarMode() || state.playing) return;
+    await Promise.allSettled([
+      featureInfo(frame),
+      frame.kind === 'futurecast' ? loadEnsembleSignal(frame) : Promise.resolve(null)
+    ]);
   }
 
   function stopPlayback() {
@@ -1035,23 +1094,67 @@
   }
 
   function availableRows(target) {
-    return MODELS.map(model => ({ model, point: modelPoint(state.modelData.get(model.id), target) })).filter(row => row.point);
+    return MODELS
+      .map(model => ({ model, point: modelPoint(state.modelData.get(model.id), target), weight: effectiveModelWeight(model, target) }))
+      .filter(row => row.point);
+  }
+
+  function forecastBucket(target) {
+    const hours = Math.max(0, (new Date(target).getTime() - Date.now()) / 3600000);
+    if (hours <= 2) return 'nowcast';
+    if (hours <= 48) return 'short';
+    if (hours <= 120) return 'medium';
+    if (hours <= 240) return 'long';
+    return 'extended';
+  }
+
+  function effectiveModelWeight(model, target) {
+    const learned = finite(state.nativeSkills[`${model.id}:${forecastBucket(target)}`]);
+    // Local skill is deliberately a bounded adjustment, never permission for
+    // a small personal sample to overwhelm the Canadian-first base blend.
+    const skillFactor = learned === null ? 1 : .8 + clamp(learned, 0, 1) * .4;
+    return model.baseWeight * skillFactor;
   }
 
   function blendedAt(target) {
     const rows = availableRows(target);
     if (!rows.length) return null;
-    const total = rows.reduce((sum, row) => sum + row.model.weight, 0);
-    const average = key => rows.reduce((sum, row) => sum + (Number.isFinite(row.point[key]) ? row.point[key] : 0) * row.model.weight, 0) / total;
-    const wetWeight = rows.reduce((sum, row) => sum + (row.point.rain >= .12 ? row.model.weight : 0), 0) / total;
+    const total = rows.reduce((sum, row) => sum + row.weight, 0);
+    const average = key => rows.reduce((sum, row) => sum + (Number.isFinite(row.point[key]) ? row.point[key] : 0) * row.weight, 0) / total;
+    const wetWeight = rows.reduce((sum, row) => sum + (row.point.rain >= .12 ? row.weight : 0), 0) / total;
     const wetModels = rows.filter(row => row.point.rain >= .12).length;
-    const dominant = [...rows].sort((a, b) => b.model.weight - a.model.weight)[0].point.code;
+    const dominant = [...rows].sort((a, b) => b.weight - a.weight)[0].point.code;
     return {
       rows,
       date: target instanceof Date ? target : new Date(target),
       temp: average('temp'), rain: average('rain'), wind: average('wind'), gust: average('gust'), cloud: average('cloud'),
       wet: Math.round(wetWeight * 100), wetModels, agreement: Math.round(Math.max(wetWeight, 1 - wetWeight) * 100), weather: weather(dominant)
     };
+  }
+
+  function selectedFrameValue(frame) {
+    return state.frameValue?.key === frameKey(frame) && !state.frameValue.pending
+      ? finite(state.frameValue.value)
+      : null;
+  }
+
+  function forecastAlignment(frame) {
+    if (frame?.kind !== 'futurecast') return { aligned: 0, total: 0, ratio: 0, wet: false };
+    const target = new Date(frame.time || Date.now());
+    const votes = [];
+    const hr = selectedFrameValue(frame);
+    if (hr !== null) votes.push(hr >= .12);
+    const ensemble = state.ensembleSignals.get(frameKey(frame));
+    if (finite(ensemble?.any) !== null) votes.push(Number(ensemble.any) >= 50);
+    const blend = blendedAt(target);
+    if (blend) votes.push(blend.wet >= 50);
+    const official = nearestCitySnapshot(target);
+    if (finite(official?.precipitation) !== null) votes.push(Number(official.precipitation) >= 50);
+    if (!votes.length) return { aligned: 0, total: 0, ratio: 0, wet: false };
+    const wetVotes = votes.filter(Boolean).length;
+    const dryVotes = votes.length - wetVotes;
+    const aligned = Math.max(wetVotes, dryVotes);
+    return { aligned, total: votes.length, ratio: aligned / votes.length, wet: wetVotes > dryVotes };
   }
 
   function guidanceLabel(blend) {
@@ -1101,10 +1204,11 @@
         output.push({ date, unavailable: true });
         continue;
       }
-      const total = rows.reduce((sum, row) => sum + row.model.weight, 0);
-      const weighted = fn => rows.reduce((sum, row) => sum + fn(row.group) * row.model.weight, 0) / total;
+      const weightedRows = rows.map(row => ({ ...row, weight: effectiveModelWeight(row.model, date) }));
+      const total = weightedRows.reduce((sum, row) => sum + row.weight, 0);
+      const weighted = fn => weightedRows.reduce((sum, row) => sum + fn(row.group) * row.weight, 0) / total;
       const codeWeights = new Map();
-      rows.forEach(row => row.group.codes.forEach((count, code) => codeWeights.set(code, (codeWeights.get(code) || 0) + count * row.model.weight)));
+      weightedRows.forEach(row => row.group.codes.forEach((count, code) => codeWeights.set(code, (codeWeights.get(code) || 0) + count * row.weight)));
       const code = [...codeWeights.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || 0;
       output.push({
         date,
@@ -1351,7 +1455,7 @@
   function renderModelStatus() {
     const count = state.modelData.size;
     const total = MODELS.length;
-    text('#model-status', `${state.cityWeather ? 'ECCC + ' : ''}${count ? `${count}/${total} guidance` : 'connecting'}`);
+    text('#model-status', `${state.cityWeather ? 'ECCC + ' : ''}${count ? `${count}/${total} guidance` : 'connecting'}${state.nativeArchiveCount ? ' · learning' : ''}`);
   }
 
   function renderModelList() {
@@ -1359,11 +1463,12 @@
     if (!list) return;
     list.innerHTML = '';
     const now = new Date();
-    MODELS.forEach(model => {
-      const point = modelPoint(state.modelData.get(model.id), now);
+    const rows = MODELS.map(model => ({ model, point: modelPoint(state.modelData.get(model.id), now), weight: effectiveModelWeight(model, now) }));
+    const maxWeight = Math.max(...rows.map(row => row.weight), .01);
+    rows.forEach(({ model, point, weight }) => {
       const row = document.createElement('div');
       row.className = 'model-row';
-      row.innerHTML = `<span>${model.name}</span><div><i style="width:${point ? Math.max(12, model.weight * 100 / .36) : 0}%;background:${model.accent}"></i></div><b>${point ? `${Math.round(point.temp)}° · ${point.rain >= .12 ? 'wet' : 'dry'}` : 'unavailable'}</b>`;
+      row.innerHTML = `<span>${model.name}</span><div><i style="width:${point ? Math.max(12, weight * 100 / maxWeight) : 0}%;background:${model.accent}"></i></div><b>${point ? `${Math.round(point.temp)}° · ${point.rain >= .12 ? 'wet' : 'dry'}` : 'unavailable'}</b>`;
       list.append(row);
     });
   }
@@ -1375,6 +1480,17 @@
     text('#detail-radar-copy', `${state.radar.copy}${state.radar.lastSuccess ? ` · Last success ${fmtTime(state.radar.lastSuccess)}` : ''}`);
     text('#detail-model-title', blend ? guidanceLabel(blend) : 'Waiting for guidance');
     text('#detail-model-copy', blend ? `${official ? `Official nearby forecast: ${officialWeatherLabel(official)}. ` : ''}${blend.agreement}% of the weighted guidance agrees on whether this hour is wet or dry.` : 'SkyMap will render with the first dependable source instead of waiting for every connection.');
+    const frame = state.frames[state.frameIndex];
+    const ensemble = frame?.kind === 'futurecast' ? state.ensembleSignals.get(frameKey(frame)) : null;
+    const alignment = forecastAlignment(frame);
+    text('#detail-ensemble-title', ensemble && finite(ensemble.any) !== null
+      ? `${Math.round(Number(ensemble.any))}% chance of at least 1 mm`
+      : frame?.kind === 'futurecast'
+        ? 'Reading the 20-member REPS ensemble'
+        : 'Ensemble signal appears with futurecast');
+    text('#detail-ensemble-copy', ensemble && finite(ensemble.any) !== null
+      ? `Official REPS probability for a three-hour window near this frame${finite(ensemble.heavy) === null ? '' : `; ${Math.round(Number(ensemble.heavy))}% chance of at least 5 mm`}. ${alignment.total ? `${alignment.aligned} of ${alignment.total} forecast sources currently point the same way.` : ''}`.trim()
+      : 'HRDPS draws the 2.5 km forecast shape. REPS tests whether a 20-member ensemble supports that signal.');
     const change = computeChange(blend);
     text('#detail-change-title', change.title);
     text('#detail-change-copy', change.copy);
@@ -1570,6 +1686,58 @@
     return `${frame?.layer || ''}|${frame?.time || 'latest'}|${frame?.referenceTime || ''}`;
   }
 
+  async function loadEnsembleSignal(frame) {
+    if (frame?.kind !== 'futurecast' || !frame.time) return null;
+    const key = frameKey(frame);
+    const cached = state.ensembleSignals.get(key);
+    if (cached && Date.now() - cached.savedAt < 20 * 60000) return cached;
+    if (state.ensembleRequests.has(key)) return state.ensembleRequests.get(key);
+
+    const request = (async () => {
+      const values = await Promise.all(REPS_SIGNALS.map(async config => {
+        try {
+          const meta = await getLayerMeta(config.layer);
+          const time = nearest(meta.times, frame.time) || meta.defaultTime;
+          if (!time) return [config.id, null, null];
+          const value = await featureInfo({
+            layer: config.layer,
+            style: config.style,
+            time,
+            referenceTime: meta.defaultReferenceTime || meta.referenceTimes?.at(-1) || null,
+            kind: 'ensemble'
+          });
+          return [config.id, finite(value), time];
+        } catch (_) {
+          return [config.id, null, null];
+        }
+      }));
+
+      const signal = { any: null, heavy: null, validTime: null, savedAt: Date.now() };
+      values.forEach(([id, value, time]) => {
+        signal[id] = value;
+        if (!signal.validTime && time) signal.validTime = time;
+      });
+      state.ensembleSignals.set(key, signal);
+      return signal;
+    })();
+
+    state.ensembleRequests.set(key, request);
+    try {
+      return await request;
+    } finally {
+      state.ensembleRequests.delete(key);
+    }
+  }
+
+  function ensembleSummary(frame) {
+    if (frame?.kind !== 'futurecast') return frameConfidence(frame).detail;
+    const signal = state.ensembleSignals.get(frameKey(frame));
+    if (finite(signal?.any) === null) return 'REPS ensemble resolving…';
+    const any = Math.round(Number(signal.any));
+    const heavy = finite(signal.heavy);
+    return `${any}% ≥1 mm / 3h${heavy === null ? '' : ` · ${Math.round(heavy)}% ≥5 mm`}`;
+  }
+
   function rainDescription(value, frame, pending = false) {
     const kind = frame?.kind || 'observed';
     if (pending) {
@@ -1613,7 +1781,7 @@
     const nowcast = frame?.kind === 'nowcast';
     text('#story-value-label', `${model ? 'FORECAST HOUR AT' : nowcast ? 'PROJECTED RATE AT' : 'OBSERVED RATE AT'} ${where}`);
     text('#story-official-label', model ? 'OFFICIAL HOURLY' : 'OFFICIAL NEARBY');
-    text('#story-guidance-label', 'CONFIDENCE');
+    text('#story-guidance-label', model ? 'REPS ENSEMBLE SIGNAL' : 'CONFIDENCE');
     const pending = state.frameValue?.pending;
     text('#story-value', pending
       ? model ? 'Amount still resolving' : 'Rate still resolving'
@@ -1623,7 +1791,7 @@
           ? model ? 'No forecast value' : 'No radar return'
           : `${value < .05 ? '0' : value.toFixed(value < 10 ? 1 : 0)} ${model ? 'mm this hour' : 'mm/h'}`);
     text('#story-official', officialWeatherLabel(official));
-    text('#story-guidance', frameConfidence(frame).detail);
+    text('#story-guidance', model ? ensembleSummary(frame) : frameConfidence(frame).detail);
   }
 
   async function updateFrameExplanation(frame) {
@@ -1639,10 +1807,15 @@
     state.frameValue = { key, value: null, pending: true };
     renderStoryFacts(frame, null);
     updateStory();
-    const value = await featureInfo(frame).catch(() => undefined);
+    const [value] = await Promise.all([
+      featureInfo(frame).catch(() => undefined),
+      frame.kind === 'futurecast' ? loadEnsembleSignal(frame).catch(() => null) : Promise.resolve(null)
+    ]);
     if (token !== state.frameExplanationToken || key !== frameKey(state.frames[state.frameIndex])) return;
     state.frameValue = { key, value, pending: false };
+    renderPlayback(frame);
     renderStoryFacts(frame, value);
+    renderDetails();
     updateStory();
   }
 
@@ -1821,6 +1994,9 @@
     placeLocationMarker();
     state.modelData.clear();
     state.modelErrors.clear();
+    state.ensembleSignals.clear();
+    state.ensembleRequests.clear();
+    state.pointValueCache.clear();
     state.cityWeather = null;
     state.cityWeatherKey = '';
     state.allFrames = [];
@@ -1829,6 +2005,8 @@
     state.arrival = null;
     state.airQuality = null;
     state.alerts = [];
+    state.lastLiveRefresh = 0;
+    state.lastGuidanceRefresh = 0;
     renderAlerts();
     await Promise.allSettled(MODELS.map(readCachedModel));
     renderForecast();
@@ -1884,6 +2062,7 @@
   }
 
   async function refreshForecastSources(refreshId) {
+    await loadNativeIntelligence();
     await Promise.allSettled(MODELS.map(readCachedModel));
     renderForecast();
     const primary = MODELS[0];
@@ -1894,6 +2073,7 @@
       if (refreshId === state.refreshId) renderForecast();
     });
     await Promise.allSettled(rest);
+    if (refreshId === state.refreshId) state.lastGuidanceRefresh = Date.now();
   }
 
   async function refreshAll(forceRadar = false) {
@@ -1911,7 +2091,47 @@
     const forecastPromise = refreshForecastSources(refreshId);
     const contextPromise = Promise.allSettled([fetchObservation(), fetchAlerts(), fetchAirQuality(), fetchCityWeather(forceRadar)]).then(() => { if (refreshId === state.refreshId) renderForecast(); });
     await Promise.allSettled([radarPromise, forecastPromise, contextPromise]);
-    if (refreshId === state.refreshId && button) button.disabled = false;
+    if (refreshId === state.refreshId) {
+      state.lastLiveRefresh = Date.now();
+      state.lastGuidanceRefresh = Date.now();
+      if (button) button.disabled = false;
+    }
+  }
+
+  async function autoRefresh() {
+    if (state.autoRefreshing || document.hidden || !navigator.onLine) return;
+    const now = Date.now();
+    const liveDue = now - state.lastLiveRefresh >= LIVE_REFRESH_MS;
+    const guidanceDue = now - state.lastGuidanceRefresh >= GUIDANCE_REFRESH_MS;
+    if (!liveDue && !guidanceDue) return;
+
+    state.autoRefreshing = true;
+    const refreshId = ++state.refreshId;
+    try {
+      const tasks = [];
+      if (liveDue) {
+        tasks.push(Promise.allSettled([fetchObservation(), fetchAlerts(), fetchAirQuality(), fetchCityWeather(true)])
+          .then(() => {
+            state.lastLiveRefresh = Date.now();
+            if (refreshId === state.refreshId) renderForecast();
+          }));
+        if (isRadarMode() && state.timelineHorizon === 'now' && !state.playing) {
+          tasks.push(refreshVisibleMap(true));
+        }
+      }
+      if (guidanceDue) tasks.push(refreshForecastSources(refreshId));
+      await Promise.allSettled(tasks);
+    } finally {
+      state.autoRefreshing = false;
+    }
+  }
+
+  function startAutoRefresh() {
+    clearInterval(state.autoRefreshTimer);
+    state.autoRefreshTimer = setInterval(() => { void autoRefresh(); }, 60 * 1000);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) void autoRefresh();
+    });
   }
 
   async function loadVersion() {
@@ -1945,8 +2165,6 @@
       navigator.geolocation.getCurrentPosition(position => setPlace({ name: 'My location', lat: position.coords.latitude, lon: position.coords.longitude, zoom: 9 }), () => showToast('Location permission was not granted'), { enableHighAccuracy: true, timeout: 12000 });
     });
     $('#recenter-button')?.addEventListener('click', recenter);
-    $('#zoom-in-button')?.addEventListener('click', () => state.map.zoomIn());
-    $('#zoom-out-button')?.addEventListener('click', () => state.map.zoomOut());
     $('#refresh-button')?.addEventListener('click', () => refreshAll(true));
     $('#details-refresh-button')?.addEventListener('click', () => { closeSheets(); refreshAll(true); });
     $('#backdrop')?.addEventListener('click', closeSheets);
@@ -1991,10 +2209,12 @@
     renderAlerts();
     text('#location-name', state.place.name);
     await loadVersion();
+    await loadNativeIntelligence();
     initMap();
     await Promise.allSettled(MODELS.map(readCachedModel));
     renderForecast();
     await refreshAll(true);
+    startAutoRefresh();
   }
 
   if ('serviceWorker' in navigator) {

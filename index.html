@@ -7,11 +7,11 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'">
   <meta name="color-scheme" content="dark">
   <title>SkyMap Ontario — Weather, moving toward you</title>
-  <meta name="description" content="Observed Ontario radar, official short-range nowcast, and high-resolution precipitation futurecast through 48 hours in one honest timeline.">
+  <meta name="description" content="Observed Ontario radar, official short-range nowcast, and a 48-hour HRDPS futurecast checked against the 20-member REPS ensemble.">
   <link rel="canonical" href="https://rbt4.github.io/skymapontario/">
   <meta property="og:type" content="website">
   <meta property="og:title" content="SkyMap Ontario — Weather, moving toward you">
-  <meta property="og:description" content="Measured radar now. High-resolution futurecast through 48 hours. One clear Ontario weather story.">
+  <meta property="og:description" content="Measured radar now. HRDPS futurecast checked against the official REPS ensemble through 48 hours.">
   <meta property="og:url" content="https://rbt4.github.io/skymapontario/">
   <link rel="icon" href="app/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/site.css">
@@ -39,9 +39,9 @@
     <section class="hero" id="top">
       <div class="hero-glow" aria-hidden="true"></div>
       <div class="hero-copy">
-        <div class="eyebrow"><i></i><span>MEASURED NOW · FUTURECAST TO 48 HOURS</span></div>
+        <div class="eyebrow"><i></i><span>MEASURED NOW · ENSEMBLE-GUIDED TO 48 HOURS</span></div>
         <h1>Weather,<br><em>moving toward you.</em></h1>
-        <p>SkyMap joins measured ECCC radar, the official short-range nowcast and 2.5 km HRDPS futurecast into one calm timeline—then explains exactly what the selected hour means at your location.</p>
+        <p>SkyMap joins measured ECCC radar, the official short-range nowcast and the 2.5 km HRDPS futurecast—then checks that forecast against the 20-member REPS ensemble at your location.</p>
         <div class="hero-actions">
           <a class="button primary" href="app/">Open the live map <span>↗</span></a>
           <a class="button secondary" data-apk href="download/SkyMap-Ontario-latest.apk">Download Android <span>↓</span></a>
@@ -49,7 +49,7 @@
         <div class="hero-proof">
           <span><i>01</i><b>Measured radar</b></span>
           <span><i>02</i><b>Radar nowcast</b></span>
-          <span><i>03</i><b>48-hour futurecast</b></span>
+          <span><i>03</i><b>HRDPS + REPS signal</b></span>
         </div>
       </div>
 
@@ -84,7 +84,7 @@
             <small>YOUR WEATHER BRIEFING</small>
             <div class="preview-now"><h3>Mostly cloudy</h3><strong>22°</strong></div>
             <p>Dry at this point now. Guidance keeps the next few hours quiet.</p>
-            <div class="preview-moment"><small>NEXT USEFUL MOMENT</small><b>Tomorrow morning</b><span>Clearer · 21°</span></div>
+            <div class="preview-moment"><small>FORECAST SIGNAL</small><b>Models converging</b><span>REPS checks the map</span></div>
             <div class="preview-days">
               <span><b>Today</b><i>○</i><em>26°</em><small>16°</small></span>
               <span><b>Sun</b><i>○</i><em>28°</em><small>18°</small></span>
@@ -105,7 +105,7 @@
       <header class="section-heading">
         <small>ONE HONEST TIMELINE</small>
         <h2>Reality now. Guidance next. No fake precision.</h2>
-        <p>Radar cannot see the future. SkyMap changes sources visibly as the horizon grows, so the map stays useful without pretending a forecast is an observation.</p>
+        <p>Radar cannot see the future. SkyMap changes sources visibly as the horizon grows, then tests a single deterministic map against an official ensemble instead of pretending colour equals certainty.</p>
       </header>
       <div class="difference-list">
         <article>
@@ -119,8 +119,8 @@
           <b>02</b>
         </article>
         <article>
-          <span>NEXT 48H</span>
-          <div><h3>See the high-resolution futurecast.</h3><p>Hourly 2.5 km HRDPS precipitation guidance extends the map through two days. Tap any frame for the local amount, source and lead-time confidence.</p></div>
+          <span>CONVERGENCE</span>
+          <div><h3>See the forecast—and whether it has support.</h3><p>Hourly 2.5 km HRDPS precipitation draws the two-day map. Official 20-member REPS probabilities reveal whether the broader forecast signal agrees at your point.</p></div>
           <b>03</b>
         </article>
       </div>
@@ -131,7 +131,7 @@
         <div class="install-copy">
           <small>ANDROID + WEB</small>
           <h2>Your weather room,<br>on every screen.</h2>
-          <p>Open SkyMap in any modern browser, or install the Android APK for the native radar relay, 48-hour futurecast, local forecast memory and checksum-verified updates.</p>
+          <p>Open SkyMap in any modern browser, or install the Android APK for the native radar relay, ensemble-guided 48-hour futurecast, local forecast learning and checksum-verified automatic update checks.</p>
           <div>
             <a class="button paper" data-apk href="download/SkyMap-Ontario-latest.apk">Download Android <span>↓</span></a>
             <a class="text-link" href="app/">Use the web app <span>↗</span></a>
