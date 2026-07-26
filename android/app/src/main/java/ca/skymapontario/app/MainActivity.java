@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.webkit.GeolocationPermissions;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -40,10 +41,14 @@ public final class MainActivity extends Activity {
     private static final String APP_ORIGIN = "https://appassets.androidplatform.net";
     private static final String BRIDGE_NAME = "SkyMapNative";
     private static final int MAX_NATIVE_MESSAGE_CHARS = 8_500_000;
+    private static final long AUTO_LOCATE_COOLDOWN_MS = TimeUnit.MINUTES.toMillis(5);
 
     private WebView webView;
     private String geoOrigin;
     private GeolocationPermissions.Callback geoCallback;
+    private boolean pageReady;
+    private boolean autoLocateAttempted;
+    private long lastAutoLocateRequestElapsed;
 
     @Override
     @SuppressLint("SetJavaScriptEnabled")
@@ -78,7 +83,7 @@ public final class MainActivity extends Activity {
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setMediaPlaybackRequiresUserGesture(true);
-        settings.setUserAgentString(settings.getUserAgentString() + " SkyMapOntario/18.0.0");
+        settings.setUserAgentString(settings.getUserAgentString() + " SkyMapOntario/18.0.1");
 
         WebViewCompat.addWebMessageListener(
                 webView,
@@ -107,6 +112,16 @@ public final class MainActivity extends Activity {
                 }
                 return true;
             }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                Uri uri = Uri.parse(url == null ? "" : url);
+                pageReady = "https".equalsIgnoreCase(uri.getScheme())
+                        && "appassets.androidplatform.net".equalsIgnoreCase(uri.getHost())
+                        && "/assets/index.html".equals(uri.getPath());
+                if (pageReady) requestAutomaticLocation(true);
+            }
         });
 
         webView.setWebChromeClient(new WebChromeClient() {
@@ -129,6 +144,36 @@ public final class MainActivity extends Activity {
         scheduleBackgroundRefresh();
         if (state == null) webView.loadUrl(APP_ORIGIN + "/assets/index.html");
         else webView.restoreState(state);
+    }
+
+    private void requestAutomaticLocation(boolean initialLoad) {
+        if (webView == null || !pageReady) return;
+        if (!initialLoad && !hasLocationPermission()) return;
+
+        long now = SystemClock.elapsedRealtime();
+        if (initialLoad && autoLocateAttempted && now - lastAutoLocateRequestElapsed < 30_000L) return;
+        if (!initialLoad && now - lastAutoLocateRequestElapsed < AUTO_LOCATE_COOLDOWN_MS) return;
+
+        autoLocateAttempted = true;
+        lastAutoLocateRequestElapsed = now;
+        final String force = initialLoad ? "true" : "false";
+        webView.postDelayed(() -> {
+            if (webView == null || !pageReady) return;
+            String script = "(() => {"
+                    + "const button=document.getElementById('locate-button');"
+                    + "const label=document.getElementById('location-name');"
+                    + "const current=(label?.textContent||'').trim();"
+                    + "const force=" + force + ";"
+                    + "if(!button||button.dataset.autoLocating==='true')return false;"
+                    + "if(!force&&current&&current!=='My location'&&current!=='Toronto')return false;"
+                    + "button.dataset.autoLocating='true';"
+                    + "button.setAttribute('aria-busy','true');"
+                    + "button.click();"
+                    + "setTimeout(()=>{button.removeAttribute('aria-busy');delete button.dataset.autoLocating;},20000);"
+                    + "return true;"
+                    + "})()";
+            webView.evaluateJavascript(script, null);
+        }, initialLoad ? 180L : 350L);
     }
 
     private static final class NativeMessageListener implements WebViewCompat.WebMessageListener {
@@ -286,11 +331,15 @@ public final class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (webView != null) webView.onResume();
+        if (webView != null) {
+            webView.onResume();
+            requestAutomaticLocation(false);
+        }
     }
 
     @Override
     protected void onDestroy() {
+        pageReady = false;
         if (webView != null) {
             WebViewCompat.removeWebMessageListener(webView, BRIDGE_NAME);
             webView.stopLoading();
