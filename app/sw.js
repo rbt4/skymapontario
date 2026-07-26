@@ -2,7 +2,7 @@
    Shell only. Weather never comes from cache — a stale radar frame is worse
    than no radar frame, so every live source goes straight to the network. */
 
-const VERSION = '17.0.1';
+const VERSION = '17.1.0';
 const SHELL = `skymap-shell-${VERSION}`;
 
 const SHELL_FILES = [

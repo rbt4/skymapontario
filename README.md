@@ -2,7 +2,7 @@
 
 **Weather, moving toward you.**
 
-SkyMap Ontario is a radar-first Ontario weather experience. It joins measured radar, official short-range radar extrapolation and high-resolution 48-hour guidance in one honest timeline, checks deterministic precipitation against the official REPS ensemble, explains every selected time in plain language, surfaces active Environment Canada alerts without shouting, and keeps meaningful snapshots ahead of a clear seven-day forecast.
+SkyMap Ontario is a radar-first Ontario weather experience. It joins measured radar, official short-range radar extrapolation and high-resolution 48-hour guidance in one honest timeline, checks deterministic precipitation against the official REPS ensemble, turns the next two days into a connected local weather path, explains every selected time in plain language, surfaces active Environment Canada alerts without shouting, and keeps meaningful snapshots ahead of a clear seven-day forecast.
 
 ## Current release
 
@@ -34,14 +34,17 @@ The website, app and Android bridge are all committed as readable source. The re
 - Futurecast frames query the official 20-member, 10 km REPS ensemble for the probability of at least 1 mm and 5 mm over a three-hour window. SkyMap reports those probabilities directly and labels cross-source alignment separately; alignment is never presented as probability.
 - Android forecast memory makes small, bounded adjustments to the point-model blend after archived forecasts can be compared with nearby ECCC observations. The Canadian-first base weighting always remains dominant.
 - Direct Now, 6h, 24h and 48h controls change both the timeline and the useful map framing without hiding the current location.
+- A connected 48-hour weather path groups blended hourly guidance into tappable three-hour windows, identifies the first wet window, peak and easing time, and opens the matching HRDPS map hour. Model support is labelled separately and is never presented as probability.
 - Rain, storms, smoke, AQHI and temperature are exposed in a direct map-view rail instead of being buried in a dropdown.
 - Radar playback runs once and stops rather than looping endlessly.
 - Every selected time explains whether it is measured, extrapolated or model guidance and reports the value beneath the map centre when available.
 - The full-bleed dark map and warm forecast briefing are deliberately different surfaces: one is an instrument, the other is an explanation.
 - Laptop users can focus the map with one control and restore the forecast briefing without losing state.
 - Nearby official ECCC conditions and hourly guidance are combined with timezone-safe model guidance without presenting model agreement as a probability.
+- Place search accepts any Ontario city or town through Open-Meteo geocoding; quick locations and device location remain direct alternatives.
 - The Android app tries a restricted native ECCC GeoMet relay first and the public direct route second.
 - A failed refresh keeps the last successful weather image visible.
+- Transient GeoMet metadata failures are retried and recovered on a short bounded schedule instead of leaving the timeline disabled for the cache window.
 - Forecast cards render when the first dependable model responds and refine progressively as more guidance arrives.
 - Meaningful snapshots—now, tonight, tomorrow morning, tomorrow afternoon and the most useful weekly window—appear before the full daily table and open their corresponding map hour when available.
 - Active alerts appear on the map as a calm banner and in full in their own sheet. Expired bulletins are filtered out.

@@ -105,6 +105,8 @@ jobs:
           rm -rf /tmp/apk-inspect && mkdir /tmp/apk-inspect
           unzip -q "$APK" -d /tmp/apk-inspect
           grep -q 'id="snapshot-rail"' /tmp/apk-inspect/assets/index.html
+          grep -q 'id="weather-path"' /tmp/apk-inspect/assets/index.html
+          grep -q 'id="location-search-input"' /tmp/apk-inspect/assets/index.html
           grep -q 'data-map-mode="rain"' /tmp/apk-inspect/assets/index.html
           grep -q 'id="focus-button"' /tmp/apk-inspect/assets/index.html
           grep -q '7-DAY FORECAST' /tmp/apk-inspect/assets/index.html
@@ -126,6 +128,10 @@ jobs:
           grep -q 'REPS.DIAG.3_PRMM.ERGE5' /tmp/apk-inspect/assets/app.js
           grep -q 'loadEnsembleSignal' /tmp/apk-inspect/assets/app.js
           grep -q 'loadNativeIntelligence' /tmp/apk-inspect/assets/app.js
+          grep -q 'renderWeatherPath' /tmp/apk-inspect/assets/app.js
+          grep -q 'searchOntarioLocations' /tmp/apk-inspect/assets/app.js
+          grep -q 'geocoding-api.open-meteo.com' /tmp/apk-inspect/assets/app.js
+          grep -q 'scheduleTimelineRecovery' /tmp/apk-inspect/assets/app.js
           grep -q 'startAutoRefresh' /tmp/apk-inspect/assets/app.js
           grep -q 'OpenStreetMap contributors' /tmp/apk-inspect/assets/app.js
           grep -q 'applyTimelineHorizon' /tmp/apk-inspect/assets/app.js

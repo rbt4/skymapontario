@@ -4,6 +4,7 @@
   const DIRECT_GEOMET = 'https://geo.weather.gc.ca/geomet';
   const NATIVE_GEOMET = 'https://appassets.androidplatform.net/geomet-proxy';
   const WEATHER_API = 'https://api.weather.gc.ca';
+  const GEOCODE_API = 'https://geocoding-api.open-meteo.com/v1/search';
   const FUTURECAST_LAYER = 'HRDPS.CONTINENTAL.DIAG_PR_PT1H';
   const FUTURECAST_STYLE = 'RDPA-WXO';
   const FUTURE_STORM_LAYER = 'HRDPS-WEonG_2.5km_Thunderstorm-Prob';
@@ -68,7 +69,7 @@
   };
 
   const state = {
-    version: '17.0.1',
+    version: '17.1.0',
     place: loadPlace(),
     mode: 'rain',
     map: null,
@@ -83,6 +84,8 @@
     playing: false,
     playTimer: null,
     horizonLoadTimer: null,
+    metadataRecoveryTimer: null,
+    metadataRecoveryAttempts: 0,
     requestToken: 0,
     moveTimer: null,
     ignoreMapMoveUntil: 0,
@@ -99,6 +102,7 @@
     currentBlend: null,
     daily: [],
     snapshots: [],
+    weatherPath: [],
     radar: { state: 'loading', title: 'Connecting to ECCC radar', copy: 'Checking the official feed', transport: IS_NATIVE ? 'Native relay' : 'Direct web', lastSuccess: null, error: null },
     frameValue: null,
     frameExplanationToken: 0,
@@ -112,6 +116,8 @@
     lastGuidanceRefresh: 0,
     autoRefreshTimer: null,
     autoRefreshing: false,
+    locationSearchTimer: null,
+    locationSearchToken: 0,
     selectedSnapshot: null,
     airQuality: null,
     refreshId: 0
@@ -446,37 +452,40 @@
 
   async function getLayerMeta(layer, force = false) {
     const cached = state.layerMeta.get(layer);
-    if (!force && cached && Date.now() - cached.loadedAt < 10 * 60 * 1000) return cached;
+    if (!force && cached && !cached.error && Date.now() - cached.loadedAt < 10 * 60 * 1000) return cached;
     let lastError;
     for (const endpoint of geometEndpoints()) {
-      try {
-        const query = new URLSearchParams({ SERVICE: 'WMS', VERSION: '1.3.0', REQUEST: 'GetCapabilities', LAYERS: layer, layer, lang: 'en', _: Date.now() });
-        const response = await fetchWithTimeout(`${endpoint}?${query}`, { cache: 'no-store' }, 14000);
-        if (!response.ok) throw new Error(`Capabilities HTTP ${response.status}`);
-        const xml = new DOMParser().parseFromString(await response.text(), 'application/xml');
-        if (xml.querySelector('parsererror')) throw new Error('Capabilities XML error');
-        const node = findLayerNode(xml, layer);
-        if (!node) throw new Error(`Layer ${layer} not found`);
-        const dimensions = [...node.getElementsByTagNameNS('*', 'Dimension'), ...node.getElementsByTagNameNS('*', 'Extent')];
-        const timeNode = dimensions.find(item => (item.getAttribute('name') || '').toLowerCase() === 'time');
-        const referenceNode = dimensions.find(item => (item.getAttribute('name') || '').toLowerCase() === 'reference_time');
-        const meta = {
-          layer,
-          times: expandDimension(timeNode?.textContent),
-          referenceTimes: expandDimension(referenceNode?.textContent),
-          defaultTime: timeNode?.getAttribute('default') || null,
-          defaultReferenceTime: referenceNode?.getAttribute('default') || null,
-          endpoint,
-          loadedAt: Date.now()
-        };
-        state.layerMeta.set(layer, meta);
-        return meta;
-      } catch (error) {
-        lastError = error;
+      const attempts = endpoint === NATIVE_GEOMET ? 1 : 2;
+      for (let attempt = 0; attempt < attempts; attempt += 1) {
+        try {
+          const query = new URLSearchParams({ SERVICE: 'WMS', VERSION: '1.3.0', REQUEST: 'GetCapabilities', LAYERS: layer, layer, lang: 'en', _: Date.now() });
+          const response = await fetchWithTimeout(`${endpoint}?${query}`, { cache: 'no-store' }, 10000);
+          if (!response.ok) throw new Error(`Capabilities HTTP ${response.status}`);
+          const xml = new DOMParser().parseFromString(await response.text(), 'application/xml');
+          if (xml.querySelector('parsererror')) throw new Error('Capabilities XML error');
+          const node = findLayerNode(xml, layer);
+          if (!node) throw new Error(`Layer ${layer} not found`);
+          const dimensions = [...node.getElementsByTagNameNS('*', 'Dimension'), ...node.getElementsByTagNameNS('*', 'Extent')];
+          const timeNode = dimensions.find(item => (item.getAttribute('name') || '').toLowerCase() === 'time');
+          const referenceNode = dimensions.find(item => (item.getAttribute('name') || '').toLowerCase() === 'reference_time');
+          const meta = {
+            layer,
+            times: expandDimension(timeNode?.textContent),
+            referenceTimes: expandDimension(referenceNode?.textContent),
+            defaultTime: timeNode?.getAttribute('default') || null,
+            defaultReferenceTime: referenceNode?.getAttribute('default') || null,
+            endpoint,
+            loadedAt: Date.now()
+          };
+          state.layerMeta.set(layer, meta);
+          return meta;
+        } catch (error) {
+          lastError = error;
+          if (attempt + 1 < attempts) await sleep(350 * (attempt + 1));
+        }
       }
     }
     const fallback = { layer, times: [], referenceTimes: [], defaultTime: null, defaultReferenceTime: null, endpoint: null, loadedAt: Date.now(), error: String(lastError || 'Capabilities unavailable') };
-    state.layerMeta.set(layer, fallback);
     return fallback;
   }
 
@@ -660,6 +669,18 @@
     });
   }
 
+  function scheduleTimelineRecovery() {
+    if (state.metadataRecoveryTimer || state.metadataRecoveryAttempts >= 3) return;
+    const delay = [9000, 22000, 45000][state.metadataRecoveryAttempts] || 45000;
+    state.metadataRecoveryTimer = setTimeout(() => {
+      state.metadataRecoveryTimer = null;
+      if (document.hidden || !navigator.onLine || !isRadarMode() || state.playing) return scheduleTimelineRecovery();
+      state.metadataRecoveryAttempts += 1;
+      state.allFrames = [];
+      void refreshVisibleMap(true);
+    }, delay);
+  }
+
   async function buildRadarFrames(force = false) {
     if (state.allFrames.length && !force) return state.frames;
     state.frameValue = null;
@@ -698,6 +719,13 @@
     ];
     if (!state.allFrames.length) {
       state.allFrames = [{ layer: 'RADAR_1KM_RRAI', style: 'RADARURPPRECIPR14-LINEAR', time: observedMeta.defaultTime || null, referenceTime: observedMeta.defaultReferenceTime || null, kind: 'observed' }];
+    }
+    if (pastTimes.length && futurecastTimes.length) {
+      clearTimeout(state.metadataRecoveryTimer);
+      state.metadataRecoveryTimer = null;
+      state.metadataRecoveryAttempts = 0;
+    } else {
+      scheduleTimelineRecovery();
     }
     applyTimelineHorizon(state.timelineHorizon, { load: false, autoFrame: false });
     return state.frames;
@@ -878,6 +906,7 @@
     const confidenceBadge = $('#frame-confidence');
     if (confidenceBadge) confidenceBadge.dataset.kind = confidence.level;
     renderLegend();
+    syncWeatherPathSelection(frame);
   }
 
   async function showRadarFrame(index, force = false) {
@@ -1225,6 +1254,193 @@
     return output;
   }
 
+  function compactHour(value) {
+    return formatForecastDate(value, { hour: 'numeric' }).replace(/\s+/g, ' ').trim();
+  }
+
+  function pathDayLabel(value) {
+    const key = dateKeyInZone(value);
+    const keys = forecastDayKeys(3);
+    if (key === keys[0]) return hourInZone(value) >= 17 ? 'Tonight' : 'Today';
+    if (key === keys[1]) return 'Tomorrow';
+    return dayName(value);
+  }
+
+  function weatherPathWindowLabel(start, end) {
+    const sameDay = dateKeyInZone(start) === dateKeyInZone(end);
+    const startLabel = compactHour(start);
+    const endLabel = compactHour(end);
+    return `${pathDayLabel(start)} · ${startLabel}${sameDay ? '–' : `–${pathDayLabel(end)} `}${endLabel}`;
+  }
+
+  function buildWeatherPath() {
+    const anchor = new Date();
+    anchor.setMinutes(0, 0, 0);
+    const path = [];
+    for (let startHour = 0; startHour < 48; startHour += 3) {
+      const samples = [0, 1, 2]
+        .map(offset => blendedAt(new Date(anchor.getTime() + (startHour + offset) * 3600000)))
+        .filter(Boolean);
+      if (!samples.length) continue;
+      const start = new Date(anchor.getTime() + startHour * 3600000);
+      const end = new Date(anchor.getTime() + (startHour + 3) * 3600000);
+      const midpoint = new Date(anchor.getTime() + (startHour + 1.5) * 3600000);
+      const rain = samples.reduce((sum, sample) => sum + sample.rain, 0);
+      const support = samples.reduce((sum, sample) => sum + sample.wet, 0) / samples.length;
+      const temp = samples.reduce((sum, sample) => sum + sample.temp, 0) / samples.length;
+      const gust = Math.max(...samples.map(sample => sample.gust));
+      const representative = samples[Math.min(1, samples.length - 1)];
+      path.push({
+        index: path.length,
+        start,
+        end,
+        midpoint,
+        rain,
+        support,
+        temp,
+        gust,
+        weather: representative.weather,
+        wet: rain >= .25 || support >= 50,
+        dayBoundary: path.length > 0 && dateKeyInZone(start) !== dateKeyInZone(path.at(-1).start)
+      });
+    }
+    state.weatherPath = path;
+    return path;
+  }
+
+  function weatherPathSummary(path) {
+    if (!path.length) {
+      return {
+        heading: 'Building your weather path',
+        insights: ['Guidance connecting', 'Guidance connecting', 'Guidance connecting']
+      };
+    }
+    const firstWetIndex = path.findIndex(point => point.wet);
+    const peak = path.reduce((best, point) => point.rain > best.rain ? point : best, path[0]);
+    if (firstWetIndex < 0) {
+      const quietest = path.reduce((best, point) => point.gust < best.gust ? point : best, path[0]);
+      return {
+        heading: 'No strong rain window through 48 hours',
+        insights: [
+          'No strong wet window',
+          peak.rain < .05 ? 'No meaningful rain' : `${peak.rain.toFixed(1)} mm / 3h at most`,
+          `${pathDayLabel(quietest.start)} looks quietest`
+        ]
+      };
+    }
+    let lastWetIndex = firstWetIndex;
+    while (lastWetIndex + 1 < path.length && path[lastWetIndex + 1].wet) lastWetIndex += 1;
+    const wetWindow = path.slice(firstWetIndex, lastWetIndex + 1);
+    const wetPeak = wetWindow.reduce((best, point) => point.rain > best.rain ? point : best, wetWindow[0]);
+    const easing = path[lastWetIndex + 1] || null;
+    const windowLabel = weatherPathWindowLabel(path[firstWetIndex].start, path[lastWetIndex].end);
+    return {
+      heading: `Wet window · ${windowLabel}`,
+      insights: [
+        windowLabel,
+        `${wetPeak.rain.toFixed(wetPeak.rain < 10 ? 1 : 0)} mm / 3h · ${compactHour(wetPeak.start)}`,
+        easing ? `Eases by ${compactHour(easing.start)}` : 'Signal continues to +48h'
+      ]
+    };
+  }
+
+  function weatherPathTimeLabel(point) {
+    if (point.index === 0) return 'Now';
+    if (point.dayBoundary) return dayName(point.start);
+    return point.index % 4 === 0 ? compactHour(point.start) : '';
+  }
+
+  function weatherPathPointDescription(point) {
+    return `${weatherPathWindowLabel(point.start, point.end)}. Blended guidance shows ${point.rain.toFixed(1)} millimetres in three hours, ${Math.round(point.support)} percent weighted model support for a wet hour, and ${Math.round(point.temp)} degrees.`;
+  }
+
+  function markWeatherPathPoint(index) {
+    $$('#path-chart .path-point').forEach((node, pointIndex) => {
+      node.dataset.selected = String(pointIndex === index);
+    });
+    const scrubber = document.querySelector('.path-scrubber');
+    const point = state.weatherPath[index];
+    if (!scrubber || !point) return;
+    scrubber.value = String(index);
+    scrubber.title = `${point.rain.toFixed(1)} mm / 3h · ${Math.round(point.support)}% weighted model support`;
+    scrubber.setAttribute('aria-valuetext', weatherPathPointDescription(point));
+  }
+
+  function renderWeatherPath() {
+    const chart = $('#path-chart');
+    if (!chart) return;
+    const path = buildWeatherPath();
+    const summary = weatherPathSummary(path);
+    text('#weather-path-heading', summary.heading);
+    $$('#path-insights b').forEach((node, index) => { node.textContent = summary.insights[index] || '—'; });
+    text('#path-source-note', path.length
+      ? `Guidance blend · ${state.modelData.size}/${MODELS.length} models · amount, not probability`
+      : 'Guidance models are connecting');
+    chart.innerHTML = '';
+    if (!path.length) {
+      const empty = document.createElement('span');
+      empty.className = 'path-empty';
+      empty.textContent = 'The 48-hour path appears as soon as the first dependable model responds.';
+      chart.append(empty);
+      return;
+    }
+
+    const rainMax = Math.max(.4, ...path.map(point => point.rain));
+    const temperatures = path.map(point => point.temp).filter(Number.isFinite);
+    const tempMin = Math.min(...temperatures);
+    const tempMax = Math.max(...temperatures);
+    const tempSpan = Math.max(1, tempMax - tempMin);
+    const selectedFrame = state.frames[state.frameIndex];
+    const selectedTime = selectedFrame?.kind === 'futurecast' ? new Date(selectedFrame.time).getTime() : NaN;
+    const selectedPathIndex = path.findIndex(point => Number.isFinite(selectedTime) && selectedTime >= point.start.getTime() && selectedTime < point.end.getTime());
+    const temperaturePoints = path.map((point, index) => {
+      const x = ((index + .5) / path.length) * 100;
+      const y = 76 - ((point.temp - tempMin) / tempSpan) * 58;
+      return `${x.toFixed(2)},${y.toFixed(2)}`;
+    }).join(' ');
+    chart.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline class="path-temperature-line" points="${temperaturePoints}"></polyline></svg>`;
+
+    path.forEach(point => {
+      const rainHeight = point.rain < .05 ? 2 : 7 + Math.sqrt(point.rain / rainMax) * 61;
+      const tempTop = 18 + (1 - (point.temp - tempMin) / tempSpan) * 58;
+      const bar = document.createElement('span');
+      bar.className = 'path-point';
+      bar.dataset.wet = String(point.wet);
+      bar.dataset.selected = String(point.index === selectedPathIndex);
+      if (point.dayBoundary) bar.dataset.dayBoundary = 'true';
+      bar.setAttribute('aria-hidden', 'true');
+      bar.style.setProperty('--rain-height', `${rainHeight.toFixed(1)}px`);
+      bar.style.setProperty('--support', String(clamp(point.support / 100, 0, 1).toFixed(2)));
+      bar.style.setProperty('--temp-top', `${tempTop.toFixed(1)}%`);
+      bar.innerHTML = `<i class="path-rain-bar"></i><i class="path-temp-dot"></i><time>${esc(weatherPathTimeLabel(point))}</time>`;
+      chart.append(bar);
+    });
+
+    const scrubber = document.createElement('input');
+    scrubber.className = 'path-scrubber';
+    scrubber.type = 'range';
+    scrubber.min = '0';
+    scrubber.max = String(path.length - 1);
+    scrubber.step = '1';
+    scrubber.value = String(Math.max(0, selectedPathIndex));
+    scrubber.setAttribute('aria-label', 'Choose a three-hour weather window to show on the map');
+    scrubber.addEventListener('input', () => markWeatherPathPoint(Number(scrubber.value)));
+    scrubber.addEventListener('change', () => openWeatherPathPoint(path[Number(scrubber.value)]));
+    chart.append(scrubber);
+    if (selectedPathIndex >= 0) markWeatherPathPoint(selectedPathIndex);
+    else {
+      scrubber.title = 'Tap, drag, or use arrow keys to choose a three-hour window';
+      scrubber.setAttribute('aria-valuetext', weatherPathPointDescription(path[0]));
+    }
+  }
+
+  function syncWeatherPathSelection(frame) {
+    const time = frame?.kind === 'futurecast' ? new Date(frame.time).getTime() : NaN;
+    const index = state.weatherPath.findIndex(point => Number.isFinite(time) && time >= point.start.getTime() && time < point.end.getTime());
+    if (index >= 0) markWeatherPathPoint(index);
+    else $$('#path-chart .path-point').forEach(node => { node.dataset.selected = 'false'; });
+  }
+
   function buildSnapshots() {
     const now = new Date();
     let tonight = forecastHour(0, 21);
@@ -1515,6 +1731,7 @@
     renderModelStatus();
     renderDaily();
     renderSummary();
+    renderWeatherPath();
     renderSnapshots();
     renderDetails();
   }
@@ -1746,6 +1963,7 @@
         : ['Reading this exact point…', 'The weather image loaded; its local rain rate is still resolving.'];
     }
     if (value === undefined) {
+      if (!frame?.time) return ['Radar is visible. Timeline details are reconnecting.', 'SkyMap is showing the latest official image while it retries the frame times needed for playback and exact point values.'];
       return ['Exact local value is unavailable.', 'The weather image is live, but the official point query did not return a usable value for this frame.'];
     }
     if (kind === 'futurecast') {
@@ -1916,29 +2134,50 @@
     }
   }
 
+  function showFutureTimeOnMap(targetTime, message) {
+    const target = targetTime instanceof Date ? targetTime.getTime() : new Date(targetTime).getTime();
+    if (!Number.isFinite(target)) return false;
+    const weatherFrames = state.allFrames.filter(frame => {
+      if (target <= Date.now() + 2 * 3600000) return frame.kind === 'observed' || frame.kind === 'nowcast';
+      return frame.kind === 'futurecast';
+    });
+    const mapFrame = nearestFrame(weatherFrames, target);
+    const tolerance = mapFrame?.kind === 'futurecast' ? 100 * 60000 : 35 * 60000;
+    if (!mapFrame || Math.abs(new Date(mapFrame.time).getTime() - target) > tolerance) return false;
+
+    const hours = Math.max(0, (target - Date.now()) / 3600000);
+    const horizon = hours <= 2 ? 'now' : hours <= 6 ? '6' : hours <= 24 ? '24' : '48';
+    applyTimelineHorizon(horizon, { load: false, autoFrame: true });
+    pushUniqueFrame(state.frames, mapFrame);
+    state.frames.sort((a, b) => new Date(a.time || 0) - new Date(b.time || 0));
+    state.frameIndex = state.frames.findIndex(frame => frameKey(frame) === frameKey(mapFrame));
+    renderRibbon();
+    renderTimelineRange();
+    renderPlayback(mapFrame);
+    scheduleRadarFrame(state.frameIndex, true);
+    if (matchMedia('(max-width: 980px)').matches) $('.radar-stage')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    showToast(message || `${frameStamp(mapFrame.time)} · shown on the weather map`);
+    return true;
+  }
+
+  function openWeatherPathPoint(point) {
+    if (showFutureTimeOnMap(point.midpoint, `${weatherPathWindowLabel(point.start, point.end)} · shown on the map`)) return;
+    showToast('That exact HRDPS hour is not available in the current run');
+  }
+
+  function openWeatherPathRange() {
+    const futurecast = state.allFrames.filter(frame => frame.kind === 'futurecast');
+    if (!futurecast.length) return showToast('The 48-hour HRDPS timeline is still connecting');
+    stopPlayback();
+    applyTimelineHorizon('48', { load: true, autoFrame: true });
+    if (matchMedia('(max-width: 980px)').matches) $('.radar-stage')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    showToast('48-hour HRDPS futurecast opened');
+  }
+
   function openSnapshot(event, button) {
     $$('.snapshot-card').forEach(item => item.classList.toggle('selected', item === button));
     const targetTime = new Date(event.date || 0).getTime();
-    const weatherFrames = state.allFrames.filter(frame => {
-      if (targetTime <= Date.now() + 2 * 3600000) return frame.kind === 'observed' || frame.kind === 'nowcast';
-      return frame.kind === 'futurecast';
-    });
-    const mapFrame = Number.isFinite(targetTime) ? nearestFrame(weatherFrames, targetTime) : null;
-    const tolerance = mapFrame?.kind === 'futurecast' ? 90 * 60000 : 35 * 60000;
-    if (mapFrame && Math.abs(new Date(mapFrame.time).getTime() - targetTime) <= tolerance) {
-      const hours = Math.max(0, (targetTime - Date.now()) / 3600000);
-      const horizon = hours <= 2 ? 'now' : hours <= 6 ? '6' : hours <= 24 ? '24' : '48';
-      applyTimelineHorizon(horizon, { load: false, autoFrame: true });
-      pushUniqueFrame(state.frames, mapFrame);
-      state.frames.sort((a, b) => new Date(a.time || 0) - new Date(b.time || 0));
-      state.frameIndex = state.frames.findIndex(frame => frameKey(frame) === frameKey(mapFrame));
-      renderRibbon();
-      renderTimelineRange();
-      scheduleRadarFrame(state.frameIndex, true);
-      if (matchMedia('(max-width: 980px)').matches) $('.radar-stage')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      showToast(`${event.label.toLowerCase()} · shown on the weather map`);
-      return;
-    }
+    if (Number.isFinite(targetTime) && showFutureTimeOnMap(targetTime, `${event.label.toLowerCase()} · shown on the weather map`)) return;
     state.selectedSnapshot = event;
     text('#details-title', event.title);
     text('#detail-radar-title', event.when);
@@ -1958,6 +2197,7 @@
     $('#backdrop').hidden = false;
     $$('.sheet').forEach(sheet => { sheet.hidden = sheet.id !== id; });
     document.body.style.overflow = 'hidden';
+    if (id === 'location-sheet') setTimeout(() => $('#location-search-input')?.focus(), 80);
   }
 
   function closeSheets() {
@@ -1968,6 +2208,92 @@
     $$('.snapshot-card').forEach(item => item.classList.remove('selected'));
     text('#details-title', 'What SkyMap is seeing');
     renderDetails();
+  }
+
+  function setLocationSearchStatus(message, stateName = '') {
+    const status = $('#location-search-status');
+    if (!status) return;
+    status.textContent = message;
+    if (stateName) status.dataset.state = stateName;
+    else delete status.dataset.state;
+  }
+
+  function clearLocationSearch() {
+    clearTimeout(state.locationSearchTimer);
+    state.locationSearchTimer = null;
+    state.locationSearchToken += 1;
+    const input = $('#location-search-input');
+    const results = $('#location-search-results');
+    if (input) input.value = '';
+    if (results) results.innerHTML = '';
+    setLocationSearchStatus('Search by place name, or choose a quick location below.');
+  }
+
+  function renderLocationSearchResults(results) {
+    const container = $('#location-search-results');
+    if (!container) return;
+    container.innerHTML = '';
+    results.forEach(result => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      const detail = [result.admin2, result.admin1].filter((value, index, list) => value && list.indexOf(value) === index).join(' · ') || 'Ontario';
+      button.innerHTML = `<span><b>${esc(result.name)}</b><small>${esc(detail)}</small></span><i aria-hidden="true">›</i>`;
+      button.addEventListener('click', () => {
+        clearLocationSearch();
+        void setPlace({
+          name: String(result.name || 'Ontario location').slice(0, 70),
+          lat: Number(result.latitude),
+          lon: Number(result.longitude),
+          zoom: Number(result.population) >= 500000 ? 9 : 10
+        });
+      });
+      container.append(button);
+    });
+  }
+
+  async function searchOntarioLocations(query, token) {
+    setLocationSearchStatus(`Searching Ontario for “${query}”…`);
+    try {
+      const params = new URLSearchParams({ name: query, count: '12', language: 'en', format: 'json', countryCode: 'CA' });
+      const data = await fetchJson(`${GEOCODE_API}?${params}`, 9000);
+      if (token !== state.locationSearchToken) return;
+      const seen = new Set();
+      const results = (data.results || [])
+        .filter(result => result.country_code === 'CA' && String(result.admin1 || '').toLowerCase() === 'ontario')
+        .filter(result => Number.isFinite(Number(result.latitude)) && Number.isFinite(Number(result.longitude)))
+        .filter(result => {
+          const key = `${Number(result.latitude).toFixed(4)},${Number(result.longitude).toFixed(4)}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .slice(0, 6);
+      renderLocationSearchResults(results);
+      setLocationSearchStatus(results.length
+        ? `${results.length} Ontario match${results.length === 1 ? '' : 'es'} · tap one to update every source`
+        : 'No Ontario match found. Try the municipality or nearby city name.', results.length ? '' : 'error');
+    } catch (_) {
+      if (token !== state.locationSearchToken) return;
+      renderLocationSearchResults([]);
+      setLocationSearchStatus('Place search is temporarily unavailable. Quick locations still work.', 'error');
+    }
+  }
+
+  function scheduleLocationSearch() {
+    clearTimeout(state.locationSearchTimer);
+    const query = String($('#location-search-input')?.value || '').trim();
+    const container = $('#location-search-results');
+    if (query.length < 2) {
+      state.locationSearchToken += 1;
+      if (container) container.innerHTML = '';
+      setLocationSearchStatus(query ? 'Type at least two characters.' : 'Search by place name, or choose a quick location below.');
+      return;
+    }
+    const token = ++state.locationSearchToken;
+    state.locationSearchTimer = setTimeout(() => {
+      state.locationSearchTimer = null;
+      void searchOntarioLocations(query, token);
+    }, 320);
   }
 
   function renderLocations() {
@@ -1985,6 +2311,7 @@
   }
 
   async function setPlace(place) {
+    clearLocationSearch();
     state.place = { ...place, lat: Number(place.lat), lon: Number(place.lon), zoom: Number(place.zoom) || 9 };
     savePlace();
     text('#location-name', state.place.name);
@@ -2001,8 +2328,12 @@
     state.cityWeatherKey = '';
     state.allFrames = [];
     state.frames = [];
+    clearTimeout(state.metadataRecoveryTimer);
+    state.metadataRecoveryTimer = null;
+    state.metadataRecoveryAttempts = 0;
     state.timelineHorizon = 'now';
     state.arrival = null;
+    state.weatherPath = [];
     state.airQuality = null;
     state.alerts = [];
     state.lastLiveRefresh = 0;
@@ -2150,9 +2481,11 @@
 
   function bindEvents() {
     $('#location-button')?.addEventListener('click', () => { renderLocations(); openSheet('location-sheet'); });
+    $('#location-search-input')?.addEventListener('input', scheduleLocationSearch);
     $('#layers-button')?.addEventListener('click', () => openSheet('layers-sheet'));
     $('#focus-button')?.addEventListener('click', () => setMapFocus(!document.body.classList.contains('map-focus')));
     $('#forecast-details-button')?.addEventListener('click', () => openSheet('details-sheet'));
+    $('#weather-path-map-button')?.addEventListener('click', openWeatherPathRange);
     $('#radar-state')?.addEventListener('click', () => state.radar.state === 'ok' ? openSheet('details-sheet') : refreshVisibleMap(true));
     $('#play-button')?.addEventListener('click', playRadar);
     $$('[data-horizon]').forEach(button => button.addEventListener('click', () => {

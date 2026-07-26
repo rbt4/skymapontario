@@ -5,10 +5,10 @@
   const tabs = [...document.querySelectorAll('[data-preview-tab]')];
   const playButton = document.querySelector('.preview-time button');
   const copy = {
-    now: { kicker: 'OBSERVED RADAR', title: 'Rain stays west for now.', body: 'Watch the latest measured frames move toward your location.', time: 'NOW', left: 'PAST HOUR', centre: 'NOW', right: 'NOWCAST', confidence: 'MEASURED' },
-    six: { kicker: 'RADAR → HRDPS + REPS', title: 'Showers approach this evening.', body: 'The source boundary stays visible while ensemble support checks the first forecast hours.', time: 'IN 6H', left: 'NOW', centre: 'NOWCAST', right: '+6H', confidence: 'CONVERGING' },
-    day: { kicker: 'HRDPS + REPS SIGNAL', title: 'Tomorrow’s wettest pocket has support.', body: 'The 2.5 km map supplies the shape; the official ensemble supplies the probability signal.', time: 'TOMORROW', left: 'NOW', centre: 'HRDPS + REPS', right: '+24H', confidence: 'ALIGNED' },
-    'two-day': { kicker: '48-HOUR CONVERGENCE', title: 'See the two-day path without fake precision.', body: 'Longer lead times remain useful, while mixed sources are labelled guarded instead of certain.', time: 'IN 48H', left: 'NOW', centre: 'MODEL + ENSEMBLE', right: '+48H', confidence: 'GUARDED' }
+    now: { kicker: 'OBSERVED RADAR', title: 'Rain stays west for now.', body: 'Watch the latest measured frames move toward your location.', time: 'NOW', left: 'PAST HOUR', centre: 'NOW', right: 'NOWCAST', confidence: 'MEASURED', path: 'Quiet through tonight', peak: 'No strong wet window', then: 'Radar stays live' },
+    six: { kicker: 'RADAR → HRDPS + REPS', title: 'Showers approach this evening.', body: 'The source boundary stays visible while ensemble support checks the first forecast hours.', time: 'IN 6H', left: 'NOW', centre: 'NOWCAST', right: '+6H', confidence: 'CONVERGING', path: 'First wet window this evening', peak: 'Peak window near 9 PM', then: 'Then easing' },
+    day: { kicker: 'HRDPS + REPS SIGNAL', title: 'Tomorrow’s wettest pocket has support.', body: 'The 2.5 km map supplies the shape; the official ensemble supplies the probability signal.', time: 'TOMORROW', left: 'NOW', centre: 'HRDPS + REPS', right: '+24H', confidence: 'ALIGNED', path: 'Tomorrow carries the wettest pocket', peak: 'Map the peak window', then: 'Tap any 3h block' },
+    'two-day': { kicker: '48-HOUR CONVERGENCE', title: 'See the two-day path without fake precision.', body: 'Longer lead times remain useful, while mixed sources are labelled guarded instead of certain.', time: 'IN 48H', left: 'NOW', centre: 'MODEL + ENSEMBLE', right: '+48H', confidence: 'GUARDED', path: 'The whole two-day path at a glance', peak: 'One guarded wet pocket', then: 'Confidence fades' }
   };
   let previewTimer = null;
 
@@ -28,6 +28,9 @@
     document.querySelector('[data-preview-centre]').textContent = copy[mode].centre;
     document.querySelector('[data-preview-right]').textContent = copy[mode].right;
     document.querySelector('[data-preview-confidence]').textContent = copy[mode].confidence;
+    document.querySelector('[data-preview-path]').textContent = copy[mode].path;
+    document.querySelector('[data-preview-peak]').textContent = copy[mode].peak;
+    document.querySelector('[data-preview-then]').textContent = copy[mode].then;
   }
 
   tabs.forEach(tab => tab.addEventListener('click', () => setPreview(tab.dataset.previewTab)));

@@ -166,6 +166,15 @@ async function checkAlerts() {
   console.log(`✓ ECCC alerts: ${data.numberMatched ?? data.features.length} Ontario records`);
 }
 
+async function checkOntarioGeocoding() {
+  const query = new URLSearchParams({ name: 'Etobicoke', count: '5', language: 'en', format: 'json', countryCode: 'CA' });
+  const response = await request(`https://geocoding-api.open-meteo.com/v1/search?${query}`, 2);
+  const data = await response.json();
+  const match = (data.results || []).find(item => item.country_code === 'CA' && item.admin1 === 'Ontario' && Number.isFinite(Number(item.latitude)) && Number.isFinite(Number(item.longitude)));
+  assert(match, 'Ontario place search: no usable Ontario result');
+  console.log(`✓ Ontario place search: ${match.name} · ${match.admin2 || match.admin1}`);
+}
+
 async function checkModel([name, endpoint, model]) {
   const query = new URLSearchParams({
     latitude: '43.6532', longitude: '-79.3832', timezone: 'auto', timeformat: 'unixtime',
@@ -196,9 +205,10 @@ await checkWms('High-resolution temperature', 'HRDPS.CONTINENTAL_TT');
 await checkWms('Lightning density', 'Lightning_2.5km_Density', 'Lightning');
 await checkCityWeather();
 await checkAlerts();
+await checkOntarioGeocoding();
 for (const model of models) {
   await checkModel(model);
   await new Promise(resolve => setTimeout(resolve, 500));
 }
 
-console.log('✓ All live sources required by SkyMap 17.0 responded with usable data');
+console.log('✓ All live sources required by SkyMap responded with usable data');
