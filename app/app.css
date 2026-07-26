@@ -80,7 +80,18 @@ button:disabled { cursor: progress; opacity: .55 }
 
 .skip-link:focus { transform: none }
 .leaflet-container { background: #071410; font: inherit }
-.leaflet-control-attribution { display: none !important }
+.leaflet-control-attribution {
+  margin: 0 14px 122px 0 !important;
+  padding: 3px 7px !important;
+  border: 1px solid rgba(225, 247, 239, .1);
+  border-radius: 7px;
+  background: rgba(6, 17, 15, .76) !important;
+  color: var(--dim) !important;
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+  backdrop-filter: blur(10px);
+}
+.leaflet-control-attribution a { color: var(--mist) !important; text-decoration: none }
 .leaflet-pane.labelPane { pointer-events: none }
 
 /* Topbar */
@@ -890,20 +901,15 @@ body[data-frame-kind="futurecast"] .story-facts span:first-child b { color: var(
 
 .snapshot-rail {
   display: grid;
-  grid-auto-columns: minmax(245px, 82%);
-  grid-auto-flow: column;
+  grid-template-columns: 1fr;
   gap: 11px;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
 }
 
 .snapshot-rail::-webkit-scrollbar { display: none }
 
 .snapshot-card {
   position: relative;
-  min-height: 216px;
+  min-height: 164px;
   padding: 16px;
   overflow: hidden;
   scroll-snap-align: start;
@@ -1050,7 +1056,7 @@ body[data-frame-kind="futurecast"] .story-facts span:first-child b { color: var(
 .layer-list i { color: var(--future); font-size: 15px; font-style: normal; text-align: center }
 .layer-list button.active { border-color: rgba(114, 228, 255, .38); background: rgba(114, 228, 255, .07) }
 
-.detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px }
+.detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px }
 .detail-grid article { padding: 16px; border: 1px solid var(--night-line); border-radius: var(--radius-sm); background: rgba(255, 255, 255, .035) }
 .detail-grid h3 { margin: 8px 0 7px; font-size: 17px; font-weight: 660; letter-spacing: -.025em; line-height: 1.17 }
 .detail-grid p { margin: 0; color: var(--mist); font-size: 12px; line-height: 1.55 }
@@ -1127,6 +1133,15 @@ body[data-frame-kind="futurecast"] .story-facts span:first-child b { color: var(
   }
   .forecast-stack { padding-inline: 20px }
   .summary-card { min-height: 180px }
+  .snapshot-rail {
+    grid-auto-columns: minmax(245px, 82%);
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
 }
 
 @media (max-width: 720px) {
@@ -1175,8 +1190,7 @@ body[data-frame-kind="futurecast"] .story-facts span:first-child b { color: var(
   .map-actions { top: 58px; right: 10px; gap: 6px }
   .alert-banner:not([hidden]) ~ .map-actions { top: 126px }
   .map-actions button { width: 43px; height: 43px; border-radius: 13px }
-  .map-actions button:nth-child(3),
-  .map-actions button:nth-child(4) { display: none }
+  .leaflet-control-attribution { margin: 0 9px 186px 0 !important }
 
   .alert-banner { top: 10px; right: 10px; left: 10px; padding: 12px 13px }
   .alert-banner b { font-size: 13px }

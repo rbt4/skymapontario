@@ -41,10 +41,11 @@ assert(app.includes('7-DAY FORECAST'), 'Seven-day forecast is missing');
 assert(app.includes('Keep radar first'), 'Layer sheet is missing its radar-first hierarchy');
 assert(app.includes('id="story-facts"'), 'Selected-time explanation facts are missing');
 assert(app.includes('id="frame-confidence"'), 'Selected-time confidence cue is missing');
-assert(app.includes('id="zoom-in-button"') && app.includes('id="zoom-out-button"'), 'Visible map zoom controls are missing');
+assert(!app.includes('id="zoom-in-button"') && !app.includes('id="zoom-out-button"'), 'Visible map zoom controls returned');
 assert(app.includes('ko-fi.com/rbt4dev'), 'Restrained in-app support link is missing');
 assert(appCss.includes('grid-template-columns: minmax(0, 1.62fr)'), 'Desktop map/forecast layout is missing');
 assert(appCss.includes('@media (max-width: 980px)'), 'Mobile layout is missing');
+assert(appCss.includes('.snapshot-rail {\n  display: grid;\n  grid-template-columns: 1fr;'), 'Desktop snapshot cards can overflow their briefing column');
 assert(app.includes('class="map-mode-rail"') && (app.match(/data-map-mode=/g) || []).length === 5, 'Direct map-view rail is missing');
 assert(app.includes('id="focus-button"') && appJs.includes('setMapFocus'), 'Laptop map-focus mode is missing');
 assert(app.indexOf('id="snapshot-rail"') < app.indexOf('id="daily-list"'), 'Meaningful snapshots must appear before the full week');
@@ -75,6 +76,15 @@ assert(appJs.includes('function applyTimelineHorizon') && appJs.includes('functi
 assert(appJs.includes('function scheduleRadarFrame') && appJs.includes('afterReframe'), 'Futurecast images may load before automatic map framing finishes');
 assert(appJs.includes("frame.kind === 'observed'") && appJs.includes("frame.kind === 'nowcast'") && appJs.includes("frame.kind === 'futurecast'"), 'Measured, nowcast and futurecast source boundaries are missing');
 assert(appJs.includes('model guidance, not observed radar'), 'Futurecast is not explained honestly');
+assert(appJs.includes("layer: 'REPS.DIAG.3_PRMM.ERGE1'") && appJs.includes("layer: 'REPS.DIAG.3_PRMM.ERGE5'"), 'Official REPS ensemble thresholds are missing');
+assert(appJs.includes('function loadEnsembleSignal') && appJs.includes('function ensembleSummary'), 'REPS point probabilities are not rendered');
+assert(appJs.includes('function forecastAlignment') && appJs.includes('forecast sources currently point the same way'), 'Cross-source alignment is not explained separately');
+assert(app.includes('id="detail-ensemble-title"') && app.includes('id="detail-ensemble-copy"'), 'Ensemble detail explanation is missing');
+assert(appJs.includes('function effectiveModelWeight') && appJs.includes('state.nativeSkills'), 'Bounded local model-skill weighting is missing');
+assert(appJs.includes("NativeBridge.call('getBootstrap'") && appJs.includes('function loadNativeIntelligence'), 'Android forecast intelligence is not connected to the web experience');
+assert(appJs.includes('const LIVE_REFRESH_MS = 6 * 60 * 1000') && appJs.includes('const GUIDANCE_REFRESH_MS = 30 * 60 * 1000'), 'Automatic refresh cadence is missing');
+assert(appJs.includes('function autoRefresh') && appJs.includes('function startAutoRefresh'), 'Live auto-refresh is not running');
+assert(appJs.includes('void prefetchFrameSignal(frame)'), 'Selected future evidence does not begin resolving alongside the map image');
 assert(appJs.includes('A timestamped forecast must never silently degrade'), 'Timestamp precision guard is missing');
 assert(appJs.includes('function openSnapshot') && appJs.includes('shown on the weather map'), 'Forecast moments do not connect back to the map');
 assert(appJs.includes('function weatherIconMarkup') && app.includes('class="svg-defs"'), 'Code-native weather graphics are missing');
@@ -107,6 +117,8 @@ assert(appJs.includes('aqhi-observations-realtime'), 'Official AQHI point readin
 assert(app.includes('id="map-legend"'), 'The in-interface legend is missing');
 assert(appJs.includes('LEGENDS'), 'Per-view legend data is missing');
 assert(appJs.includes('dark_only_labels') && appJs.includes("createPane('labelPane')"), 'Place labels are no longer drawn above the weather');
+assert(appJs.includes('attributionControl: true') && appJs.includes('OpenStreetMap contributors') && appJs.includes('CARTO'), 'Required base-map attribution is missing');
+assert(!/\.leaflet-control-attribution\s*\{[^}]*display:\s*none/s.test(appCss), 'Base-map attribution is hidden');
 assert(appJs.includes('function esc('), 'HTML escaping helper is missing');
 assert(app.includes('Content-Security-Policy') && site.includes('Content-Security-Policy'), 'Content-Security-Policy is missing');
 assert(sw.includes(`const VERSION = '${version.version}'`), 'Service worker version is not aligned');
@@ -118,8 +130,8 @@ assert(geoMetProxy.includes('safeHeaders') && !geoMetProxy.includes('flattenHead
 assert(androidManifest.includes('android:allowBackup="false"'), 'Cached weather and saved location are still cloud-backed-up');
 
 // --- Release continuity and security guarantees ----------------------------
-assert(version.version === '16.0.1' && version.versionCode === 16001, 'Release version is not 16.0.1 / 16001');
-assert(version.releaseName === 'Horizon', 'Release name is not Horizon');
+assert(version.version === '17.0.0' && version.versionCode === 17000, 'Release version is not 17.0.0 / 17000');
+assert(version.releaseName === 'Convergence', 'Release name is not Convergence');
 assert(buildGradle.includes("storeFile file('signing/skymap-public-release.jks')"), 'Public continuity keystore is not attached');
 assert(buildGradle.includes("storePassword 'skymap-public-release'"), 'Public keystore credentials are not explicit');
 assert(buildGradle.includes('signingConfig signingConfigs.release'), 'Release signing configuration is not attached');

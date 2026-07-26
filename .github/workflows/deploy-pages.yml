@@ -111,7 +111,10 @@ jobs:
           grep -q 'id="alert-banner"' /tmp/apk-inspect/assets/index.html
           grep -q 'id="map-legend"' /tmp/apk-inspect/assets/index.html
           grep -q 'data-horizon="48"' /tmp/apk-inspect/assets/index.html
+          grep -q 'id="detail-ensemble-title"' /tmp/apk-inspect/assets/index.html
           grep -q 'Content-Security-Policy' /tmp/apk-inspect/assets/index.html
+          ! grep -q 'id="zoom-in-button"' /tmp/apk-inspect/assets/index.html
+          ! grep -q 'id="zoom-out-button"' /tmp/apk-inspect/assets/index.html
           grep -q 'renderAlerts' /tmp/apk-inspect/assets/app.js
           grep -q 'aqhi-observations-realtime' /tmp/apk-inspect/assets/app.js
           grep -q 'dark_only_labels' /tmp/apk-inspect/assets/app.js
@@ -119,6 +122,12 @@ jobs:
           grep -q 'NATIVE_GEOMET' /tmp/apk-inspect/assets/app.js
           grep -q 'HRDPS.CONTINENTAL.DIAG_PR_PT1H' /tmp/apk-inspect/assets/app.js
           grep -q 'HRDPS-WEonG_2.5km_Thunderstorm-Prob' /tmp/apk-inspect/assets/app.js
+          grep -q 'REPS.DIAG.3_PRMM.ERGE1' /tmp/apk-inspect/assets/app.js
+          grep -q 'REPS.DIAG.3_PRMM.ERGE5' /tmp/apk-inspect/assets/app.js
+          grep -q 'loadEnsembleSignal' /tmp/apk-inspect/assets/app.js
+          grep -q 'loadNativeIntelligence' /tmp/apk-inspect/assets/app.js
+          grep -q 'startAutoRefresh' /tmp/apk-inspect/assets/app.js
+          grep -q 'OpenStreetMap contributors' /tmp/apk-inspect/assets/app.js
           grep -q 'applyTimelineHorizon' /tmp/apk-inspect/assets/app.js
           grep -q 'NativeBridge' /tmp/apk-inspect/assets/app.js
           grep -q "${SKYMAP_VERSION}" /tmp/apk-inspect/assets/version.json

@@ -2,7 +2,7 @@
   "id": "/skymapontario/app/",
   "name": "SkyMap Ontario",
   "short_name": "SkyMap",
-  "description": "Measured Ontario radar, official nowcast, 48-hour futurecast, alerts, air quality, and a clear seven-day forecast.",
+  "description": "Measured Ontario radar, official nowcast, and 48-hour HRDPS guidance checked against the official REPS ensemble.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

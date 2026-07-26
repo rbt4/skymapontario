@@ -6,9 +6,9 @@
   const playButton = document.querySelector('.preview-time button');
   const copy = {
     now: { kicker: 'OBSERVED RADAR', title: 'Rain stays west for now.', body: 'Watch the latest measured frames move toward your location.', time: 'NOW', left: 'PAST HOUR', centre: 'NOW', right: 'NOWCAST', confidence: 'MEASURED' },
-    six: { kicker: 'RADAR → HRDPS', title: 'Showers approach this evening.', body: 'The source and confidence change visibly where the nowcast hands off to model guidance.', time: 'IN 6H', left: 'NOW', centre: 'NOWCAST', right: '+6H', confidence: 'MED–HIGH' },
-    day: { kicker: 'HRDPS 2.5 KM FUTURECAST', title: 'Tomorrow’s wettest pocket has a shape.', body: 'Tap any forecast hour for the local amount and a plain-language confidence cue.', time: 'TOMORROW', left: 'NOW', centre: 'HRDPS', right: '+24H', confidence: 'MEDIUM' },
-    'two-day': { kicker: '48-HOUR FUTURECAST', title: 'See the two-day path without fake precision.', body: 'Longer lead times stay useful, but the interface becomes more cautious as confidence falls.', time: 'IN 48H', left: 'NOW', centre: 'MODEL GUIDANCE', right: '+48H', confidence: 'LOWER' }
+    six: { kicker: 'RADAR → HRDPS + REPS', title: 'Showers approach this evening.', body: 'The source boundary stays visible while ensemble support checks the first forecast hours.', time: 'IN 6H', left: 'NOW', centre: 'NOWCAST', right: '+6H', confidence: 'CONVERGING' },
+    day: { kicker: 'HRDPS + REPS SIGNAL', title: 'Tomorrow’s wettest pocket has support.', body: 'The 2.5 km map supplies the shape; the official ensemble supplies the probability signal.', time: 'TOMORROW', left: 'NOW', centre: 'HRDPS + REPS', right: '+24H', confidence: 'ALIGNED' },
+    'two-day': { kicker: '48-HOUR CONVERGENCE', title: 'See the two-day path without fake precision.', body: 'Longer lead times remain useful, while mixed sources are labelled guarded instead of certain.', time: 'IN 48H', left: 'NOW', centre: 'MODEL + ENSEMBLE', right: '+48H', confidence: 'GUARDED' }
   };
   let previewTimer = null;
 

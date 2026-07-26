@@ -7,7 +7,7 @@
   <meta name="color-scheme" content="dark">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://geo.weather.gc.ca; connect-src 'self' https://geo.weather.gc.ca https://api.weather.gc.ca https://api.open-meteo.com; manifest-src 'self'; worker-src 'self'">
   <title>SkyMap Ontario</title>
-  <meta name="description" content="Observed Ontario radar, official nowcast, and high-resolution precipitation futurecast through 48 hours.">
+  <meta name="description" content="Observed Ontario radar, official nowcast, and a 48-hour HRDPS futurecast checked against the 20-member REPS ensemble.">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="vendor/leaflet.css">
@@ -107,8 +107,6 @@
       <div class="map-actions">
         <button id="locate-button" type="button" aria-label="Use my location"><svg aria-hidden="true"><use href="#icon-locate"></use></svg></button>
         <button id="recenter-button" type="button" aria-label="Recentre the map"><svg aria-hidden="true"><use href="#icon-target"></use></svg></button>
-        <button id="zoom-in-button" type="button" aria-label="Zoom in">+</button>
-        <button id="zoom-out-button" type="button" aria-label="Zoom out">−</button>
       </div>
 
       <section class="radar-story" aria-live="polite">
@@ -192,7 +190,7 @@
     <div class="sheet-handle"></div>
     <header><div><small>MAP VIEW</small><h2 id="layers-sheet-title">Keep radar first. Add context when needed.</h2></div><button class="sheet-close" type="button" aria-label="Close">×</button></header>
     <div class="layer-list" id="layer-list">
-      <button class="active" data-layer="rain" type="button"><span aria-hidden="true"><svg><use href="#icon-rain"></use></svg></span><div><b>Rain + futurecast</b><small>Observed radar, official nowcast, then HRDPS guidance through 48 hours</small></div><i>✓</i></button>
+      <button class="active" data-layer="rain" type="button"><span aria-hidden="true"><svg><use href="#icon-rain"></use></svg></span><div><b>Rain + futurecast</b><small>Measured radar, official nowcast, then HRDPS checked against the REPS ensemble</small></div><i>✓</i></button>
       <button data-layer="storm" type="button"><span aria-hidden="true"><svg><use href="#icon-storm"></use></svg></span><div><b>Storms</b><small>Radar with lightning density on top</small></div><i></i></button>
       <button data-layer="smoke" type="button"><span aria-hidden="true"><svg><use href="#icon-smoke"></use></svg></span><div><b>Wildfire smoke</b><small>Forecast fine particles from active wildfires</small></div><i></i></button>
       <button data-layer="air" type="button"><span aria-hidden="true"><svg><use href="#icon-air"></use></svg></span><div><b>Air quality</b><small>Observed Air Quality Health Index, 1 to 10+</small></div><i></i></button>
@@ -212,6 +210,7 @@
     <div class="detail-grid">
       <article><small>RADAR</small><h3 id="detail-radar-title">Checking the official feed</h3><p id="detail-radar-copy">The app keeps the last successful frame if a fresh image fails.</p></article>
       <article><small>FORECAST GUIDANCE</small><h3 id="detail-model-title">Waiting for guidance</h3><p id="detail-model-copy">Official city forecasts and model guidance load independently.</p></article>
+      <article><small>ENSEMBLE SIGNAL</small><h3 id="detail-ensemble-title">Waiting for a futurecast frame</h3><p id="detail-ensemble-copy">Official REPS probabilities test whether the deterministic map has ensemble support.</p></article>
       <article><small>WHAT CHANGED</small><h3 id="detail-change-title">First forecast of this session</h3><p id="detail-change-copy">SkyMap will compare this forecast with the next fresh update.</p></article>
     </div>
     <div class="model-list" id="model-list"></div>
