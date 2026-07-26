@@ -126,11 +126,12 @@ assert(appJs.includes("navigator.serviceWorker.register('sw.js', { updateViaCach
 assert(appJs.includes("'controllerchange'") && appJs.includes('controlledAtLaunch') && appJs.includes('refreshingForUpdate'), 'A newly activated app shell does not refresh an existing install safely');
 assert(sw.includes('cacheFreshShell') && sw.includes("cache: 'reload'"), 'Service-worker install can reuse stale shell bytes');
 assert(sw.includes("client.navigate(client.url)") && sw.includes("key.startsWith('skymap-shell-')"), 'Stale shell clients are not upgraded immediately');
+assert(sw.includes('return network;') && sw.includes('if (cached) return cached'), 'App shell is not network-first with an offline fallback');
 assert(geoMetProxy.includes('safeHeaders') && !geoMetProxy.includes('flattenHeaders'), 'Native relay still forwards upstream headers verbatim');
 assert(androidManifest.includes('android:allowBackup="false"'), 'Cached weather and saved location are still cloud-backed-up');
 
 // --- Release continuity and security guarantees ----------------------------
-assert(version.version === '17.0.0' && version.versionCode === 17000, 'Release version is not 17.0.0 / 17000');
+assert(version.version === '17.0.1' && version.versionCode === 17001, 'Release version is not 17.0.1 / 17001');
 assert(version.releaseName === 'Convergence', 'Release name is not Convergence');
 assert(buildGradle.includes("storeFile file('signing/skymap-public-release.jks')"), 'Public continuity keystore is not attached');
 assert(buildGradle.includes("storePassword 'skymap-public-release'"), 'Public keystore credentials are not explicit');
