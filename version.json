@@ -1,8 +1,8 @@
 {
   "product": "SkyMap Ontario",
-  "version": "18.0.1",
-  "versionCode": 18001,
-  "releaseName": "Pinpoint",
+  "version": "18.1.0",
+  "versionCode": 18100,
+  "releaseName": "Frontline",
   "channel": "stable",
   "apkBaseName": "SkyMap-Ontario"
 }
