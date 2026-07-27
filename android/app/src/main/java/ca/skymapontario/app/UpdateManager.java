@@ -28,6 +28,7 @@ public final class UpdateManager {
     static final String KEY_VERSION_NAME = "pendingVersionName";
     static final String KEY_FILE = "pendingFile";
     static final String KEY_SHA256 = "pendingSha256";
+    static final String ACTION_UPDATE_READY = "ca.skymapontario.app.action.UPDATE_READY";
     private static final String KEY_LAST_PROMPT = "lastPromptAt";
     private static final long PROMPT_COOLDOWN_MS = 6L * 60L * 60L * 1000L;
 
@@ -55,6 +56,12 @@ public final class UpdateManager {
                 ExistingWorkPolicy.REPLACE,
                 immediate
         );
+    }
+
+    static void notifyUpdateReady(Context context) {
+        Intent ready = new Intent(ACTION_UPDATE_READY);
+        ready.setPackage(context.getPackageName());
+        context.sendBroadcast(ready);
     }
 
     public static void promptPendingUpdate(Activity activity) {
@@ -117,16 +124,13 @@ public final class UpdateManager {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) return info.getLongVersionCode();
             return info.versionCode;
         } catch (PackageManager.NameNotFoundException ignored) {
-            // Fail closed: never offer an update if Android cannot identify the installed package.
             return Long.MAX_VALUE;
         }
     }
 
     static File updateDirectory(Context context) {
         File directory = new File(context.getFilesDir(), "updates");
-        if (!directory.exists() && !directory.mkdirs()) {
-            throw new IllegalStateException("Unable to create update directory");
-        }
+        if (!directory.exists() && !directory.mkdirs()) throw new IllegalStateException("Unable to create update directory");
         return directory;
     }
 
@@ -143,9 +147,7 @@ public final class UpdateManager {
     static void clearPending(SharedPreferences prefs, boolean deleteFile) {
         if (deleteFile) {
             String path = prefs.getString(KEY_FILE, "");
-            if (path != null && !path.isEmpty()) {
-                try { new File(path).delete(); } catch (RuntimeException ignored) { }
-            }
+            if (path != null && !path.isEmpty()) try { new File(path).delete(); } catch (RuntimeException ignored) { }
         }
         prefs.edit()
                 .remove(KEY_VERSION_CODE)
