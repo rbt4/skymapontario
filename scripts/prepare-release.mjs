@@ -54,10 +54,18 @@ if (!mainActivity.includes('requestAutomaticLocation')
 const frontlineParts = ['app/frontline.part-0.js', 'app/frontline.part-1.js', 'app/frontline.part-2.js', 'app/frontline.part-3.js'];
 for (const part of frontlineParts) if (!fs.existsSync(path.join(root, part))) throw new Error(`Missing Frontline source part: ${part}`);
 write('app/frontline.js', frontlineParts.map(read).join(''));
-for (const required of ['app/frontline.js', 'app/frontline.css', 'app/icon.svg', 'assets/site-coherence.css']) {
+
+for (const required of [
+  'app/frontline.js',
+  'app/frontline.css',
+  'app/icon.svg',
+  'assets/site.css',
+  'assets/site.js'
+]) {
   if (!fs.existsSync(path.join(root, required))) throw new Error(`Missing release asset: ${required}`);
 }
 execFileSync(process.execPath, ['--check', path.join(root, 'app/frontline.js')], { stdio: 'inherit' });
+execFileSync(process.execPath, ['--check', path.join(root, 'assets/site.js')], { stdio: 'inherit' });
 
 const frontlineCssPath = 'app/frontline.css';
 let frontlineCss = read(frontlineCssPath).replace("url('icon-192.png')", "url('icon.svg')");
@@ -81,40 +89,34 @@ if (!appIndex.includes('src="frontline.js"')) {
 write(appIndexPath, appIndex);
 
 const sitePath = 'index.html';
-let site = read(sitePath);
-site = site.replace('<meta name="theme-color" content="#06110f">', '<meta name="theme-color" content="#06101c">');
-if (!site.includes('href="assets/site-coherence.css"')) {
-  site = replaceOnce(
-    site,
-    '<link rel="stylesheet" href="assets/site.css">',
-    '<link rel="stylesheet" href="assets/site.css">\n  <link rel="stylesheet" href="assets/site-coherence.css">',
-    'public-site coherence stylesheet'
-  );
+const site = read(sitePath);
+if (!site.includes('id="home-map"')
+    || !site.includes('name="skymap-mapbox-token"')
+    || !site.includes('app/vendor/leaflet.js')
+    || !site.includes('data-weather-mode="rain"')) {
+  throw new Error('Live landing-page weather map is incomplete');
 }
-site = site.replaceAll(
-  '<span class="brand-mark" aria-hidden="true"><i></i></span>',
-  '<span class="brand-mark" aria-hidden="true"><img src="app/icon.svg" alt=""></span>'
-);
-site = site.replace(
-  'Going to Oakville from 4–6 PM? Choose the place and exact hours. SkyMap checks what is there now, what is approaching, and how likely it is—then makes a large image or short GIF you can actually read in WhatsApp.',
-  'Heading somewhere from 4–6 PM? SkyMap follows your exact position or a chosen destination, separates surface drizzle from radar, shows the cloud front, and checks what is approaching—then makes a large image or short GIF you can actually read in WhatsApp.'
-);
-site = site.replace('Dry at Oakville now.', 'No measurable radar return at the pinpoint.');
-site = site.replace('The rain area is still west of your destination.', 'Surface drizzle and the visible cloud front are checked separately.');
-site = site.replace('Mostly dry at arrival. Keep watching the band to the west.', 'No radar return at arrival. Surface conditions and the cloud edge remain separate evidence.');
-site = site.replace('No rain at arrival', 'No measurable radar return');
-write(sitePath, site);
-
-const siteCssPath = 'assets/site.css';
-let siteCss = read(siteCssPath);
-const logoMarker = '/* Frontline logo asset */';
-if (!siteCss.includes(logoMarker)) {
-  siteCss += `\n\n${logoMarker}\n.brand-mark { border: 0; border-radius: 12px; background: #06111d; box-shadow: 0 8px 24px rgba(0,0,0,.32), 0 0 0 1px rgba(114,228,255,.16); }\n.brand-mark:before, .brand-mark:after, .brand-mark i { display: none; }\n.brand-mark img { display: block; width: 100%; height: 100%; object-fit: cover; }\n`;
-}
-write(siteCssPath, siteCss);
+if (site.includes('site-coherence.css')) throw new Error('Obsolete landing-page override stylesheet returned');
 
 const validatorPath = 'scripts/validate-release.mjs';
 let validator = read(validatorPath);
+const landingAssertionsPattern = /assert\(site\.includes\('Will rain reach<br><em>your plans\?<\/em>'\)[\s\S]*?assert\(siteJs\.length < 6000, 'Landing JavaScript has become bloated'\);/;
+const landingAssertions = `assert(site.includes('id="home-map"') && site.includes('app/vendor/leaflet.js'), 'Landing page live map is missing');
+assert((site.match(/data-weather-mode=/g) || []).length === 3, 'Landing map must expose rain, storm and cloud modes');
+assert(site.includes('id="timeline-frames"') && siteJs.includes('getCapabilitiesTimes') && siteJs.includes('showFrame'), 'Landing weather timeline is missing');
+assert(siteJs.includes("const RADAR_LAYER = 'RADAR_1KM_RRAI'") && siteJs.includes('Lightning_2.5km_Density') && siteJs.includes('GOES-East_1km_DayVis-NightIR'), 'Landing weather layers are incomplete');
+assert(siteJs.includes('dark_nolabels') && siteJs.includes('dark_only_labels') && siteJs.includes("createPane('label-pane')"), 'Landing basemap or label hierarchy is missing');
+assert(site.includes('name="skymap-mapbox-token"') && siteJs.includes('mapbox/dark-v11'), 'Optional Mapbox basemap path is missing');
+assert(site.includes('https://geo.weather.gc.ca') && site.includes('https://api.mapbox.com') && site.includes('https://*.basemaps.cartocdn.com'), 'Landing map CSP is incomplete');
+assert(!site.includes('class="product-preview"') && !site.includes('rain-band'), 'Fake landing-page map preview returned');
+assert(privacy.includes('Shared visit cards') && privacy.includes('does not upload the generated file'), 'Generated-share privacy behaviour is not disclosed');
+assert(!site.includes('<iframe'), 'Landing page must not embed the full app');
+assert((site.match(/ko-fi\\.com\\/rbt4dev/g) || []).length >= 3, 'Ko-fi support must remain visible');
+assert(site.includes('data-apk'), 'Public APK link is missing');
+assert(siteCss.length < 30000, 'Landing CSS has become bloated');
+assert(siteJs.length < 16000, 'Landing JavaScript has become bloated');`;
+if (!landingAssertionsPattern.test(validator)) throw new Error('Unable to replace obsolete landing-page validation');
+validator = validator.replace(landingAssertionsPattern, landingAssertions);
 validator = validator.replace(
   /assert\(version\.version === '\d+\.\d+\.\d+' && version\.versionCode === \d+, 'Release version is not [^']+'\);/,
   `assert(version.version === '${version.version}' && version.versionCode === ${version.versionCode}, 'Release version is not ${version.version} / ${version.versionCode}');`
