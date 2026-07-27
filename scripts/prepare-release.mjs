@@ -54,10 +54,19 @@ if (!mainActivity.includes('requestAutomaticLocation')
 const frontlineParts = ['app/frontline.part-0.js', 'app/frontline.part-1.js', 'app/frontline.part-2.js', 'app/frontline.part-3.js'];
 for (const part of frontlineParts) if (!fs.existsSync(path.join(root, part))) throw new Error(`Missing Frontline source part: ${part}`);
 write('app/frontline.js', frontlineParts.map(read).join(''));
-for (const required of ['app/frontline.js', 'app/frontline.css', 'app/icon.svg', 'assets/site-coherence.css']) {
+
+for (const required of [
+  'app/frontline.js',
+  'app/frontline.css',
+  'app/icon.svg',
+  'assets/site.css',
+  'assets/site.js',
+  'assets/map-config.js'
+]) {
   if (!fs.existsSync(path.join(root, required))) throw new Error(`Missing release asset: ${required}`);
 }
 execFileSync(process.execPath, ['--check', path.join(root, 'app/frontline.js')], { stdio: 'inherit' });
+execFileSync(process.execPath, ['--check', path.join(root, 'assets/site.js')], { stdio: 'inherit' });
 
 const frontlineCssPath = 'app/frontline.css';
 let frontlineCss = read(frontlineCssPath).replace("url('icon-192.png')", "url('icon.svg')");
@@ -81,37 +90,14 @@ if (!appIndex.includes('src="frontline.js"')) {
 write(appIndexPath, appIndex);
 
 const sitePath = 'index.html';
-let site = read(sitePath);
-site = site.replace('<meta name="theme-color" content="#06110f">', '<meta name="theme-color" content="#06101c">');
-if (!site.includes('href="assets/site-coherence.css"')) {
-  site = replaceOnce(
-    site,
-    '<link rel="stylesheet" href="assets/site.css">',
-    '<link rel="stylesheet" href="assets/site.css">\n  <link rel="stylesheet" href="assets/site-coherence.css">',
-    'public-site coherence stylesheet'
-  );
+const site = read(sitePath);
+if (!site.includes('id="home-map"')
+    || !site.includes('assets/map-config.js')
+    || !site.includes('app/vendor/leaflet.js')
+    || !site.includes('data-weather-mode="rain"')) {
+  throw new Error('Live landing-page weather map is incomplete');
 }
-site = site.replaceAll(
-  '<span class="brand-mark" aria-hidden="true"><i></i></span>',
-  '<span class="brand-mark" aria-hidden="true"><img src="app/icon.svg" alt=""></span>'
-);
-site = site.replace(
-  'Going to Oakville from 4–6 PM? Choose the place and exact hours. SkyMap checks what is there now, what is approaching, and how likely it is—then makes a large image or short GIF you can actually read in WhatsApp.',
-  'Heading somewhere from 4–6 PM? SkyMap follows your exact position or a chosen destination, separates surface drizzle from radar, shows the cloud front, and checks what is approaching—then makes a large image or short GIF you can actually read in WhatsApp.'
-);
-site = site.replace('Dry at Oakville now.', 'No measurable radar return at the pinpoint.');
-site = site.replace('The rain area is still west of your destination.', 'Surface drizzle and the visible cloud front are checked separately.');
-site = site.replace('Mostly dry at arrival. Keep watching the band to the west.', 'No radar return at arrival. Surface conditions and the cloud edge remain separate evidence.');
-site = site.replace('No rain at arrival', 'No measurable radar return');
-write(sitePath, site);
-
-const siteCssPath = 'assets/site.css';
-let siteCss = read(siteCssPath);
-const logoMarker = '/* Frontline logo asset */';
-if (!siteCss.includes(logoMarker)) {
-  siteCss += `\n\n${logoMarker}\n.brand-mark { border: 0; border-radius: 12px; background: #06111d; box-shadow: 0 8px 24px rgba(0,0,0,.32), 0 0 0 1px rgba(114,228,255,.16); }\n.brand-mark:before, .brand-mark:after, .brand-mark i { display: none; }\n.brand-mark img { display: block; width: 100%; height: 100%; object-fit: cover; }\n`;
-}
-write(siteCssPath, siteCss);
+if (site.includes('site-coherence.css')) throw new Error('Obsolete landing-page override stylesheet returned');
 
 const validatorPath = 'scripts/validate-release.mjs';
 let validator = read(validatorPath);
