@@ -60,8 +60,7 @@ for (const required of [
   'app/frontline.css',
   'app/icon.svg',
   'assets/site.css',
-  'assets/site.js',
-  'assets/map-config.js'
+  'assets/site.js'
 ]) {
   if (!fs.existsSync(path.join(root, required))) throw new Error(`Missing release asset: ${required}`);
 }
@@ -92,7 +91,7 @@ write(appIndexPath, appIndex);
 const sitePath = 'index.html';
 const site = read(sitePath);
 if (!site.includes('id="home-map"')
-    || !site.includes('assets/map-config.js')
+    || !site.includes('name="skymap-mapbox-token"')
     || !site.includes('app/vendor/leaflet.js')
     || !site.includes('data-weather-mode="rain"')) {
   throw new Error('Live landing-page weather map is incomplete');
@@ -101,6 +100,23 @@ if (site.includes('site-coherence.css')) throw new Error('Obsolete landing-page 
 
 const validatorPath = 'scripts/validate-release.mjs';
 let validator = read(validatorPath);
+const landingAssertionsPattern = /assert\(site\.includes\('Will rain reach<br><em>your plans\?<\/em>'\)[\s\S]*?assert\(siteJs\.length < 6000, 'Landing JavaScript has become bloated'\);/;
+const landingAssertions = `assert(site.includes('id="home-map"') && site.includes('app/vendor/leaflet.js'), 'Landing page live map is missing');
+assert((site.match(/data-weather-mode=/g) || []).length === 3, 'Landing map must expose rain, storm and cloud modes');
+assert(site.includes('id="timeline-frames"') && siteJs.includes('getCapabilitiesTimes') && siteJs.includes('showFrame'), 'Landing weather timeline is missing');
+assert(siteJs.includes("const RADAR_LAYER = 'RADAR_1KM_RRAI'") && siteJs.includes('Lightning_2.5km_Density') && siteJs.includes('GOES-East_1km_DayVis-NightIR'), 'Landing weather layers are incomplete');
+assert(siteJs.includes('dark_nolabels') && siteJs.includes('dark_only_labels') && siteJs.includes("createPane('label-pane')"), 'Landing basemap or label hierarchy is missing');
+assert(site.includes('name="skymap-mapbox-token"') && siteJs.includes('mapbox/dark-v11'), 'Optional Mapbox basemap path is missing');
+assert(site.includes('https://geo.weather.gc.ca') && site.includes('https://api.mapbox.com') && site.includes('https://*.basemaps.cartocdn.com'), 'Landing map CSP is incomplete');
+assert(!site.includes('class="product-preview"') && !site.includes('rain-band'), 'Fake landing-page map preview returned');
+assert(privacy.includes('Shared visit cards') && privacy.includes('does not upload the generated file'), 'Generated-share privacy behaviour is not disclosed');
+assert(!site.includes('<iframe'), 'Landing page must not embed the full app');
+assert((site.match(/ko-fi\\.com\\/rbt4dev/g) || []).length >= 3, 'Ko-fi support must remain visible');
+assert(site.includes('data-apk'), 'Public APK link is missing');
+assert(siteCss.length < 30000, 'Landing CSS has become bloated');
+assert(siteJs.length < 16000, 'Landing JavaScript has become bloated');`;
+if (!landingAssertionsPattern.test(validator)) throw new Error('Unable to replace obsolete landing-page validation');
+validator = validator.replace(landingAssertionsPattern, landingAssertions);
 validator = validator.replace(
   /assert\(version\.version === '\d+\.\d+\.\d+' && version\.versionCode === \d+, 'Release version is not [^']+'\);/,
   `assert(version.version === '${version.version}' && version.versionCode === ${version.versionCode}, 'Release version is not ${version.version} / ${version.versionCode}');`
