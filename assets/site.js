@@ -142,7 +142,7 @@
   }
 
   function mapboxBase() {
-    const token = String(window.SKYMAP_MAPBOX_PUBLIC_TOKEN || '').trim();
+    const token = String(document.querySelector('meta[name="skymap-mapbox-token"]')?.content || '').trim();
     if (!token) return null;
     const url = `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/512/{z}/{x}/{y}@2x?access_token=${encodeURIComponent(token)}`;
     return L.tileLayer(url, {
