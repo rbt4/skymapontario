@@ -41,6 +41,10 @@
 
   async function refreshTruth(force = false) {
     clearTimeout(state.truthTimer);
+    if (state.follow && !state.position) {
+      state.truthTimer = setTimeout(() => refreshTruth(force), 1000);
+      return;
+    }
     const token = ++state.truthToken;
     const point = activePoint();
     const results = await Promise.allSettled([cityEvidence(point), surfaceEvidence(point), shortEvidence(point), radarEvidence(point), nowcastEvidence(point)]);
@@ -104,7 +108,11 @@
         if (state.cloudEnabled) refreshCloud(true);
       }
       if (target.closest('#truth-refresh')) refreshTruth(true);
-      if (target.closest('[data-map-mode]')) setTimeout(() => refreshCloud(true), 100);
+      if (target.closest('[data-map-mode]')) setTimeout(() => {
+        const pane = state.map?.getPane('satellitePane');
+        if (pane) pane.style.display = state.cloudEnabled && radarMode() ? '' : 'none';
+        if (state.cloudEnabled && radarMode()) refreshCloud(true);
+      }, 100);
     }, true);
 
     const observer = new MutationObserver(() => rewriteStory());
