@@ -401,7 +401,11 @@
         rate=Math.max(0,Number(preferred?.[1]??fallback?.[1]??0));
       }
       const reading={rate,frame,time:frame.time};
-      if(queryPointValue.latest===requestToken){state.frameReading=reading;if(live)state.liveRadarReading=reading;renderPointReadout();}
+      if(queryPointValue.latest===requestToken){
+        state.frameReading=reading;
+        if(live){state.liveRadarReading=reading;applyLiveCondition();}
+        renderPointReadout();
+      }
       return reading;
     } catch(_){
       if(queryPointValue.latest===requestToken){state.frameReading=null;renderPointReadout();}
@@ -413,7 +417,9 @@
     const event=state.events.find(e=>e.end>Date.now())||null; const nowCondition=currentCondition(); const frame=state.frames[state.frameIndex];
     let stateName=nowCondition.state, title=nowCondition.label, copy='At your exact pinpoint';
     if(frame&&frame.time&&Math.abs(minutesFromNow(frame.time))>15){
-      const point=blendAt(frame.time); const condition=point?classifyCondition(point.precip,point.snow>40?.3:0,point.rows[0]?.code||0):null;
+      const selectedReading=state.frameReading?.time===frame.time&&state.frameReading?.frame?.layer===frame.layer?state.frameReading:null;
+      const point=blendAt(frame.time);
+      const condition=selectedReading?classifyCondition(selectedReading.rate):point?classifyCondition(point.precip,point.snow>40?.3:0,point.rows[0]?.code||0):null;
       title=condition?condition.label:'Forecast point'; stateName=condition?.state||'loading'; copy=`${fmtTime(frame.time)} · ${frame.kind==='nowcast'?'near-future':'model guidance'}`;
     } else if(event){
       const lead=Math.round((event.start-Date.now())/60000);
@@ -424,6 +430,19 @@
     const el=$('#point-readout'); el.dataset.state=stateName;
     text('#point-readout-kicker',frame?.kind==='observed'?'AT THIS POINT':frame?.kind==='nowcast'?'PREDICTED HERE':'GUIDANCE HERE');
     text('#point-readout-title',title); text('#point-readout-copy',copy); placeMarker(stateName); requestPointReadoutPosition();
+  }
+
+  function applyLiveCondition() {
+    if(!state.liveRadarReading)return;
+    const condition=currentCondition();
+    text('#now-condition',condition.short);
+    if(!['wet','snow','uncertain'].includes(condition.state))return;
+    const rail=$('#rail-status');
+    rail.dataset.state=condition.state==='snow'?'likely':condition.state;
+    text('#answer-eyebrow','LIVE AT THIS EXACT POINT');
+    text('#answer-title',condition.label);
+    text('#answer-copy','Live ECCC radar is detecting precipitation at the pinpoint. The broader event window remains separate below.');
+    if($('#first-possible')?.textContent==='None found')text('#first-possible','Now');
   }
 
   function renderAnswer() {
