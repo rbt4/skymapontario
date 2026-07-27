@@ -50,6 +50,7 @@
       map.whenReady(() => {
         if (!map.getPane('satellitePane')) map.createPane('satellitePane');
         map.getPane('satellitePane').style.zIndex = '325';
+        map.getPane('satellitePane').style.display = state.cloudEnabled && radarMode() ? '' : 'none';
         map.on('moveend', () => scheduleCloud());
         if (state.position) applyPosition(true);
         refreshCloud(true);
@@ -99,7 +100,16 @@
   }
 
   function onLocationError(error) {
-    renderLocation(Number(error?.code) === 1 ? 'LOCATION OFF · TAP ARROW' : 'GPS RETRYING');
+    const denied = Number(error?.code) === 1;
+    if (denied) {
+      state.follow = false;
+      stopLocation();
+      removeAccuracy();
+      renderLocation('LOCATION OFF · USING SAVED PLACE');
+      refreshTruth(true);
+      return;
+    }
+    renderLocation('GPS RETRYING');
   }
 
   function shouldApply(force) {
