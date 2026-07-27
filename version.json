@@ -1,8 +1,8 @@
 {
   "product": "SkyMap Ontario",
-  "version": "18.1.0",
-  "versionCode": 18100,
-  "releaseName": "Frontline",
+  "version": "18.2.0",
+  "versionCode": 18200,
+  "releaseName": "Clarity",
   "channel": "stable",
   "apkBaseName": "SkyMap-Ontario"
 }
