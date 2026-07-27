@@ -91,7 +91,7 @@ if (!site.includes('href="assets/site-coherence.css"')) {
     'public-site coherence stylesheet'
   );
 }
-site = site.replace(
+site = site.replaceAll(
   '<span class="brand-mark" aria-hidden="true"><i></i></span>',
   '<span class="brand-mark" aria-hidden="true"><img src="app/icon.svg" alt=""></span>'
 );
