@@ -1,8 +1,8 @@
 {
   "name": "SkyMap Future Lab",
-  "version": "19.0.0-experimental.2",
+  "version": "19.0.0-experimental.3",
   "channel": "experimental",
   "engine": "living-future-radar",
   "released": "2026-07-27",
-  "experience": "map-first-rain-timing"
+  "experience": "rainflow-studio"
 }
