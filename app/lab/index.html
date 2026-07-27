@@ -3,117 +3,169 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#050b12">
+  <meta name="theme-color" content="#051018">
   <meta name="color-scheme" content="dark">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://geo.weather.gc.ca; connect-src 'self' https://geo.weather.gc.ca https://api.open-meteo.com https://geocoding-api.open-meteo.com; manifest-src 'self'">
-  <title>SkyMap Future Lab — Living predictive radar</title>
-  <meta name="description" content="An experimental continuous weather map that flows from measured radar into official nowcast, model guidance and seven-day precipitation events for one exact point.">
+  <title>SkyMap Future Lab — Living rain timing</title>
+  <meta name="description" content="A living Ontario weather map centred on one exact point, with intuitive rain timing, future playback and transparent forecast confidence.">
   <link rel="icon" href="../icon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="../vendor/leaflet.css">
   <link rel="stylesheet" href="lab.css">
 </head>
 <body>
-  <a class="skip-link" href="#point-answer">Skip to exact-point forecast</a>
-  <header class="lab-header">
-    <a class="lab-brand" href="../../" aria-label="SkyMap Ontario home">
+  <a class="skip-link" href="#forecast-rail">Skip to exact-point forecast</a>
+
+  <header class="app-bar">
+    <a class="brand" href="../../" aria-label="SkyMap Ontario home">
       <img src="../icon.svg" alt="">
-      <span><b>SkyMap</b><small>FUTURE LAB · EXPERIMENTAL</small></span>
+      <span><b>SkyMap</b><small>FUTURE LAB</small></span>
     </a>
-    <button class="place-button" id="place-button" type="button" aria-label="Change forecast point">
-      <span><small>TRACKING</small><b id="place-name">Finding your location…</b></span><i>⌄</i>
+
+    <button class="place-search-trigger" id="place-button" type="button" aria-label="Search or change forecast point">
+      <span class="search-icon" aria-hidden="true">⌕</span>
+      <span class="search-copy"><small>EXACT FORECAST POINT</small><b id="place-name">Finding your location…</b></span>
+      <span class="search-hint">Search place or tap map</span>
     </button>
-    <div class="header-actions">
-      <button id="locate-button" type="button">◎ <span>Use my location</span></button>
-      <a href="../">Current app ↗</a>
+
+    <div class="app-actions">
+      <button id="locate-button" class="icon-button" type="button" aria-label="Use my exact location"><span>◎</span><em>My location</em></button>
+      <a class="icon-button" href="../" aria-label="Open current SkyMap app"><span>↗</span><em>Current app</em></a>
     </div>
   </header>
-  <main class="future-shell">
+
+  <main class="lab-shell">
     <section class="map-stage" aria-label="Living future radar">
       <div id="future-map" class="future-map"></div>
-      <div class="map-vignette" aria-hidden="true"></div>
-      <div class="forecast-beam" id="forecast-beam" aria-hidden="true"></div>
-      <div class="stage-topline">
+      <div class="map-atmosphere" aria-hidden="true"></div>
+
+      <div class="status-cluster">
         <div class="source-phase" id="source-phase" data-phase="observed">
           <i></i><span><small id="phase-kicker">OBSERVED</small><b id="phase-title">Measured radar</b></span>
         </div>
         <div class="feed-health" id="feed-health" data-state="loading">
-          <i></i><span><b id="feed-title">Connecting to weather sources</b><small id="feed-detail">ECCC GeoMet + four forecast families</small></span>
+          <i></i><span><b id="feed-title">Connecting weather sources</b><small id="feed-detail">ECCC + four forecast families</small></span>
         </div>
       </div>
-      <section class="point-answer" id="point-answer" aria-live="polite" data-state="loading">
-        <div class="answer-eyebrow"><span id="answer-eyebrow">AT THIS EXACT POINT</span><time id="answer-updated">UPDATING</time></div>
-        <h1 id="answer-title">Building the weather future.</h1>
-        <p id="answer-copy">Measured radar, official extrapolation and independent forecast models are connecting.</p>
-        <div class="answer-times" id="answer-times">
-          <span><small>FIRST POSSIBLE</small><b id="first-possible">—</b></span>
-          <span><small>MAIN WINDOW</small><b id="main-window">—</b></span>
-          <span><small>LIKELY END</small><b id="likely-end">—</b></span>
+
+      <div class="point-readout" id="point-readout" data-state="loading" aria-live="polite">
+        <span class="point-readout-kicker" id="point-readout-kicker">AT THIS POINT</span>
+        <b id="point-readout-title">Building the weather future…</b>
+        <small id="point-readout-copy">Measured radar and forecast guidance are connecting.</small>
+      </div>
+
+      <div class="intensity-key" aria-label="Human-readable precipitation intensity legend">
+        <span><i data-kind="drizzle"></i><b>Few drops</b></span>
+        <span><i data-kind="rain"></i><b>Rain</b></span>
+        <span><i data-kind="heavy"></i><b>Heavy</b></span>
+        <span><i data-kind="snow"></i><b>Snow</b></span>
+      </div>
+
+      <div class="map-controls">
+        <button id="map-locate" type="button" aria-label="Centre on forecast point">◎</button>
+        <button id="map-zoom" type="button" aria-label="Show Ontario overview">⌗</button>
+      </div>
+
+      <section class="forecast-rail" id="forecast-rail" aria-label="Exact-point precipitation timing">
+        <div class="rail-status" data-state="loading" id="rail-status">
+          <small id="answer-eyebrow">AT THIS EXACT POINT</small>
+          <b id="answer-title">Checking the next weather event</b>
+          <span id="answer-copy">SkyMap is combining live radar with independent forecast guidance.</span>
         </div>
-        <div class="answer-trust">
+        <div class="rail-moment"><small>NOW</small><b id="now-condition">Checking</b></div>
+        <div class="rail-moment"><small>FIRST POSSIBLE</small><b id="first-possible">—</b></div>
+        <div class="rail-moment rail-main"><small>MAIN WINDOW</small><b id="main-window">—</b></div>
+        <div class="rail-moment"><small>LIKELY END</small><b id="likely-end">—</b></div>
+        <button class="trust-button" id="why-button" type="button" aria-expanded="false">
+          <small>TRUST</small><b id="forecast-stability">New reading</b><span>＋</span>
+        </button>
+      </section>
+
+      <section class="time-dock" aria-label="Weather time controls">
+        <div class="time-now">
+          <small id="time-kind">MEASURED</small>
+          <b id="time-label">NOW</b>
+          <span id="time-detail">Latest available radar frame</span>
+        </div>
+
+        <div class="time-controller">
+          <div class="phase-labels" aria-hidden="true"><span>PAST</span><span>NEAR FUTURE</span><span>LATER</span></div>
+          <div class="time-track-shell">
+            <div class="time-track" id="time-track" aria-hidden="true"></div>
+            <div class="event-window" id="event-window" aria-hidden="true"></div>
+            <input id="time-slider" type="range" min="0" max="1" value="0" step="1" aria-label="Move through observed and predicted weather">
+          </div>
+          <div class="jump-controls" aria-label="Jump through forecast time">
+            <button type="button" data-jump="now">Now</button>
+            <button type="button" data-jump="30">+30m</button>
+            <button type="button" data-jump="60">+1h</button>
+            <button type="button" data-jump="180">+3h</button>
+            <button type="button" data-jump="tomorrow">Tomorrow</button>
+          </div>
+        </div>
+
+        <div class="playback-controls">
+          <button class="speed-button" id="speed-button" type="button" aria-label="Change playback speed">1×</button>
+          <button class="play-button" id="play-button" type="button" aria-label="Play future weather"><span>▶</span><b>PLAY</b></button>
+        </div>
+      </section>
+
+      <aside class="evidence-drawer" id="evidence-drawer" aria-hidden="true">
+        <header><span><small>WHY THIS ANSWER</small><b>Weather evidence</b></span><button id="evidence-close" type="button" aria-label="Close evidence">×</button></header>
+        <div class="evidence-summary" id="evidence-summary">Waiting for source agreement.</div>
+        <div class="trust-grid">
           <span><small>EVENT</small><b id="event-confidence">Checking</b></span>
           <span><small>TIMING</small><b id="timing-confidence">Checking</b></span>
-          <span><small>STABILITY</small><b id="forecast-stability">New reading</b></span>
+          <span><small>LAST UPDATE</small><b id="answer-updated">Updating</b></span>
         </div>
-        <button class="why-button" id="why-button" type="button" aria-expanded="false">Why SkyMap thinks this <span>＋</span></button>
-      </section>
-      <aside class="evidence-drawer" id="evidence-drawer" aria-hidden="true">
-        <header><span><small>LIVE EVIDENCE</small><b>What is driving the answer</b></span><button id="evidence-close" type="button" aria-label="Close evidence">×</button></header>
-        <div class="evidence-summary" id="evidence-summary">Waiting for source agreement.</div>
         <div class="source-grid" id="source-grid"></div>
         <div class="change-note"><small>WHAT CHANGED</small><p id="change-note">This is the first forecast stored for this point.</p></div>
-        <p class="honesty-note">Experimental guidance, not a safety warning. Observed, extrapolated and modelled weather are always labelled separately.</p>
+        <p class="honesty-note">Observed radar, official extrapolation and model guidance are labelled separately. This experimental view does not replace official alerts.</p>
       </aside>
-      <div class="map-controls">
-        <button id="map-locate" type="button" aria-label="Centre map on forecast point">◎</button>
-        <button id="map-zoom" type="button" aria-label="Show wider Ontario view">⌗</button>
-      </div>
-      <section class="time-surface" aria-label="Continuous forecast timeline">
-        <div class="time-readout">
-          <span><small id="time-kind">MEASURED</small><b id="time-label">NOW</b></span>
-          <em id="time-detail">Latest available radar frame</em>
-        </div>
-        <div class="time-track-wrap">
-          <div class="phase-labels" aria-hidden="true"><span>PAST</span><span>RADAR NOWCAST</span><span>MODEL GUIDANCE</span></div>
-          <input id="time-slider" type="range" min="0" max="1" value="0" step="1" aria-label="Move through observed and predicted weather">
-          <div class="time-track" id="time-track" aria-hidden="true"></div>
-        </div>
-        <button class="play-button" id="play-button" type="button" aria-label="Play weather timeline"><span>▶</span><b>PLAY FUTURE</b></button>
-      </section>
     </section>
-    <section class="rainline-panel" aria-labelledby="rainline-heading">
-      <header class="panel-heading">
-        <div><small>FROM THIS MINUTE TO SEVEN DAYS</small><h2 id="rainline-heading">Your RainLine</h2></div>
+
+    <section class="forecast-deck" aria-labelledby="rainline-heading">
+      <header class="deck-heading">
+        <div><small>THE NEXT SEVEN DAYS AT THIS POINT</small><h1 id="rainline-heading">Your RainLine</h1></div>
         <span id="forecast-stage">Connecting sources</span>
       </header>
-      <div class="rainline" id="rainline" aria-live="polite">
-        <div class="rainline-loading">Building one continuous forecast from independent guidance…</div>
-      </div>
+
       <section class="next-event" id="next-event">
-        <header><span><small>NEXT WEATHER EVENT</small><h3 id="event-name">Searching the next seven days</h3></span><b id="event-state">WATCHING</b></header>
+        <header><span><small>NEXT WEATHER EVENT</small><h2 id="event-name">Searching the next seven days</h2></span><b id="event-state">WATCHING</b></header>
         <div class="event-flow" id="event-flow"></div>
-        <p id="event-story">SkyMap is checking whether a precipitation signal persists across model families and forecast cycles.</p>
+        <p id="event-story">SkyMap is checking whether a precipitation signal persists across independent forecast families.</p>
       </section>
-      <section class="model-constellation" aria-labelledby="constellation-heading">
-        <header><div><small>INVISIBLE UNDER THE MAIN ANSWER</small><h3 id="constellation-heading">Source constellation</h3></div><p>Models are not equal votes. Canadian guidance leads locally; independent global models test whether the event is real.</p></header>
+
+      <div class="rainline" id="rainline" aria-live="polite">
+        <div class="rainline-loading">Building one continuous forecast…</div>
+      </div>
+
+      <details class="advanced-section">
+        <summary><span><small>DEEPER VIEW</small><b>Source constellation</b></span><i>＋</i></summary>
+        <p>Canadian guidance leads locally. Independent global models test whether the event is real instead of being counted as equal duplicate votes.</p>
         <div class="constellation-grid" id="constellation-grid"></div>
-      </section>
-      <section class="lab-notes">
-        <div><small>WHAT IS REAL IN THIS LAB</small><p>Live ECCC radar, official radar extrapolation, HRDPS map guidance, and point forecasts from GEM, ECMWF IFS, NOAA GFS and ECMWF AIFS.</p></div>
-        <div><small>WHAT IS EXPERIMENTAL</small><p>The event identity, source weighting, confidence language, forecast-memory comparison and continuous RainLine presentation.</p></div>
-        <a href="ATTRIBUTION.md">Sources and attribution ↗</a>
-        <a href="../">Return to the current SkyMap app ↗</a>
-      </section>
+      </details>
+
+      <footer class="deck-footer">
+        <span><b>Measured</b> ECCC radar</span>
+        <span><b>Predicted</b> official extrapolation</span>
+        <span><b>Guidance</b> HRDPS + point consensus</span>
+        <a href="ATTRIBUTION.md">Sources ↗</a>
+      </footer>
     </section>
   </main>
+
   <dialog class="place-dialog" id="place-dialog">
     <form method="dialog">
-      <header><span><small>MOVE THE FORECAST POINT</small><b>Where should SkyMap watch?</b></span><button value="cancel" aria-label="Close">×</button></header>
-      <label><span>Ontario place</span><input id="place-search" type="search" autocomplete="off" placeholder="Oakville, Toronto, Ottawa…"></label>
+      <header><span><small>MOVE THE PINPOINT</small><b>Where should SkyMap watch?</b></span><button value="cancel" aria-label="Close">×</button></header>
+      <label class="place-search-box"><span aria-hidden="true">⌕</span><input id="place-search" type="search" autocomplete="off" placeholder="Search city, neighbourhood, or place"></label>
+      <button class="dialog-location" id="dialog-locate" type="button"><span>◎</span><b>Use my exact location</b><small>Best for rain timing where you are now</small></button>
       <div class="search-results" id="search-results"></div>
-      <div class="quick-places" id="quick-places"></div>
+      <div class="quick-section"><small>QUICK PLACES</small><div class="quick-places" id="quick-places"></div></div>
+      <p class="map-tip">You can also close this and tap anywhere on the map to move the pinpoint.</p>
     </form>
   </dialog>
+
   <div class="toast" id="toast" role="status"></div>
   <script src="../vendor/leaflet.js"></script>
   <script src="lab.js"></script>
