@@ -28,7 +28,7 @@ write(appJsPath, appJs);
 const swPath = 'app/sw.js';
 let sw = read(swPath);
 sw = sw.replace(/const VERSION = '\d+\.\d+\.\d+'/, `const VERSION = '${version.version}'`);
-for (const file of ['frontline.css', 'frontline.js', 'icon-192.png', 'icon-512.png']) {
+for (const file of ['frontline.css', 'frontline.js']) {
   if (!sw.includes(`'${file}'`)) {
     sw = replaceOnce(sw, "  'app.js',", `  'app.js',\n  '${file}',`, `service-worker shell entry ${file}`);
   }
@@ -54,10 +54,14 @@ if (!mainActivity.includes('requestAutomaticLocation')
 const frontlineParts = ['app/frontline.part-0.js', 'app/frontline.part-1.js', 'app/frontline.part-2.js', 'app/frontline.part-3.js'];
 for (const part of frontlineParts) if (!fs.existsSync(path.join(root, part))) throw new Error(`Missing Frontline source part: ${part}`);
 write('app/frontline.js', frontlineParts.map(read).join(''));
-for (const required of ['app/frontline.js', 'app/frontline.css', 'app/icon-192.png', 'app/icon-512.png']) {
+for (const required of ['app/frontline.js', 'app/frontline.css', 'app/icon.svg']) {
   if (!fs.existsSync(path.join(root, required))) throw new Error(`Missing Frontline asset: ${required}`);
 }
 execFileSync(process.execPath, ['--check', path.join(root, 'app/frontline.js')], { stdio: 'inherit' });
+
+const frontlineCssPath = 'app/frontline.css';
+let frontlineCss = read(frontlineCssPath).replace("url('icon-192.png')", "url('icon.svg')");
+write(frontlineCssPath, frontlineCss);
 
 const appIndexPath = 'app/index.html';
 let appIndex = read(appIndexPath);
@@ -65,10 +69,7 @@ appIndex = appIndex.replace(
   /<meta name="description" content="[^"]*">/,
   '<meta name="description" content="Open SkyMap anywhere in Ontario to follow your exact location, compare radar with surface drizzle and cloud fronts, and see what is approaching.">'
 );
-appIndex = appIndex.replace(
-  '<link rel="icon" href="icon.svg" type="image/svg+xml">',
-  '<link rel="icon" href="icon-192.png" type="image/png">\n  <link rel="apple-touch-icon" href="icon-192.png">'
-);
+appIndex = appIndex.replace(/<link rel="icon" href="[^"]+" type="[^"]+">/, '<link rel="icon" href="icon.svg" type="image/svg+xml">');
 if (!appIndex.includes('href="frontline.css"')) {
   if (!/<link rel="stylesheet" href="app\.css">/.test(appIndex)) throw new Error('Unable to update Frontline stylesheet');
   appIndex = appIndex.replace(/<link rel="stylesheet" href="app\.css">/, '<link rel="stylesheet" href="app.css">\n  <link rel="stylesheet" href="frontline.css">');
@@ -83,7 +84,7 @@ const sitePath = 'index.html';
 let site = read(sitePath);
 site = site.replace(
   '<span class="brand-mark" aria-hidden="true"><i></i></span>',
-  '<span class="brand-mark" aria-hidden="true"><img src="app/icon-192.png" alt=""></span>'
+  '<span class="brand-mark" aria-hidden="true"><img src="app/icon.svg" alt=""></span>'
 );
 site = site.replace(
   'Going to Oakville from 4–6 PM? Choose the place and exact hours. SkyMap checks what is there now, what is approaching, and how likely it is—then makes a large image or short GIF you can actually read in WhatsApp.',
@@ -115,7 +116,7 @@ validator = validator.replace(
 );
 const validatorMarker = '// --- Frontline current-location truth guarantees';
 if (!validator.includes(validatorMarker)) {
-  const checks = `\n${validatorMarker} ------------------------------------\nconst frontlineJs = read('app/frontline.js');\nconst frontlineCss = read('app/frontline.css');\nconst manifest = JSON.parse(read('app/manifest.webmanifest'));\nassert(app.includes('frontline.css') && app.includes('frontline.js'), 'Frontline assets are not loaded before the app runtime');\nassert(frontlineJs.includes('originalWatchPosition') && frontlineJs.includes('movementThreshold'), 'Follow Me location tracking is missing');\nassert(frontlineJs.includes('Very light precipitation may be reaching the surface.'), 'Surface-drizzle correction is missing');\nassert(frontlineJs.includes('GOES-East_1km_DayVis-NightIR') && frontlineJs.includes('radarEvidence'), 'Cloud-front and surrounding-radar evidence are missing');\nassert(frontlineJs.includes('RIGHT NOW · LIVE PINPOINT') && frontlineJs.includes('selectedClock'), 'Current truth is not separated from selected future time');\nassert(frontlineCss.includes('.truth-deck') && frontlineCss.includes('.skymap-location-marker'), 'Frontline visual system is incomplete');\nassert(manifest.icons.some(icon => icon.src === 'icon-192.png') && manifest.icons.some(icon => icon.src === 'icon-512.png'), 'PNG application icons are missing from the web manifest');\nassert(androidManifest.includes('@drawable/skymap_logo'), 'Generated SkyMap logo is not applied to Android');\nassert(updateWorker.includes('notifyUpdateReady') && application.includes('ACTION_UPDATE_READY'), 'Downloaded APK updates do not prompt the foreground app');\n`;
+  const checks = `\n${validatorMarker} ------------------------------------\nconst frontlineJs = read('app/frontline.js');\nconst frontlineCss = read('app/frontline.css');\nconst manifest = JSON.parse(read('app/manifest.webmanifest'));\nassert(app.includes('frontline.css') && app.includes('frontline.js'), 'Frontline assets are not loaded before the app runtime');\nassert(frontlineJs.includes('originalWatchPosition') && frontlineJs.includes('movementThreshold'), 'Follow Me location tracking is missing');\nassert(frontlineJs.includes('Very light precipitation may be reaching the surface.'), 'Surface-drizzle correction is missing');\nassert(frontlineJs.includes('GOES-East_1km_DayVis-NightIR') && frontlineJs.includes('radarEvidence'), 'Cloud-front and surrounding-radar evidence are missing');\nassert(frontlineJs.includes('RIGHT NOW · LIVE PINPOINT') && frontlineJs.includes('selectedClock'), 'Current truth is not separated from selected future time');\nassert(frontlineCss.includes('.truth-deck') && frontlineCss.includes('.skymap-location-marker'), 'Frontline visual system is incomplete');\nassert(manifest.icons.some(icon => icon.src === 'icon.svg'), 'Vector application icon is missing from the web manifest');\nassert(androidManifest.includes('@drawable/skymap_logo'), 'Generated SkyMap logo is not applied to Android');\nassert(updateWorker.includes('notifyUpdateReady') && application.includes('ACTION_UPDATE_READY'), 'Downloaded APK updates do not prompt the foreground app');\n`;
   validator = validator.replace(/\nconsole\.log\(`SkyMap \$\{version\.version\} validation passed`\);\s*$/, `${checks}\nconsole.log(\`SkyMap \${version.version} validation passed\`);\n`);
 }
 write(validatorPath, validator);
