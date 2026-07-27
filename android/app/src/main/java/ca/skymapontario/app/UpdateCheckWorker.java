@@ -54,13 +54,17 @@ public final class UpdateCheckWorker extends Worker {
                     && pendingPath != null
                     && !pendingPath.isEmpty()) {
                 File existing = new File(pendingPath);
-                if (existing.isFile() && expectedSha256.equalsIgnoreCase(sha256(existing))) return Result.success();
+                if (existing.isFile() && expectedSha256.equalsIgnoreCase(sha256(existing))) {
+                    UpdateManager.notifyUpdateReady(context);
+                    return Result.success();
+                }
             }
 
             File directory = UpdateManager.updateDirectory(context);
             File target = new File(directory, "SkyMap-Ontario-v" + safeVersion(remoteVersion) + ".apk");
             downloadVerified(APK_URL, target, expectedSha256);
             UpdateManager.savePending(context, remoteCode, remoteVersion, target, expectedSha256);
+            UpdateManager.notifyUpdateReady(context);
             return Result.success();
         } catch (Exception ignored) {
             return getRunAttemptCount() < 2 ? Result.retry() : Result.success();
@@ -143,7 +147,7 @@ public final class UpdateCheckWorker extends Worker {
         connection.setInstanceFollowRedirects(true);
         connection.setUseCaches(false);
         connection.setRequestProperty("Accept", "application/json,text/plain,application/vnd.android.package-archive,*/*;q=0.5");
-        connection.setRequestProperty("User-Agent", "SkyMapOntario/18.0.0 updater");
+        connection.setRequestProperty("User-Agent", "SkyMapOntario/18.1.0 updater");
         return connection;
     }
 
