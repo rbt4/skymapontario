@@ -12,6 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="../vendor/leaflet.css">
   <link rel="stylesheet" href="lab.css">
+  <link rel="stylesheet" href="rainflow.css">
 </head>
 <body>
   <a class="skip-link" href="#forecast-rail">Skip to exact-point forecast</a>
@@ -130,6 +131,43 @@
         <span id="forecast-stage">Connecting sources</span>
       </header>
 
+      <section class="rainflow-studio" id="rainflow-studio" aria-labelledby="rainflow-studio-heading">
+        <header class="rainflow-header">
+          <span><small>LIVING FORECAST</small><h2 id="rainflow-studio-heading">RainFlow</h2></span>
+          <div><span class="flow-place" id="flow-place">Selected point</span><span class="flow-status" id="flow-status">Building the living forecast…</span></div>
+        </header>
+        <div class="rainflow-visual">
+          <svg id="rainflow-svg" viewBox="0 0 1000 260" preserveAspectRatio="none" role="img" aria-label="A seven-day living precipitation river. Drag the gate to inspect another time." tabindex="0">
+            <defs>
+              <linearGradient id="flowRain" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#67dcff"/><stop offset=".55" stop-color="#4b9dff"/><stop offset="1" stop-color="#8b61ff"/></linearGradient>
+              <linearGradient id="flowSnow" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#eef0ff"/><stop offset=".55" stop-color="#c7c0ff"/><stop offset="1" stop-color="#87dcff"/></linearGradient>
+              <linearGradient id="flowEnvelope" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#71e4ff" stop-opacity=".2"/><stop offset="1" stop-color="#c4a8ff" stop-opacity=".25"/></linearGradient>
+              <linearGradient id="flowCalm" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8ff3c1" stop-opacity=".12"/><stop offset=".5" stop-color="#8ff3c1" stop-opacity=".85"/><stop offset="1" stop-color="#8ff3c1" stop-opacity=".12"/></linearGradient>
+              <filter id="flowGlow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <filter id="flowSoftGlow"><feGaussianBlur stdDeviation="1.2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <filter id="flowBlur"><feGaussianBlur stdDeviation="5"/></filter>
+            </defs>
+            <g id="rainflow-grid"></g>
+            <g id="rainflow-calm"></g>
+            <g id="rainflow-ghosts"></g>
+            <g id="rainflow-branches"></g>
+            <g id="rainflow-main"></g>
+            <g id="rainflow-gate"></g>
+          </svg>
+          <div class="flow-gate-label" id="flow-gate-label">YOU · NOW</div>
+        </div>
+        <div class="rainflow-answer">
+          <div class="flow-answer-main" id="flow-answer" data-state="loading"><small id="flow-answer-kicker">AT YOUR PINPOINT NOW</small><b id="flow-answer-title">Building RainFlow</b><span id="flow-answer-copy">The river will combine intensity, uncertainty and model paths.</span></div>
+          <span class="flow-chip"><small>FORECAST LOCK</small><b id="flow-lock">Checking</b></span>
+          <span class="flow-chip"><small>POSSIBLE FUTURES</small><b id="flow-branches-count">Checking</b></span>
+          <span class="flow-chip"><small>MEMORY</small><b id="flow-memory-count">Checking</b></span>
+          <span class="flow-chip"><small>CALM GAP</small><b id="flow-calm">Checking</b></span>
+        </div>
+        <div class="flow-legend" aria-label="RainFlow visual legend">
+          <span><i></i>weighted event river</span><span><i></i>model branches</span><span><i></i>past forecast ghosts</span><span><i></i>usable dry gap</span><em class="flow-map-note" id="flow-map-note">Drag the gate; the radar follows through about 48 hours.</em>
+        </div>
+      </section>
+
       <section class="next-event" id="next-event">
         <header><span><small>NEXT WEATHER EVENT</small><h2 id="event-name">Searching the next seven days</h2></span><b id="event-state">WATCHING</b></header>
         <div class="event-flow" id="event-flow"></div>
@@ -169,5 +207,6 @@
   <div class="toast" id="toast" role="status"></div>
   <script src="../vendor/leaflet.js"></script>
   <script src="lab.js"></script>
+  <script src="rainflow.js"></script>
 </body>
 </html>
