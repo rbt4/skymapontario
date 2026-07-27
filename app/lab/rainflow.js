@@ -178,9 +178,16 @@
   function modelWindows(start,end) {
     return MODELS.map(model=>{
       const data=state.models.get(model.id);
-      if(!data)return {model,start:null,end:null};
-      const points=data.hourly.time.map(value=>pointAt(model,data,modelDate(data,value))).filter(Boolean);
-      const wet=points.filter(point=>point.time>=new Date(start.getTime()-12*HOUR)&&point.time<=new Date(end.getTime()+12*HOUR)&&point.wet);
+      if(!data)return {model,start:null,end:null,points:[]};
+      const candidates=data.hourly.time.map(value=>pointAt(model,data,modelDate(data,value))).filter(point=>point&&point.time>=new Date(start.getTime()-12*HOUR)&&point.time<=new Date(end.getTime()+12*HOUR));
+      const segments=[]; let active=[];
+      candidates.forEach(point=>{
+        if(point.wet)active.push(point);
+        else if(active.length){segments.push(active);active=[];}
+      });
+      if(active.length)segments.push(active);
+      const centre=(start.getTime()+end.getTime())/2;
+      const wet=segments.sort((a,b)=>Math.abs((a[0].time.getTime()+a.at(-1).time.getTime())/2-centre)-Math.abs((b[0].time.getTime()+b.at(-1).time.getTime())/2-centre))[0]||[];
       return {model,start:wet[0]?.time||null,end:wet.length?new Date(wet.at(-1).time.getTime()+HOUR):null,points:wet};
     });
   }
@@ -232,6 +239,7 @@
   }
 
   function bandPath(samples,{baseY=138,amplitude=1,spread=0}={}) {
+    if(samples.length===1)samples=[samples[0],{...samples[0],time:new Date(samples[0].time.getTime()+HOUR)}];
     if(samples.length<2)return '';
     const top=[],bottom=[];
     samples.forEach((sample,index)=>{
@@ -328,6 +336,7 @@
   }
 
   function updateGate(value,{syncMap=false}={}) {
+    if(!state.start||!state.end)return;
     state.selectedTime=new Date(clamp(new Date(value).getTime(),state.start.getTime(),state.end.getTime()));
     const x=xForTime(state.selectedTime);
     const group=$('#rainflow-gate');clearGroup('#rainflow-gate');
@@ -443,7 +452,7 @@
   }
 
   function syncGateFromMap() {
-    if(state.dragging)return;
+    if(state.dragging||!state.start||!state.end)return;
     const slider=$('#time-slider');
     if(!slider||!state.frames.length)return;
     const value=Number(slider.value);
