@@ -54,8 +54,8 @@ if (!mainActivity.includes('requestAutomaticLocation')
 const frontlineParts = ['app/frontline.part-0.js', 'app/frontline.part-1.js', 'app/frontline.part-2.js', 'app/frontline.part-3.js'];
 for (const part of frontlineParts) if (!fs.existsSync(path.join(root, part))) throw new Error(`Missing Frontline source part: ${part}`);
 write('app/frontline.js', frontlineParts.map(read).join(''));
-for (const required of ['app/frontline.js', 'app/frontline.css', 'app/icon.svg']) {
-  if (!fs.existsSync(path.join(root, required))) throw new Error(`Missing Frontline asset: ${required}`);
+for (const required of ['app/frontline.js', 'app/frontline.css', 'app/icon.svg', 'assets/site-coherence.css']) {
+  if (!fs.existsSync(path.join(root, required))) throw new Error(`Missing release asset: ${required}`);
 }
 execFileSync(process.execPath, ['--check', path.join(root, 'app/frontline.js')], { stdio: 'inherit' });
 
@@ -82,6 +82,15 @@ write(appIndexPath, appIndex);
 
 const sitePath = 'index.html';
 let site = read(sitePath);
+site = site.replace('<meta name="theme-color" content="#06110f">', '<meta name="theme-color" content="#06101c">');
+if (!site.includes('href="assets/site-coherence.css"')) {
+  site = replaceOnce(
+    site,
+    '<link rel="stylesheet" href="assets/site.css">',
+    '<link rel="stylesheet" href="assets/site.css">\n  <link rel="stylesheet" href="assets/site-coherence.css">',
+    'public-site coherence stylesheet'
+  );
+}
 site = site.replace(
   '<span class="brand-mark" aria-hidden="true"><i></i></span>',
   '<span class="brand-mark" aria-hidden="true"><img src="app/icon.svg" alt=""></span>'
