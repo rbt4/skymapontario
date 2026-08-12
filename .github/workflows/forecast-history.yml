@@ -3,17 +3,17 @@ name: SkyMap historical forecast intelligence
 on:
   workflow_dispatch:
   schedule:
-    - cron: '41 4,16 * * *'
+    - cron: '41 */6 * * *'
   push:
     branches: [main]
     paths:
-      - 'scripts/forecast-history-backfill.mjs'
+      - 'scripts/forecast-history-backfill-v2.mjs'
       - 'scripts/forecast-history-smoke.mjs'
       - '.github/workflows/forecast-history.yml'
       - 'verification/HISTORICAL-INTELLIGENCE.md'
   pull_request:
     paths:
-      - 'scripts/forecast-history-backfill.mjs'
+      - 'scripts/forecast-history-backfill-v2.mjs'
       - 'scripts/forecast-history-smoke.mjs'
       - '.github/workflows/forecast-history.yml'
       - 'verification/HISTORICAL-INTELLIGENCE.md'
@@ -33,11 +33,11 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Validate historical engine
+      - name: Validate lossless historical engine
         run: |
-          node --check scripts/forecast-history-backfill.mjs
+          node --check scripts/forecast-history-backfill-v2.mjs
           node --check scripts/forecast-history-smoke.mjs
-          node scripts/forecast-history-backfill.mjs --self-test
+          node scripts/forecast-history-backfill-v2.mjs --self-test
       - name: Live end-to-end historical smoke test
         if: github.event_name == 'pull_request'
         run: node scripts/forecast-history-smoke.mjs
@@ -58,10 +58,8 @@ jobs:
           mkdir -p verification-history
           git fetch origin forecast-history-data || true
           git show origin/forecast-history-data:verification-history/state.json > verification-history/state.json 2>/dev/null || true
-      - name: Backfill two archive chunks
-        run: |
-          node scripts/forecast-history-backfill.mjs
-          node scripts/forecast-history-backfill.mjs
+      - name: Advance each forecast source and atmospheric archive independently
+        run: node scripts/forecast-history-backfill-v2.mjs
       - name: Publish bounded history branch
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -77,8 +75,8 @@ jobs:
           cat > README.md <<'EOF'
           # SkyMap Historical Forecast Intelligence Data
 
-          Machine-generated historical skill and synoptic analog state. The branch is force-replaced each run to keep Git history bounded. Production does not consume these weights until out-of-sample gates are met.
+          Machine-generated lossless historical skill and synoptic analog state. Every forecast source has its own cursor: failed downloads stay behind and retry, genuinely missing archive values are never converted to dry weather, and this branch is force-replaced to keep Git history bounded.
           EOF
           git add README.md verification-history
-          git commit -m "Update historical forecast intelligence $(date -u +'%Y-%m-%dT%H:%MZ')"
+          git commit -m "Update lossless forecast history $(date -u +'%Y-%m-%dT%H:%MZ')"
           git push --force origin HEAD:forecast-history-data
