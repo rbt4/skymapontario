@@ -1,0 +1,11 @@
+const end=new Date(Date.now()-10*86400000),start=new Date(end-2*86400000),d=x=>x.toISOString().slice(0,10);
+const q=new URLSearchParams({latitude:'43.6532',longitude:'-79.3832',start_date:d(start),end_date:d(end),timezone:'UTC',timeformat:'unixtime',hourly:'precipitation_previous_day1,weather_code_previous_day1',models:'gem_seamless'});
+const r=await fetch(`https://previous-runs-api.open-meteo.com/v1/forecast?${q}`),data=await r.json();
+console.log('previous status',r.status,'keys',Object.keys(data.hourly||{}));
+console.log('previous times',data.hourly?.time?.slice(0,8));
+for(const [k,v] of Object.entries(data.hourly||{}))if(k!=='time')console.log(k,Array.isArray(v)?v.slice(0,12):v);
+const cq=new URLSearchParams({f:'json',bbox:'-80.1,43.0,-78.7,44.3',datetime:`${d(start)}T00:00:00Z/${d(end)}T23:59:59Z`,limit:'20'});
+const cr=await fetch(`https://api.weather.gc.ca/collections/climate-hourly/items?${cq}`),cl=await cr.json();
+console.log('climate status',cr.status,'features',cl.features?.length);
+for(const f of (cl.features||[]).slice(0,5))console.log('truth props',f.properties?.UTC_DATE,f.properties?.CLIMATE_IDENTIFIER,f.properties?.PRECIP_AMOUNT,f.properties?.WEATHER_ENG_DESC);
+process.exitCode=1;
