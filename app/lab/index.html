@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#051018">
   <meta name="color-scheme" content="dark">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://geo.weather.gc.ca; connect-src 'self' https://geo.weather.gc.ca https://api.weather.gc.ca https://api.open-meteo.com https://geocoding-api.open-meteo.com; manifest-src 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://geo.weather.gc.ca; connect-src 'self' https://geo.weather.gc.ca https://api.weather.gc.ca https://api.open-meteo.com https://ensemble-api.open-meteo.com https://geocoding-api.open-meteo.com; manifest-src 'self'">
   <title>SkyMap Future Lab — Living rain timing</title>
   <meta name="description" content="A living Ontario weather map centred on one exact point, with intuitive rain timing, future playback and transparent forecast confidence.">
   <link rel="icon" href="../icon.svg" type="image/svg+xml">
@@ -44,7 +44,7 @@
           <i></i><span><small id="phase-kicker">OBSERVED</small><b id="phase-title">Measured radar</b></span>
         </div>
         <div class="feed-health" id="feed-health" data-state="loading">
-          <i></i><span><b id="feed-title">Connecting weather sources</b><small id="feed-detail">ECCC + four forecast families</small></span>
+          <i></i><span><b id="feed-title">Connecting weather sources</b><small id="feed-detail">ECCC + five forecast brains</small></span>
         </div>
       </div>
 
@@ -142,7 +142,7 @@
 
       <details class="advanced-section">
         <summary><span><small>DEEPER VIEW</small><b>Source constellation</b></span><i>＋</i></summary>
-        <p>Canadian guidance leads locally. Independent global models test whether the event is real instead of being counted as equal duplicate votes.</p>
+        <p>Canadian guidance leads locally. Independent global and AI ensembles test whether the event is real instead of being counted as equal duplicate votes.</p>
         <div class="constellation-grid" id="constellation-grid"></div>
       </details>
 
@@ -168,7 +168,9 @@
 
   <div class="toast" id="toast" role="status"></div>
   <script src="../vendor/leaflet.js"></script>
+  <script src="forecast-intelligence-25.js" data-phase="capture"></script>
   <script src="accuracy-engine.js"></script>
+  <script src="forecast-intelligence-25.js" data-phase="augment"></script>
   <script src="lab.js"></script>
 </body>
 </html>
