@@ -1,0 +1,93 @@
+name: SkyMap Forecast Court
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '37 */6 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/forecast-court.mjs'
+      - '.github/workflows/forecast-court.yml'
+      - 'verification/FORECAST-COURT.md'
+  pull_request:
+    paths:
+      - 'scripts/forecast-court.mjs'
+      - '.github/workflows/forecast-court.yml'
+      - 'verification/FORECAST-COURT.md'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: forecast-court
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Validate promotion court
+        run: |
+          node --check scripts/forecast-court.mjs
+          node scripts/forecast-court.mjs --self-test
+      - name: Live sealed-forecast smoke test
+        if: github.event_name == 'pull_request'
+        run: |
+          mkdir -p verification-court
+          cat > verification-court/challenger.json <<'EOF'
+          {
+            "generatedAt":"2026-08-12T00:00:00Z",
+            "currentRegime":{"test":"smoke"},
+            "proposedByLead":{
+              "24":{"gem":{"weight":0.385,"samples":800},"ifs":{"weight":0.268,"samples":800},"gfs":{"weight":0.188,"samples":800},"aifs":{"weight":0.159,"samples":800}},
+              "48":{"gem":{"weight":0.375,"samples":800},"ifs":{"weight":0.275,"samples":800},"gfs":{"weight":0.192,"samples":800},"aifs":{"weight":0.158,"samples":800}},
+              "72":{"gem":{"weight":0.374,"samples":800},"ifs":{"weight":0.274,"samples":800},"gfs":{"weight":0.195,"samples":800},"aifs":{"weight":0.157,"samples":800}}
+            }
+          }
+          EOF
+          node scripts/forecast-court.mjs --smoke
+
+  collect:
+    if: github.event_name != 'pull_request'
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Restore sealed cases and current shadow challenger
+        run: |
+          mkdir -p verification-court
+          git fetch origin forecast-court-data forecast-history-data || true
+          git show origin/forecast-court-data:verification-court/state.json > verification-court/state.json 2>/dev/null || true
+          git show origin/forecast-history-data:verification-history/challenger.json > verification-court/challenger.json 2>/dev/null || true
+      - name: Seal new champion and challenger forecasts, then score mature cases
+        run: node scripts/forecast-court.mjs
+      - name: Publish bounded court branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p /tmp/skymap-court
+          cp verification-court/state.json verification-court/public.json /tmp/skymap-court/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout --orphan forecast-court-data-next
+          git rm -rf .
+          mkdir -p verification-court
+          cp /tmp/skymap-court/* verification-court/
+          cat > README.md <<'EOF'
+          # SkyMap Forecast Court Data
+
+          Machine-generated sealed champion-versus-challenger forecasts. Both blends are stored before the outcome exists and are later scored against the same ECCC observation. The court can recommend a bounded integration review but cannot self-promote code into the live forecast. The branch is force-replaced to keep history bounded.
+          EOF
+          git add README.md verification-court
+          git commit -m "Update sealed forecast court $(date -u +'%Y-%m-%dT%H:%MZ')"
+          git push --force origin HEAD:forecast-court-data
