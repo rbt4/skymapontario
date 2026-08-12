@@ -1,8 +1,8 @@
 {
   "name": "SkyMap Future Lab",
-  "version": "21.0.0-experimental.3",
+  "version": "25.0.0-experimental.1",
   "channel": "experimental",
-  "engine": "living-future-radar+forecast-iq-21",
+  "engine": "living-future-radar+forecast-iq-21+weathernext-25",
   "released": "2026-08-12",
-  "experience": "radar-first-official-ensemble-local-learning"
+  "experience": "radar-first-official-ensemble-ai-crosscheck-shadow-learning"
 }

@@ -12,17 +12,43 @@ const SOURCES={
   lakeMichigan:'https://apps.glerl.noaa.gov/coastwatch/webdata/statistic/csv/all_year_glsea_avg_m_C.csv',
   lakeHuron:'https://apps.glerl.noaa.gov/coastwatch/webdata/statistic/csv/all_year_glsea_avg_h_C.csv',
   lakeOntario:'https://apps.glerl.noaa.gov/coastwatch/webdata/statistic/csv/all_year_glsea_avg_o_C.csv',
-  lakeErie:'https://apps.glerl.noaa.gov/coastwatch/webdata/statistic/csv/all_year_glsea_avg_e_C.csv'
+  lakeErie:'https://apps.glerl.noaa.gov/coastwatch/webdata/statistic/csv/all_year_glsea_avg_e_C.csv',
+  iceBasin:'https://www.glerl.noaa.gov/data/ice/glicd/daily/bas.txt',
+  iceSuperior:'https://www.glerl.noaa.gov/data/ice/glicd/daily/sup.txt',
+  iceMichigan:'https://www.glerl.noaa.gov/data/ice/glicd/daily/mic.txt',
+  iceHuron:'https://www.glerl.noaa.gov/data/ice/glicd/daily/hur.txt',
+  iceOntario:'https://www.glerl.noaa.gov/data/ice/glicd/daily/ont.txt',
+  iceErie:'https://www.glerl.noaa.gov/data/ice/glicd/daily/eri.txt'
 };
 const MJO_COLUMNS=['INDEX_9_20E','INDEX_10_70E','INDEX_1_80E','INDEX_2_100E','INDEX_3_120E','INDEX_4_140E','INDEX_5_160E','INDEX_6_120W','INDEX_7_40W','INDEX_8_10W'];
 const finite=v=>v===null||v===undefined||String(v).trim()===''?null:(Number.isFinite(Number(v))?Number(v):null);
 const hash=s=>crypto.createHash('sha256').update(s).digest('hex').slice(0,16);
-async function fetchText(url,attempts=3){let last;for(let i=1;i<=attempts;i++){try{const r=await fetch(url,{headers:{'user-agent':'SkyMap-Ontario-Forecast-Research/24'},signal:AbortSignal.timeout(30000),cache:'no-store'});if(!r.ok)throw new Error(`HTTP ${r.status}`);const t=await r.text();if(t.trim().length<20)throw new Error('empty response');return t;}catch(e){last=e;if(i<attempts)await new Promise(r=>setTimeout(r,800*i));}}throw last;}
+async function fetchText(url,attempts=3){let last;for(let i=1;i<=attempts;i++){try{const r=await fetch(url,{headers:{'user-agent':'SkyMap-Ontario-Forecast-Research/25'},signal:AbortSignal.timeout(30000),cache:'no-store'});if(!r.ok)throw new Error(`HTTP ${r.status}`);const t=await r.text();if(t.trim().length<20)throw new Error('empty response');return t;}catch(e){last=e;if(i<attempts)await new Promise(r=>setTimeout(r,800*i));}}throw last;}
 function csvRows(text){return text.replace(/^\uFEFF/,'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean).map(line=>line.split(',').map(v=>v.trim().replace(/^"|"$/g,'')));}
 function parseDailyIndex(text,id){const rows=csvRows(text),out=[];for(const row of rows){let date=null,value=null;if(/^\d{4}-\d{2}-\d{2}/.test(row[0])){date=row[0].slice(0,10);value=finite(row.find((v,i)=>i>0&&finite(v)!=null));}else if(row.length>=4&&/^\d{4}$/.test(row[0])&&finite(row[1])!=null&&finite(row[2])!=null){date=`${row[0]}-${String(row[1]).padStart(2,'0')}-${String(row[2]).padStart(2,'0')}`;value=finite(row.find((v,i)=>i>=3&&finite(v)!=null));}if(date&&value!=null&&value>-90)out.push([date,value]);}if(out.length<1000)throw new Error(`${id} parsed only ${out.length} daily rows`);return out;}
 function parseNino(text){const rows=csvRows(text),out=[];for(const row of rows){if(row.length>=3&&/^\d{4}$/.test(row[0])&&finite(row[1])!=null){const month=finite(row[1]);const value=finite(row[2]);if(month>=1&&month<=12&&value!=null&&value>-90){out.push([`${row[0]}-${String(month).padStart(2,'0')}`,value]);continue;}}if(/^\d{4}-\d{2}/.test(row[0])){const value=finite(row.find((v,i)=>i>0&&finite(v)!=null));if(value!=null&&value>-90)out.push([row[0].slice(0,7),value]);}}if(out.length<100)throw new Error(`nino34 parsed only ${out.length} rows`);return out;}
 function parseMjo(text){const out=[];for(const line of text.split(/\r?\n/)){const parts=line.trim().split(/\s+/);if(parts.length<11||!/^\d{8}$/.test(parts[0]))continue;const y=Number(parts[0].slice(0,4)),m=Number(parts[0].slice(4,6)),d=Number(parts[0].slice(6,8)),vals=parts.slice(1,11).map(finite);if(y<1970||y>2100||m<1||m>12||d<1||d>31||vals.some(v=>v==null||v<-90))continue;out.push([`${String(y).padStart(4,'0')}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`,...vals]);}if(out.length<1000)throw new Error(`MJO parsed only ${out.length} pentad rows`);return out;}
 function parseLake(text,id){const rows=csvRows(text);if(rows.length<100)throw new Error(`${id} has only ${rows.length} rows`);const header=rows[0],body=rows.slice(1).filter(r=>r.some(v=>finite(v)!=null));return{header,rows:body};}
+function parseIce(text,id){
+  const rows=text.replace(/^\uFEFF/,'').split(/\r?\n/).map(line=>line.trim()).filter(Boolean).filter(line=>!line.startsWith('#')).map(line=>line.split(/\s+/));
+  const headerIndex=rows.findIndex(row=>row.filter(v=>/^(?:19|20)\d{2}$/.test(v)).length>=20);
+  if(headerIndex<0)throw new Error(`${id} ice-year header not found`);
+  const header=rows[headerIndex],years=header.filter(v=>/^(?:19|20)\d{2}$/.test(v)).map(Number);
+  const body=rows.slice(headerIndex+1).filter(row=>row.length>=Math.max(3,years.length/2));
+  if(years.length<40||body.length<100)throw new Error(`${id} ice matrix incomplete (${years.length} years, ${body.length} rows)`);
+  return{years,rows:body,note:'Columns are ICE years (named by January year); rows are days of year. NA means not observed and is distinct from zero ice cover.'};
+}
 async function one(id,url,parser){const text=await fetchText(url);const data=parser(text,id);return{url,sha256:hash(text),bytes:Buffer.byteLength(text),data};}
-async function main(){await fs.mkdir('verification-history',{recursive:true});const results={},errors={};const specs=[['pna',SOURCES.pna,parseDailyIndex],['nao',SOURCES.nao,parseDailyIndex],['ao',SOURCES.ao,parseDailyIndex],['nino34',SOURCES.nino34,parseNino],['mjo',SOURCES.mjo,parseMjo],['lakeSuperior',SOURCES.lakeSuperior,parseLake],['lakeMichigan',SOURCES.lakeMichigan,parseLake],['lakeHuron',SOURCES.lakeHuron,parseLake],['lakeOntario',SOURCES.lakeOntario,parseLake],['lakeErie',SOURCES.lakeErie,parseLake]];for(const [id,url,parser] of specs){try{results[id]=await one(id,url,parser);const n=Array.isArray(results[id].data)?results[id].data.length:results[id].data.rows.length;console.log(`✓ ${id}: ${n} records`);}catch(e){errors[id]=String(e.message||e);console.warn(`⚠ ${id}: ${errors[id]}`);}}const required=['pna','nao','ao','nino34','mjo','lakeOntario','lakeErie'];const missing=required.filter(k=>!results[k]);if(process.argv.includes('--smoke')&&missing.length)throw new Error(`required context sources missing: ${missing.join(', ')}`);const out={schema:1,generatedAt:new Date().toISOString(),purpose:'Large-scale conditioning features for future out-of-sample calibration; not direct deterministic forecast inputs.',coverage:{teleconnections:'daily CPC AO/NAO/PNA',enso:'monthly NOAA/CPC Niño 3.4',mjo:'CPC pentad MJO historical index',greatLakes:'NOAA GLSEA average surface water temperature'},columns:{mjo:['date',...MJO_COLUMNS]},results,errors};await fs.writeFile(OUT,JSON.stringify(out));console.log(`✓ context memory written with ${Object.keys(results).length}/${specs.length} sources`);}
+async function main(){
+  await fs.mkdir('verification-history',{recursive:true});const results={},errors={};
+  const specs=[
+    ['pna',SOURCES.pna,parseDailyIndex],['nao',SOURCES.nao,parseDailyIndex],['ao',SOURCES.ao,parseDailyIndex],['nino34',SOURCES.nino34,parseNino],['mjo',SOURCES.mjo,parseMjo],
+    ['lakeSuperior',SOURCES.lakeSuperior,parseLake],['lakeMichigan',SOURCES.lakeMichigan,parseLake],['lakeHuron',SOURCES.lakeHuron,parseLake],['lakeOntario',SOURCES.lakeOntario,parseLake],['lakeErie',SOURCES.lakeErie,parseLake],
+    ['iceBasin',SOURCES.iceBasin,parseIce],['iceSuperior',SOURCES.iceSuperior,parseIce],['iceMichigan',SOURCES.iceMichigan,parseIce],['iceHuron',SOURCES.iceHuron,parseIce],['iceOntario',SOURCES.iceOntario,parseIce],['iceErie',SOURCES.iceErie,parseIce]
+  ];
+  for(const [id,url,parser] of specs){try{results[id]=await one(id,url,parser);const d=results[id].data;const n=Array.isArray(d)?d.length:(Array.isArray(d.rows)?d.rows.length:0);console.log(`✓ ${id}: ${n} records`);}catch(e){errors[id]=String(e.message||e);console.warn(`⚠ ${id}: ${errors[id]}`);}}
+  const required=['pna','nao','ao','nino34','mjo','lakeOntario','lakeErie','iceOntario','iceErie'];const missing=required.filter(k=>!results[k]);if(process.argv.includes('--smoke')&&missing.length)throw new Error(`required context sources missing: ${missing.join(', ')}`);
+  const out={schema:2,generatedAt:new Date().toISOString(),purpose:'Large-scale conditioning features for future out-of-sample calibration; not direct deterministic forecast inputs.',coverage:{teleconnections:'daily CPC AO/NAO/PNA',enso:'monthly NOAA/CPC Niño 3.4',mjo:'CPC pentad MJO historical index',greatLakes:'NOAA GLSEA average surface water temperature',greatLakesIce:'NOAA GLERL daily average lake ice cover, 1973-present'},columns:{mjo:['date',...MJO_COLUMNS]},results,errors};
+  await fs.writeFile(OUT,JSON.stringify(out));console.log(`✓ context memory written with ${Object.keys(results).length}/${specs.length} sources`);
+}
 await main();
