@@ -38,7 +38,7 @@ jobs:
       - name: Live archived forecast + RDPA final-analysis smoke
         if: github.event_name == 'pull_request'
         env:
-          CAPA_CHUNK_DAYS: '3'
+          CAPA_CHUNK_DAYS: '14'
         run: |
           rm -rf verification-capa
           node scripts/forecast-capa-truth.mjs --smoke
