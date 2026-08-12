@@ -1,0 +1,31 @@
+name: Validate SkyMap Future Lab
+
+on:
+  pull_request:
+    paths:
+      - 'app/lab/**'
+      - '.github/workflows/lab-check.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/lab/**'
+      - '.github/workflows/lab-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-lab:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Check Future Lab JavaScript
+        run: |
+          node --check app/lab/accuracy-engine.js
+          node --check app/lab/lab.js
+          grep -q '<script src="accuracy-engine.js"></script>' app/lab/index.html
+          grep -q 'Forecast IQ' app/lab/accuracy-engine.js
+          grep -q 'row.snow' app/lab/accuracy-engine.js
