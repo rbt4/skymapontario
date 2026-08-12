@@ -37,6 +37,8 @@ jobs:
           grep -q "VERSION = '21.0.0'" app/lab/accuracy-engine.js
           grep -q "VERSION = '25.0.0'" app/lab/forecast-intelligence-25.js
           grep -q 'google_weathernext2_ensemble' app/lab/forecast-intelligence-25.js
+          grep -q '__skymap_missing__' app/lab/forecast-intelligence-25.js
+          grep -q 'x-skymap-null-guard' app/lab/forecast-intelligence-25.js
           grep -q 'Radar_1km_RainPrecipRate-Extrapolation' app/lab/accuracy-engine.js
           grep -q 'REPS.DIAG.3_PRMM.ERGE1' app/lab/accuracy-engine.js
           grep -q 'citypageweather-realtime' app/lab/accuracy-engine.js
