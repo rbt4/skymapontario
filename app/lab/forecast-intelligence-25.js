@@ -4,9 +4,47 @@
   const script = document.currentScript;
   const phase = script?.dataset?.phase || 'augment';
   const ORIGINAL_KEY = '__skymapNativeFetch25';
+  const MISSING = '__skymap_missing__';
+  const NULL_GUARD_RE = /^https:\/\/api\.open-meteo\.com\/v1\/(?:forecast|gem|ecmwf|gfs)(?:\?|$)|api\.weather\.gc\.ca\/collections\/citypageweather-realtime/i;
+
+  function guardKnownNumericNulls(value, parentKey = '') {
+    if (value === null) return /precip|rain|shower|snow|weather_code|temperature|cloud|wind|lop|prob/i.test(parentKey) ? MISSING : null;
+    if (Array.isArray(value)) return value.map(item => guardKnownNumericNulls(item, parentKey));
+    if (!value || typeof value !== 'object') return value;
+    const out = {};
+    for (const [key, item] of Object.entries(value)) out[key] = guardKnownNumericNulls(item, key);
+    return out;
+  }
+
+  function restoreMissing(value) {
+    if (value === MISSING) return null;
+    if (Array.isArray(value)) return value.map(restoreMissing);
+    if (!value || typeof value !== 'object') return value;
+    for (const [key, item] of Object.entries(value)) value[key] = restoreMissing(item);
+    return value;
+  }
+
+  function jsonResponseLike(response, data, headerName, headerValue) {
+    const headers = new Headers(response.headers);
+    headers.set('content-type', 'application/json');
+    if (headerName) headers.set(headerName, headerValue);
+    return new Response(JSON.stringify(data), { status: response.status, statusText: response.statusText, headers });
+  }
 
   if (phase === 'capture') {
     if (!window[ORIGINAL_KEY]) window[ORIGINAL_KEY] = window.fetch.bind(window);
+    const native = window[ORIGINAL_KEY];
+    window.fetch = async function skyMapNullGuard25(input, init) {
+      const url = typeof input === 'string' ? input : input?.url || String(input);
+      const response = await native(input, init);
+      if (!response.ok || !NULL_GUARD_RE.test(url)) return response;
+      try {
+        const data = await response.clone().json();
+        return jsonResponseLike(response, guardKnownNumericNulls(data), 'x-skymap-null-guard', '25');
+      } catch (_) {
+        return response;
+      }
+    };
     return;
   }
 
@@ -21,7 +59,7 @@
   const CACHE_TTL = 30 * 60 * 1000;
   const contextCache = new Map();
 
-  const finite = value => value === null || value === undefined || value === '' ? null : (Number.isFinite(Number(value)) ? Number(value) : null);
+  const finite = value => value === null || value === undefined || value === '' || value === MISSING ? null : (Number.isFinite(Number(value)) ? Number(value) : null);
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const roundHour = value => {
     const date = new Date(value);
@@ -128,6 +166,7 @@
   }
 
   function augment(data, context, id) {
+    restoreMissing(data);
     if (!data?.hourly?.time?.length || !context) return data;
     const hourly = data.hourly;
     const now = Date.now();
@@ -139,7 +178,7 @@
       const target = new Date(time).getTime();
       if (!Number.isFinite(target)) return;
       const leadHours = Math.max(0, (target - now) / 3600000);
-      if (leadHours <= 2.3 || leadHours > 168) return; // radar/official nowcast remains king at short range
+      if (leadHours <= 2.3 || leadHours > 168) return;
       const wn = weatherNextAt(context, target);
       if (!wn || wn.members < 20) return;
 
@@ -149,7 +188,8 @@
       let rain = Math.max(0, finite(hourly.rain?.[index]) || 0);
       let showers = Math.max(0, finite(hourly.showers?.[index]) || 0);
       const snowfall = Math.max(0, finite(hourly.snowfall?.[index]) || 0);
-      let code = Number(hourly.weather_code?.[index] || 0);
+      let code = finite(hourly.weather_code?.[index]);
+      if (code == null) code = 0;
       const snowSignal = snowfall > 0.02 || SNOW_CODES.has(code);
       const probability = clamp(wn.probability, 0, 100);
       const confidence = Math.abs(probability - 50) / 50;
@@ -164,14 +204,12 @@
       rain *= blendedFactor;
       showers *= blendedFactor;
 
-      // Strong ensemble disagreement should widen uncertainty, not create false hourly precision.
       if (probability >= 35 && probability <= 65 && wn.spread > 0.8 && leadHours > 24) {
         precip *= 0.92;
         rain *= 0.92;
         showers *= 0.92;
       }
 
-      // Extreme 64-member consensus is allowed a small veto/rescue, never an absolute override.
       if (!snowSignal && probability <= 8 && precip0 < 0.30) {
         precip *= 0.72;
         rain *= 0.72;
@@ -193,8 +231,9 @@
 
     data.skymap_iq25 = {
       version: VERSION,
-      mode: 'weathernext-ensemble-shadow-augmentation',
       model: id,
+      mode: 'weathernext-ensemble-shadow-augmentation',
+      null_guard: 'known numeric nulls stay missing through legacy calibration',
       weathernext_rows_used: used,
       weathernext_members: maxMembers || context.members || 0,
       mean_weathernext_probability: used ? Number((probabilitySum / used).toFixed(1)) : null,
@@ -204,10 +243,7 @@
   }
 
   function cloneJsonResponse(response, data) {
-    const headers = new Headers(response.headers);
-    headers.set('content-type', 'application/json');
-    headers.set('x-skymap-forecast-iq25', VERSION);
-    return new Response(JSON.stringify(data), { status: response.status, statusText: response.statusText, headers });
+    return jsonResponseLike(response, data, 'x-skymap-forecast-iq25', VERSION);
   }
 
   window.fetch = async function skyMapForecastIQ25(input, init) {
@@ -222,9 +258,10 @@
       upstreamFetch(input, init),
       getWeatherNext(lat, lon)
     ]);
-    if (!response.ok || !context) return response;
+    if (!response.ok) return response;
     try {
-      const data = await response.clone().json();
+      const data = restoreMissing(await response.clone().json());
+      if (!context) return cloneJsonResponse(response, data);
       return cloneJsonResponse(response, augment(data, context, modelId(url)));
     } catch (_) {
       return response;
@@ -234,7 +271,7 @@
   window.SkyMapForecastIQ25 = {
     version: VERSION,
     source: 'Google DeepMind WeatherNext 2 via Open-Meteo Ensemble API',
-    mode: 'bounded-ensemble-cross-check',
+    mode: 'bounded-ensemble-cross-check+legacy-null-guard',
     cache: contextCache
   };
 })();
