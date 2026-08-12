@@ -10,6 +10,7 @@ on:
       - 'scripts/forecast-history-backfill-v2.mjs'
       - 'scripts/forecast-history-smoke.mjs'
       - 'scripts/forecast-context.mjs'
+      - 'scripts/forecast-regime-skill.mjs'
       - '.github/workflows/forecast-history.yml'
       - 'verification/HISTORICAL-INTELLIGENCE.md'
   pull_request:
@@ -17,6 +18,7 @@ on:
       - 'scripts/forecast-history-backfill-v2.mjs'
       - 'scripts/forecast-history-smoke.mjs'
       - 'scripts/forecast-context.mjs'
+      - 'scripts/forecast-regime-skill.mjs'
       - '.github/workflows/forecast-history.yml'
       - 'verification/HISTORICAL-INTELLIGENCE.md'
 
@@ -35,16 +37,18 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Validate lossless historical engine
+      - name: Validate lossless historical and shadow-learning engines
         run: |
           node --check scripts/forecast-history-backfill-v2.mjs
           node --check scripts/forecast-history-smoke.mjs
           node --check scripts/forecast-context.mjs
+          node --check scripts/forecast-regime-skill.mjs
           node scripts/forecast-history-backfill-v2.mjs --self-test
+          node scripts/forecast-regime-skill.mjs --self-test
       - name: Live end-to-end historical smoke test
         if: github.event_name == 'pull_request'
         run: node scripts/forecast-history-smoke.mjs
-      - name: Live continental context smoke test
+      - name: Live continental context and lake-boundary smoke test
         if: github.event_name == 'pull_request'
         run: node scripts/forecast-context.mjs --smoke
 
@@ -59,21 +63,24 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Restore bounded history state
+      - name: Restore bounded history and regime-skill state
         run: |
           mkdir -p verification-history
           git fetch origin forecast-history-data || true
           git show origin/forecast-history-data:verification-history/state.json > verification-history/state.json 2>/dev/null || true
+          git show origin/forecast-history-data:verification-history/regime-skill.json > verification-history/regime-skill.json 2>/dev/null || true
       - name: Advance each forecast source and atmospheric archive independently
         run: node scripts/forecast-history-backfill-v2.mjs
-      - name: Refresh teleconnection and Great Lakes context
+      - name: Refresh teleconnection, lake temperature and lake ice context
         run: node scripts/forecast-context.mjs
+      - name: Advance regime-conditioned shadow skill independently
+        run: node scripts/forecast-regime-skill.mjs
       - name: Publish bounded history branch
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p /tmp/skymap-history
-          cp verification-history/state.json verification-history/public.json verification-history/report.md verification-history/context.json /tmp/skymap-history/
+          cp verification-history/state.json verification-history/public.json verification-history/report.md verification-history/context.json verification-history/regime-skill.json verification-history/challenger.json /tmp/skymap-history/
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git checkout --orphan forecast-history-data-next
@@ -83,8 +90,8 @@ jobs:
           cat > README.md <<'EOF'
           # SkyMap Historical Forecast Intelligence Data
 
-          Machine-generated lossless historical skill, synoptic analog, teleconnection and Great Lakes context state. Forecast sources advance independently; missing values never become dry weather; failed requests retry; the branch is force-replaced so Git history remains bounded.
+          Machine-generated lossless historical skill, synoptic analog, teleconnection, Great Lakes thermal/ice context and regime-conditioned shadow calibration. Forecast sources advance independently; missing values never become dry weather; failed requests retry; the challenger cannot change production weights until it passes an out-of-sample gate.
           EOF
           git add README.md verification-history
-          git commit -m "Update forecast history and context $(date -u +'%Y-%m-%dT%H:%MZ')"
+          git commit -m "Update forecast history, context and shadow skill $(date -u +'%Y-%m-%dT%H:%MZ')"
           git push --force origin HEAD:forecast-history-data
