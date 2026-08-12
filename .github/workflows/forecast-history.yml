@@ -1,0 +1,84 @@
+name: SkyMap historical forecast intelligence
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 4,16 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/forecast-history-backfill.mjs'
+      - 'scripts/forecast-history-smoke.mjs'
+      - '.github/workflows/forecast-history.yml'
+      - 'verification/HISTORICAL-INTELLIGENCE.md'
+  pull_request:
+    paths:
+      - 'scripts/forecast-history-backfill.mjs'
+      - 'scripts/forecast-history-smoke.mjs'
+      - '.github/workflows/forecast-history.yml'
+      - 'verification/HISTORICAL-INTELLIGENCE.md'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: forecast-history
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Validate historical engine
+        run: |
+          node --check scripts/forecast-history-backfill.mjs
+          node --check scripts/forecast-history-smoke.mjs
+          node scripts/forecast-history-backfill.mjs --self-test
+      - name: Live end-to-end historical smoke test
+        if: github.event_name == 'pull_request'
+        run: node scripts/forecast-history-smoke.mjs
+
+  backfill:
+    if: github.event_name != 'pull_request'
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Restore bounded history state
+        run: |
+          mkdir -p verification-history
+          git fetch origin forecast-history-data || true
+          git show origin/forecast-history-data:verification-history/state.json > verification-history/state.json 2>/dev/null || true
+      - name: Backfill two archive chunks
+        run: |
+          node scripts/forecast-history-backfill.mjs
+          node scripts/forecast-history-backfill.mjs
+      - name: Publish bounded history branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p /tmp/skymap-history
+          cp verification-history/state.json verification-history/public.json verification-history/report.md /tmp/skymap-history/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout --orphan forecast-history-data-next
+          git rm -rf .
+          mkdir -p verification-history
+          cp /tmp/skymap-history/* verification-history/
+          cat > README.md <<'EOF'
+          # SkyMap Historical Forecast Intelligence Data
+
+          Machine-generated historical skill and synoptic analog state. The branch is force-replaced each run to keep Git history bounded. Production does not consume these weights until out-of-sample gates are met.
+          EOF
+          git add README.md verification-history
+          git commit -m "Update historical forecast intelligence $(date -u +'%Y-%m-%dT%H:%MZ')"
+          git push --force origin HEAD:forecast-history-data
