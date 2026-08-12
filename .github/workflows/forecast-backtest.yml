@@ -1,0 +1,76 @@
+name: SkyMap forecast verification
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/forecast-backtest.mjs'
+      - '.github/workflows/forecast-backtest.yml'
+      - 'verification/README.md'
+  pull_request:
+    paths:
+      - 'scripts/forecast-backtest.mjs'
+      - '.github/workflows/forecast-backtest.yml'
+      - 'verification/README.md'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: forecast-verification
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Validate backtester
+        run: |
+          node --check scripts/forecast-backtest.mjs
+          node scripts/forecast-backtest.mjs --self-test
+
+  collect:
+    if: github.event_name != 'pull_request'
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Restore bounded verification state
+        run: |
+          mkdir -p verification-data
+          git fetch origin forecast-data || true
+          git show origin/forecast-data:verification-data/state.json > verification-data/state.json 2>/dev/null || true
+      - name: Collect and score forecasts
+        run: node scripts/forecast-backtest.mjs
+      - name: Publish one-commit data branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p /tmp/skymap-verification
+          cp verification-data/state.json verification-data/public.json verification-data/report.md /tmp/skymap-verification/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout --orphan forecast-data-next
+          git rm -rf .
+          mkdir -p verification-data
+          cp /tmp/skymap-verification/* verification-data/
+          cat > README.md <<'EOF'
+          # SkyMap Forecast Verification Data
+
+          Machine-generated verification state for SkyMap Ontario. This branch is force-replaced each run so historical Git objects do not grow without bound. See `verification-data/report.md` for the human-readable scorecard and `verification-data/public.json` for compact metrics.
+          EOF
+          git add README.md verification-data
+          git commit -m "Update forecast verification $(date -u +'%Y-%m-%dT%H:%MZ')"
+          git push --force origin HEAD:forecast-data
