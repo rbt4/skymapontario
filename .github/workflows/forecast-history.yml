@@ -8,12 +8,13 @@ on:
     branches: [main]
     paths:
       - 'scripts/forecast-history-backfill.mjs'
+      - 'scripts/forecast-history-smoke.mjs'
       - '.github/workflows/forecast-history.yml'
       - 'verification/HISTORICAL-INTELLIGENCE.md'
   pull_request:
     paths:
       - 'scripts/forecast-history-backfill.mjs'
-      - 'scripts/forecast-history-diagnostic.mjs'
+      - 'scripts/forecast-history-smoke.mjs'
       - '.github/workflows/forecast-history.yml'
       - 'verification/HISTORICAL-INTELLIGENCE.md'
 
@@ -35,13 +36,11 @@ jobs:
       - name: Validate historical engine
         run: |
           node --check scripts/forecast-history-backfill.mjs
+          node --check scripts/forecast-history-smoke.mjs
           node scripts/forecast-history-backfill.mjs --self-test
-      - name: Archive timestamp diagnostic
+      - name: Live end-to-end historical smoke test
         if: github.event_name == 'pull_request'
-        run: node scripts/forecast-history-diagnostic.mjs
-      - name: Live archive smoke test
-        if: github.event_name == 'pull_request'
-        run: node scripts/forecast-history-backfill.mjs --smoke
+        run: node scripts/forecast-history-smoke.mjs
 
   backfill:
     if: github.event_name != 'pull_request'
