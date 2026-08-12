@@ -1,0 +1,81 @@
+name: SkyMap spatial displacement verification
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 * * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/forecast-spatial-verifier.mjs'
+      - '.github/workflows/forecast-spatial.yml'
+      - 'verification/SPATIAL-VERIFICATION.md'
+  pull_request:
+    paths:
+      - 'scripts/forecast-spatial-verifier.mjs'
+      - '.github/workflows/forecast-spatial.yml'
+      - 'verification/SPATIAL-VERIFICATION.md'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: forecast-spatial-verification
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Validate spatial verifier
+        run: |
+          node --check scripts/forecast-spatial-verifier.mjs
+          node scripts/forecast-spatial-verifier.mjs --self-test
+      - name: Live six-source + rain/snow radar smoke
+        if: github.event_name == 'pull_request'
+        run: |
+          rm -rf verification-spatial
+          node scripts/forecast-spatial-verifier.mjs --smoke
+
+  collect:
+    if: github.event_name != 'pull_request'
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Restore bounded spatial state
+        run: |
+          mkdir -p verification-spatial
+          git fetch origin forecast-spatial-data || true
+          git show origin/forecast-spatial-data:verification-spatial/state.json > verification-spatial/state.json 2>/dev/null || true
+      - name: Seal forecast neighbourhoods and score radar-mature cases
+        run: node scripts/forecast-spatial-verifier.mjs
+      - name: Publish bounded spatial branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p /tmp/skymap-spatial
+          cp verification-spatial/state.json verification-spatial/public.json /tmp/skymap-spatial/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout --orphan forecast-spatial-data-next
+          git rm -rf .
+          mkdir -p verification-spatial
+          cp /tmp/skymap-spatial/* verification-spatial/
+          cat > README.md <<'EOF'
+          # SkyMap Spatial Verification Data
+
+          Machine-generated prospective exact-point and neighbourhood verification against ECCC rain and snow radar. Nearby precipitation is never promoted to exact-point truth; spatial evidence exists only to distinguish hard forecast errors from displaced systems and to measure systematic directional bias. The branch is force-replaced to keep history bounded.
+          EOF
+          git add README.md verification-spatial
+          git commit -m "Update spatial displacement verification $(date -u +'%Y-%m-%dT%H:%MZ')"
+          git push --force origin HEAD:forecast-spatial-data
