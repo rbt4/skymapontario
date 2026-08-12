@@ -8,11 +8,13 @@ on:
     branches: [main]
     paths:
       - 'scripts/forecast-spatial-verifier.mjs'
+      - 'scripts/forecast-spatial-smoke.mjs'
       - '.github/workflows/forecast-spatial.yml'
       - 'verification/SPATIAL-VERIFICATION.md'
   pull_request:
     paths:
       - 'scripts/forecast-spatial-verifier.mjs'
+      - 'scripts/forecast-spatial-smoke.mjs'
       - '.github/workflows/forecast-spatial.yml'
       - 'verification/SPATIAL-VERIFICATION.md'
 
@@ -34,12 +36,11 @@ jobs:
       - name: Validate spatial verifier
         run: |
           node --check scripts/forecast-spatial-verifier.mjs
+          node --check scripts/forecast-spatial-smoke.mjs
           node scripts/forecast-spatial-verifier.mjs --self-test
-      - name: Live six-source + rain/snow radar smoke
+      - name: Live six-source + latest published rain/snow radar smoke
         if: github.event_name == 'pull_request'
-        run: |
-          rm -rf verification-spatial
-          node scripts/forecast-spatial-verifier.mjs --smoke
+        run: node scripts/forecast-spatial-smoke.mjs
 
   collect:
     if: github.event_name != 'pull_request'
