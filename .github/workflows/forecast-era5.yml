@@ -1,0 +1,85 @@
+name: SkyMap ERA5 deep analog memory
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '53 */12 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/forecast-era5-memory.mjs'
+      - '.github/workflows/forecast-era5.yml'
+      - 'verification/ERA5-MEMORY.md'
+  pull_request:
+    paths:
+      - 'scripts/forecast-era5-memory.mjs'
+      - '.github/workflows/forecast-era5.yml'
+      - 'verification/ERA5-MEMORY.md'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: forecast-era5-memory
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Validate compact ERA5 memory engine
+        run: |
+          node --check scripts/forecast-era5-memory.mjs
+          node scripts/forecast-era5-memory.mjs --self-test
+      - name: Live 1940 ERA5 smoke test
+        if: github.event_name == 'pull_request'
+        env:
+          ERA5_CHUNK_DAYS: '7'
+          ERA5_CHUNKS_PER_RUN: '1'
+        run: |
+          rm -rf verification-era5
+          node scripts/forecast-era5-memory.mjs
+          node -e "const fs=require('fs');const x=JSON.parse(fs.readFileSync('verification-era5/public.json'));if(x.days<5||x.first!=='1940-01-01')throw new Error('ERA5 smoke did not produce expected 1940 fingerprints');console.log('✓ live ERA5 deep-memory smoke:',x.days,'daily fingerprints',x.first,'→',x.last)"
+
+  backfill:
+    if: github.event_name != 'pull_request'
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Restore bounded ERA5 state
+        run: |
+          mkdir -p verification-era5
+          git fetch origin forecast-era5-data || true
+          git show origin/forecast-era5-data:verification-era5/state.json > verification-era5/state.json 2>/dev/null || true
+      - name: Advance deep analog memory
+        run: node scripts/forecast-era5-memory.mjs
+      - name: Publish one-commit ERA5 memory branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p /tmp/skymap-era5
+          cp verification-era5/state.json verification-era5/public.json /tmp/skymap-era5/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout --orphan forecast-era5-data-next
+          git rm -rf .
+          mkdir -p verification-era5
+          cp /tmp/skymap-era5/* verification-era5/
+          cat > README.md <<'EOF'
+          # SkyMap ERA5 Deep Analog Memory
+
+          Machine-generated compact ERA5 atmospheric-regime memory for Ontario forecast research. Raw global grids are intentionally not stored: the archive contains physically interpretable upstream pressure, temperature, moisture-transport and wind-pattern fingerprints. Failed downloads retry without advancing the cursor. This branch is force-replaced each run so Git history remains bounded.
+          EOF
+          git add README.md verification-era5
+          git commit -m "Advance ERA5 analog memory $(date -u +'%Y-%m-%dT%H:%MZ')"
+          git push --force origin HEAD:forecast-era5-data
