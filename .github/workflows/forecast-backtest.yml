@@ -7,12 +7,12 @@ on:
   push:
     branches: [main]
     paths:
-      - 'scripts/forecast-backtest.mjs'
+      - 'scripts/forecast-backtest-v2.mjs'
       - '.github/workflows/forecast-backtest.yml'
       - 'verification/README.md'
   pull_request:
     paths:
-      - 'scripts/forecast-backtest.mjs'
+      - 'scripts/forecast-backtest-v2.mjs'
       - '.github/workflows/forecast-backtest.yml'
       - 'verification/README.md'
 
@@ -31,10 +31,10 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Validate backtester
+      - name: Validate null-safe backtester
         run: |
-          node --check scripts/forecast-backtest.mjs
-          node scripts/forecast-backtest.mjs --self-test
+          node --check scripts/forecast-backtest-v2.mjs
+          node scripts/forecast-backtest-v2.mjs --self-test
 
   collect:
     if: github.event_name != 'pull_request'
@@ -53,7 +53,7 @@ jobs:
           git fetch origin forecast-data || true
           git show origin/forecast-data:verification-data/state.json > verification-data/state.json 2>/dev/null || true
       - name: Collect and score forecasts
-        run: node scripts/forecast-backtest.mjs
+        run: node scripts/forecast-backtest-v2.mjs
       - name: Publish one-commit data branch
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -69,8 +69,8 @@ jobs:
           cat > README.md <<'EOF'
           # SkyMap Forecast Verification Data
 
-          Machine-generated verification state for SkyMap Ontario. This branch is force-replaced each run so historical Git objects do not grow without bound. See `verification-data/report.md` for the human-readable scorecard and `verification-data/public.json` for compact metrics.
+          Machine-generated null-safe verification state for SkyMap Ontario. Missing numeric forecast or observation fields are excluded rather than being interpreted as dry weather. This branch is force-replaced each run so history remains bounded.
           EOF
           git add README.md verification-data
-          git commit -m "Update forecast verification $(date -u +'%Y-%m-%dT%H:%MZ')"
+          git commit -m "Update null-safe forecast verification $(date -u +'%Y-%m-%dT%H:%MZ')"
           git push --force origin HEAD:forecast-data
