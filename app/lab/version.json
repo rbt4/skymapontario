@@ -1,8 +1,8 @@
 {
   "name": "SkyMap Future Lab",
-  "version": "20.0.1-experimental.2",
+  "version": "21.0.0-experimental.3",
   "channel": "experimental",
-  "engine": "living-future-radar+forecast-iq",
+  "engine": "living-future-radar+forecast-iq-21",
   "released": "2026-08-12",
-  "experience": "horizon-calibrated-local-learning"
+  "experience": "radar-first-official-ensemble-local-learning"
 }
