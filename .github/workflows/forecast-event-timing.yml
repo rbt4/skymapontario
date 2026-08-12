@@ -1,0 +1,81 @@
+name: SkyMap precipitation event timing
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '7 */12 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/forecast-event-timing.mjs'
+      - '.github/workflows/forecast-event-timing.yml'
+      - 'verification/EVENT-TIMING.md'
+  pull_request:
+    paths:
+      - 'scripts/forecast-event-timing.mjs'
+      - '.github/workflows/forecast-event-timing.yml'
+      - 'verification/EVENT-TIMING.md'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: forecast-event-timing
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Validate event-object verifier
+        run: |
+          node --check scripts/forecast-event-timing.mjs
+          node scripts/forecast-event-timing.mjs --self-test
+      - name: Live six-source event snapshot smoke
+        if: github.event_name == 'pull_request'
+        run: |
+          rm -rf verification-timing
+          node scripts/forecast-event-timing.mjs --smoke
+
+  collect:
+    if: github.event_name != 'pull_request'
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Restore bounded event-timing state
+        run: |
+          mkdir -p verification-timing
+          git fetch origin forecast-timing-data || true
+          git show origin/forecast-timing-data:verification-timing/state.json > verification-timing/state.json 2>/dev/null || true
+      - name: Seal new event windows and score mature snapshots
+        run: node scripts/forecast-event-timing.mjs
+      - name: Publish bounded timing branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p /tmp/skymap-timing
+          cp verification-timing/state.json verification-timing/public.json /tmp/skymap-timing/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout --orphan forecast-timing-data-next
+          git rm -rf .
+          mkdir -p verification-timing
+          cp /tmp/skymap-timing/* verification-timing/
+          cat > README.md <<'EOF'
+          # SkyMap Event Timing Verification Data
+
+          Machine-generated prospective precipitation-event timing verification. Forecast event windows are sealed before their outcomes and later matched to ECCC observed events. Metrics preserve start/end signed bias, timing MAE, misses and false alarms. The branch is force-replaced to keep history bounded.
+          EOF
+          git add README.md verification-timing
+          git commit -m "Update precipitation event timing $(date -u +'%Y-%m-%dT%H:%MZ')"
+          git push --force origin HEAD:forecast-timing-data
