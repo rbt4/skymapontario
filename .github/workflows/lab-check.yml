@@ -4,11 +4,13 @@ on:
   pull_request:
     paths:
       - 'app/lab/**'
+      - 'scripts/check-weathernext.mjs'
       - '.github/workflows/lab-check.yml'
   push:
     branches: [main]
     paths:
       - 'app/lab/**'
+      - 'scripts/check-weathernext.mjs'
       - '.github/workflows/lab-check.yml'
 
 permissions:
@@ -25,13 +27,22 @@ jobs:
       - name: Check Future Lab JavaScript and data hierarchy
         run: |
           node --check app/lab/accuracy-engine.js
+          node --check app/lab/forecast-intelligence-25.js
           node --check app/lab/lab.js
+          node --check scripts/check-weathernext.mjs
           grep -q '<script src="accuracy-engine.js"></script>' app/lab/index.html
+          grep -q 'forecast-intelligence-25.js' app/lab/index.html
+          grep -q 'ensemble-api.open-meteo.com' app/lab/index.html
           grep -q 'https://api.weather.gc.ca' app/lab/index.html
           grep -q "VERSION = '21.0.0'" app/lab/accuracy-engine.js
+          grep -q "VERSION = '25.0.0'" app/lab/forecast-intelligence-25.js
+          grep -q 'google_weathernext2_ensemble' app/lab/forecast-intelligence-25.js
           grep -q 'Radar_1km_RainPrecipRate-Extrapolation' app/lab/accuracy-engine.js
           grep -q 'REPS.DIAG.3_PRMM.ERGE1' app/lab/accuracy-engine.js
           grep -q 'citypageweather-realtime' app/lab/accuracy-engine.js
           grep -q 'neighbourhoodCoordinates' app/lab/accuracy-engine.js
           grep -q 'leadBucket' app/lab/accuracy-engine.js
           grep -q 'row.snow' app/lab/accuracy-engine.js
+      - name: Live Google WeatherNext 2 ensemble smoke test
+        if: github.event_name == 'pull_request'
+        run: node scripts/check-weathernext.mjs
