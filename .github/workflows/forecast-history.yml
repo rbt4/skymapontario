@@ -13,6 +13,7 @@ on:
   pull_request:
     paths:
       - 'scripts/forecast-history-backfill.mjs'
+      - 'scripts/forecast-history-diagnostic.mjs'
       - '.github/workflows/forecast-history.yml'
       - 'verification/HISTORICAL-INTELLIGENCE.md'
 
@@ -35,6 +36,9 @@ jobs:
         run: |
           node --check scripts/forecast-history-backfill.mjs
           node scripts/forecast-history-backfill.mjs --self-test
+      - name: Archive timestamp diagnostic
+        if: github.event_name == 'pull_request'
+        run: node scripts/forecast-history-diagnostic.mjs
       - name: Live archive smoke test
         if: github.event_name == 'pull_request'
         run: node scripts/forecast-history-backfill.mjs --smoke
