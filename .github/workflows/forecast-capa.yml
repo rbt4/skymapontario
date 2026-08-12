@@ -38,9 +38,12 @@ jobs:
       - name: Live archived forecast + RDPA final-analysis smoke
         if: github.event_name == 'pull_request'
         env:
-          CAPA_CHUNK_DAYS: '14'
+          CAPA_CHUNK_DAYS: '7'
         run: |
           rm -rf verification-capa
+          # Production begins at 2024-01-01 to map real archive coverage.
+          # The smoke uses a mature archive period so it tests the RDPA integration itself.
+          sed -i "s/const START='2024-01-01';/const START='2026-04-15';/" scripts/forecast-capa-truth.mjs
           node scripts/forecast-capa-truth.mjs --smoke
 
   backfill:
@@ -51,7 +54,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@49933ea5288caeca8642d1f99cc633dbcf757c94c7933a
         with:
           node-version: '22'
       - name: Restore bounded CaPA truth state
