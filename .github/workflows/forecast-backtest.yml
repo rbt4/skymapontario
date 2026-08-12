@@ -8,11 +8,13 @@ on:
     branches: [main]
     paths:
       - 'scripts/forecast-backtest-v2.mjs'
+      - 'scripts/forecast-weathernext-verifier.mjs'
       - '.github/workflows/forecast-backtest.yml'
       - 'verification/README.md'
   pull_request:
     paths:
       - 'scripts/forecast-backtest-v2.mjs'
+      - 'scripts/forecast-weathernext-verifier.mjs'
       - '.github/workflows/forecast-backtest.yml'
       - 'verification/README.md'
 
@@ -31,10 +33,12 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Validate null-safe backtester
+      - name: Validate null-safe prospective verifiers
         run: |
           node --check scripts/forecast-backtest-v2.mjs
+          node --check scripts/forecast-weathernext-verifier.mjs
           node scripts/forecast-backtest-v2.mjs --self-test
+          node scripts/forecast-weathernext-verifier.mjs --self-test
 
   collect:
     if: github.event_name != 'pull_request'
@@ -52,14 +56,17 @@ jobs:
           mkdir -p verification-data
           git fetch origin forecast-data || true
           git show origin/forecast-data:verification-data/state.json > verification-data/state.json 2>/dev/null || true
-      - name: Collect and score forecasts
+          git show origin/forecast-data:verification-data/weather-next-state.json > verification-data/weather-next-state.json 2>/dev/null || true
+      - name: Collect and score conventional and official forecasts
         run: node scripts/forecast-backtest-v2.mjs
+      - name: Collect and score WeatherNext ensemble prospectively
+        run: node scripts/forecast-weathernext-verifier.mjs
       - name: Publish one-commit data branch
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p /tmp/skymap-verification
-          cp verification-data/state.json verification-data/public.json verification-data/report.md /tmp/skymap-verification/
+          cp verification-data/state.json verification-data/public.json verification-data/report.md verification-data/weather-next-state.json verification-data/weather-next-public.json verification-data/weather-next-report.md /tmp/skymap-verification/
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git checkout --orphan forecast-data-next
@@ -69,7 +76,7 @@ jobs:
           cat > README.md <<'EOF'
           # SkyMap Forecast Verification Data
 
-          Machine-generated null-safe verification state for SkyMap Ontario. Missing numeric forecast or observation fields are excluded rather than being interpreted as dry weather. This branch is force-replaced each run so history remains bounded.
+          Machine-generated null-safe prospective verification for conventional, official, ensemble and WeatherNext 2 guidance in Ontario. Missing numeric forecast or observation fields are excluded rather than interpreted as dry weather. WeatherNext is scored independently before any larger production role is considered. This branch is force-replaced each run so history remains bounded.
           EOF
           git add README.md verification-data
           git commit -m "Update null-safe forecast verification $(date -u +'%Y-%m-%dT%H:%MZ')"
