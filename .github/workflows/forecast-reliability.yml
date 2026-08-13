@@ -1,0 +1,81 @@
+name: SkyMap probability reliability lab
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '29 */6 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/forecast-reliability.mjs'
+      - '.github/workflows/forecast-reliability.yml'
+      - 'verification/PROBABILITY-RELIABILITY.md'
+  pull_request:
+    paths:
+      - 'scripts/forecast-reliability.mjs'
+      - '.github/workflows/forecast-reliability.yml'
+      - 'verification/PROBABILITY-RELIABILITY.md'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: forecast-reliability
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Validate reliability and monotonic calibration math
+        run: |
+          node --check scripts/forecast-reliability.mjs
+          node scripts/forecast-reliability.mjs --self-test
+      - name: Live four-family probability seal
+        if: github.event_name == 'pull_request'
+        run: |
+          rm -rf verification-reliability
+          node scripts/forecast-reliability.mjs --smoke
+
+  collect:
+    if: github.event_name != 'pull_request'
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Restore bounded reliability state
+        run: |
+          mkdir -p verification-reliability
+          git fetch origin forecast-reliability-data || true
+          git show origin/forecast-reliability-data:verification-reliability/state.json > verification-reliability/state.json 2>/dev/null || true
+      - name: Seal probability forecasts and score mature cases
+        run: node scripts/forecast-reliability.mjs
+      - name: Publish bounded reliability branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p /tmp/skymap-reliability
+          cp verification-reliability/state.json verification-reliability/public.json verification-reliability/candidate.json /tmp/skymap-reliability/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout --orphan forecast-reliability-data-next
+          git rm -rf .
+          mkdir -p verification-reliability
+          cp /tmp/skymap-reliability/* verification-reliability/
+          cat > README.md <<'EOF'
+          # SkyMap Probability Reliability Data
+
+          Machine-generated prospective probability calibration evidence. Forecast probabilities are sealed before outcomes and later scored for Brier/reliability by source, lead and season. Candidate monotonic calibration curves are shrinkage-protected, capped, shadow-only and cannot modify production automatically. The branch is force-replaced to keep history bounded.
+          EOF
+          git add README.md verification-reliability
+          git commit -m "Update probability reliability $(date -u +'%Y-%m-%dT%H:%MZ')"
+          git push --force origin HEAD:forecast-reliability-data
