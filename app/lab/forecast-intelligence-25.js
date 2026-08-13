@@ -56,6 +56,7 @@
   const MODEL_RE = /^https:\/\/api\.open-meteo\.com\/v1\/(gem|ecmwf|gfs)(?:\?|$)/i;
   const CACHE_TTL = 30 * 60 * 1000;
   const contextCache = new Map();
+  const announced = new Set();
 
   const finite = value => value === null || value === undefined || value === '' || value === MISSING ? null : (Number.isFinite(Number(value)) ? Number(value) : null);
   const roundHour = value => {
@@ -127,14 +128,48 @@
     return parseWeatherNext(await response.json());
   }
 
+  function persistentKey(lat, lon) {
+    return `skymap.weathernext25.${placeKey(lat, lon)}`;
+  }
+
+  function readPersistent(lat, lon) {
+    try {
+      const saved = JSON.parse(localStorage.getItem(persistentKey(lat, lon)) || 'null');
+      if (!saved?.fetchedAt || Date.now() - saved.fetchedAt >= CACHE_TTL || !Array.isArray(saved.rows)) return null;
+      return { fetchedAt:saved.fetchedAt, members:saved.members || 0, rows:new Map(saved.rows) };
+    } catch (_) { return null; }
+  }
+
+  function writePersistent(lat, lon, data) {
+    try {
+      localStorage.setItem(persistentKey(lat, lon), JSON.stringify({ fetchedAt:data.fetchedAt, members:data.members, rows:[...data.rows] }));
+    } catch (_) {}
+  }
+
+  function announce(lat, lon, data, force = false) {
+    if (!data) return;
+    const token = `${placeKey(lat, lon)}:${data.fetchedAt}`;
+    if (!force && announced.has(token)) return;
+    announced.add(token);
+    try {
+      window.dispatchEvent(new CustomEvent('skymap:evidence-ready', { detail:{ source:'weathernext', placeKey:placeKey(lat, lon), savedAt:data.fetchedAt } }));
+    } catch (_) {}
+  }
+
   async function getWeatherNext(lat, lon) {
     const key = placeKey(lat, lon);
     const cached = contextCache.get(key);
     if (cached?.data && Date.now() - cached.savedAt < CACHE_TTL) return cached.data;
     if (cached?.promise) return cached.promise;
+    const persistent = readPersistent(lat, lon);
+    if (persistent) {
+      contextCache.set(key, { savedAt:persistent.fetchedAt, data:persistent });
+      return persistent;
+    }
     const promise = fetchWeatherNext(lat, lon)
       .then(data => {
         contextCache.set(key, { savedAt: Date.now(), data });
+        writePersistent(lat, lon, data);
         return data;
       })
       .catch(error => {
@@ -143,6 +178,11 @@
       });
     contextCache.set(key, { savedAt: 0, data: null, promise });
     return promise;
+  }
+
+  function warmWeatherNext(lat, lon, announceReady = true) {
+    if (finite(lat) == null || finite(lon) == null) return Promise.resolve(null);
+    return getWeatherNext(lat, lon).then(data => { announce(lat, lon, data, announceReady); return data; }).catch(() => null);
   }
 
   function weatherNextAt(context, target) {
@@ -186,14 +226,12 @@
     const lon = finite(parsed.searchParams.get('longitude'));
     if (lat == null || lon == null) return upstreamFetch(input, init);
 
-    const [response, context] = await Promise.all([
-      upstreamFetch(input, init),
-      getWeatherNext(lat, lon)
-    ]);
+    void warmWeatherNext(lat, lon, false);
+    const response = await upstreamFetch(input, init);
     if (!response.ok) return response;
     try {
       const data = restoreMissing(await response.clone().json());
-      if (!context) return cloneJsonResponse(response, data);
+      const context = contextCache.get(placeKey(lat, lon))?.data || null;
       return cloneJsonResponse(response, annotate(data, context, modelId(url)));
     } catch (_) {
       return response;
@@ -205,6 +243,7 @@
     source: 'Google DeepMind WeatherNext 2 via Open-Meteo Ensemble API',
     mode: 'single-pass-sidecar+legacy-null-guard',
     cache: contextCache,
+    warm: warmWeatherNext,
     at(lat, lon, target) {
       return weatherNextAt(contextCache.get(placeKey(lat, lon))?.data, target);
     }

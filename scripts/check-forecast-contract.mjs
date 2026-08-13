@@ -44,7 +44,7 @@ vm.runInNewContext(source, {
 }, { filename: 'accuracy-engine.js' });
 
 const engine = window.SkyMapAccuracy;
-assert.equal(engine?.version, '33.0.0');
+assert.equal(engine?.version, '33.1.0');
 assert.match(engine?.mode || '', /truth-firewall/);
 const contract = engine?.contract;
 assert.ok(contract, 'forecast contract export missing');
