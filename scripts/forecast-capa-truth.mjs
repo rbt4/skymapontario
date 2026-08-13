@@ -107,20 +107,33 @@ function gridSeries(data,loc,c){
   }
   return out;
 }
-function pointTruthUrl(loc,c){
+function pointTruthUrl(loc,validAt){
   const radius=.18,bbox=[loc.lon-radius,loc.lat-radius,loc.lon+radius,loc.lat+radius].map(v=>v.toFixed(4)).join(',');
-  const datetime=`${iso(c.startMs).replace('.000Z','Z')}/${iso(c.endMs).replace('.000Z','Z')}`;
+  const datetime=iso(validAt).replace('.000Z','Z');
   return `${ECCC}/collections/${COLLECTION}/coverage?${new URLSearchParams({f:'json',bbox,datetime})}`;
 }
 async function loadTruth(c){
-  const out=new Map(),expected=analysisTimes(c).length,minimum=Math.max(2,Math.floor(expected*.5));
+  const out=new Map(),times=analysisTimes(c),minimum=Math.max(2,Math.floor(times.length*.5));
   let accepted=0,failed=0;
   for(const loc of LOCATIONS){
-    try{
-      const series=gridSeries(await fetchJson(pointTruthUrl(loc,c),3,55000),loc,c);
-      if(series.size>=minimum){out.set(loc.id,series);accepted++;}else{failed++;console.warn(`⚠ RDPA ${loc.id}: only ${series.size}/${expected} usable analyses`);}
-    }catch(e){failed++;console.warn(`⚠ RDPA ${loc.id}: ${e.message}`);}
-    await new Promise(r=>setTimeout(r,150));
+    const series=new Map();
+    let requestFailures=0;
+    for(let i=0;i<times.length;i+=3){
+      const batch=times.slice(i,i+3);
+      const rows=await Promise.all(batch.map(async validAt=>{
+        try{
+          const payload=await fetchJson(pointTruthUrl(loc,validAt),3,55000);
+          return[validAt,gridSeries(payload,loc,{startMs:validAt,endMs:validAt}).get(validAt)||null,null];
+        }catch(e){return[validAt,null,String(e.message||e)];}
+      }));
+      for(const [validAt,value,error]of rows){
+        if(value)series.set(validAt,value);
+        else if(error){requestFailures++;if(requestFailures<=2)console.warn(`⚠ RDPA ${loc.id} ${iso(validAt)}: ${error}`);}
+      }
+      await new Promise(r=>setTimeout(r,180));
+    }
+    if(series.size>=minimum){out.set(loc.id,series);accepted++;}
+    else{failed++;console.warn(`⚠ RDPA ${loc.id}: only ${series.size}/${times.length} usable analyses · ${requestFailures} request failures`);}
   }
   console.log(`✓ RDPA point truth: ${accepted}/${LOCATIONS.length} locations usable · ${failed} failed`);
   return out;
