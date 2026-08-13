@@ -5,12 +5,14 @@ on:
     paths:
       - 'app/lab/**'
       - 'scripts/check-weathernext.mjs'
+      - 'scripts/check-forecast-contract.mjs'
       - '.github/workflows/lab-check.yml'
   push:
     branches: [main]
     paths:
       - 'app/lab/**'
       - 'scripts/check-weathernext.mjs'
+      - 'scripts/check-forecast-contract.mjs'
       - '.github/workflows/lab-check.yml'
 
 permissions:
@@ -30,11 +32,13 @@ jobs:
           node --check app/lab/forecast-intelligence-25.js
           node --check app/lab/lab.js
           node --check scripts/check-weathernext.mjs
+          node --check scripts/check-forecast-contract.mjs
+          node scripts/check-forecast-contract.mjs
           grep -q '<script src="accuracy-engine.js"></script>' app/lab/index.html
           grep -q 'forecast-intelligence-25.js' app/lab/index.html
           grep -q 'ensemble-api.open-meteo.com' app/lab/index.html
           grep -q 'https://api.weather.gc.ca' app/lab/index.html
-          grep -q "VERSION = '21.0.0'" app/lab/accuracy-engine.js
+          grep -q "VERSION = '32.0.0'" app/lab/accuracy-engine.js
           grep -q "VERSION = '25.0.0'" app/lab/forecast-intelligence-25.js
           grep -q 'google_weathernext2_ensemble' app/lab/forecast-intelligence-25.js
           grep -q '__skymap_missing__' app/lab/forecast-intelligence-25.js
@@ -45,6 +49,8 @@ jobs:
           grep -q 'neighbourhoodCoordinates' app/lab/accuracy-engine.js
           grep -q 'leadBucket' app/lab/accuracy-engine.js
           grep -q 'row.snow' app/lab/accuracy-engine.js
+          grep -q 'truth_contract' app/lab/accuracy-engine.js
+          grep -q 'hasExplicitForecastEvidence' app/lab/accuracy-engine.js
       - name: Live Google WeatherNext 2 ensemble smoke test
         if: github.event_name == 'pull_request'
         run: node scripts/check-weathernext.mjs
