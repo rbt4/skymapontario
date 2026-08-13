@@ -3,6 +3,7 @@
 
   const GEOMET = 'https://geo.weather.gc.ca/geomet';
   const GEOCODE = 'https://geocoding-api.open-meteo.com/v1/search';
+  const PUBLIC_COURT = 'https://raw.githubusercontent.com/rbt4/skymapontario/forecast-court-data/verification-court/public.json';
   const MODEL_CACHE_MS = 45 * 60 * 1000;
   const PERFORMANCE_KEY = 'skymap.lab.performance.v1';
   const WET_THRESHOLD = 0.12;
@@ -33,7 +34,7 @@
   const state = {
     place: loadPlace(), map:null, marker:null, overlay:null, frames:[], frameIndex:0,
     playing:false, playTimer:null, speedIndex:0, loopCount:0,
-    models:new Map(), modelErrors:new Map(), modelStale:new Map(), evidenceReady:new Set(), enrichmentStarted:false, timezone:'America/Toronto', consensus:[], events:[], courtDecision:null,
+    models:new Map(), modelErrors:new Map(), modelStale:new Map(), evidenceReady:new Set(), enrichmentStarted:false, timezone:'America/Toronto', consensus:[], events:[], personalDecision:null, publicCourt:null, publicCourtFetchedAt:0,
     modelControllers:new Map(), mapLayersStarted:false, transport:null,
     searchTimer:null, requestId:0, metadataErrors:[], frameReading:null, liveRadarReading:null,
     pointReadoutFrame:0
@@ -389,8 +390,7 @@
   function modelRowsAt(target) {
     const rows=MODELS.map(model=>{const p=pointAt(model,state.models.get(model.id),target);return p?{...p,weight:model.weight,baseWeight:model.weight}:null;}).filter(Boolean);
     if(!rows.length)return {rows,decision:null};
-    const decision=window.SkyMapAccuracy?.courtWeightsAt?.(state.place.lat,state.place.lon,target,rows)||null;
-    if(decision?.weights)rows.forEach(row=>{const adjusted=finite(decision.weights[row.model.id]);if(adjusted!=null)row.weight=adjusted;});
+    const decision=window.SkyMapAccuracy?.personalShadowAt?.(state.place.lat,state.place.lon,target,rows)||null;
     return {rows,decision};
   }
   function blendAt(target) {
@@ -407,7 +407,7 @@
   function buildConsensus() {
     const now=new Date(); now.setMinutes(0,0,0); const points=[];
     for(let h=0;h<8*24;h++){const point=blendAt(new Date(now.getTime()+h*3600000));if(point)points.push(point);}
-    state.consensus=points; state.courtDecision=points[0]?.calibration||null; state.events=identifyEvents(points); return points;
+    state.consensus=points; state.personalDecision=points[0]?.calibration||null; state.events=identifyEvents(points); return points;
   }
   function identifyEvents(points) {
     const events=[]; let active=null;
@@ -585,12 +585,14 @@
       {name:'ECCC extrapolation',role:'0–2 hour official nowcast',state:state.frames.some(f=>f.kind==='nowcast')?'ready':'error',value:state.frames.some(f=>f.kind==='nowcast')?'Connected':'Unavailable'},
       {name:'HRDPS',role:'2.5 km Canadian map guidance',state:state.frames.some(f=>f.kind==='guidance')?'ready':'error',value:state.frames.some(f=>f.kind==='guidance')?'Connected':'Unavailable'}
     ];
-    const court=state.courtDecision;
-    MODELS.forEach(model=>{const w=modelWetWindow(model),stale=state.modelStale.get(model.id),weight=finite(court?.weights?.[model.id])??model.weight;cards.push({name:model.name,role:`${model.role} · ${Math.round(weight*100)}% ${court?.active?'court':'base'} influence`,state:state.modelErrors.has(model.id)?'error':w?.wet?'wet':w?.wet===false?'dry':'ready',value:state.modelErrors.has(model.id)?'Feed error':stale?`Cached ${Math.max(1,Math.round(stale/60000))} min old`:w?.wet?`Wet ${fmtTime(w.start)}–${fmtTime(w.end)}`:w?.wet===false?'No near event':'Precipitation fields unavailable'});});
+    const personal=state.personalDecision;
+    MODELS.forEach(model=>{const w=modelWetWindow(model),stale=state.modelStale.get(model.id),weight=finite(personal?.weights?.[model.id])??model.weight;cards.push({name:model.name,role:`${model.role} · ${Math.round(weight*100)}% live base influence`,state:state.modelErrors.has(model.id)?'error':w?.wet?'wet':w?.wet===false?'dry':'ready',value:state.modelErrors.has(model.id)?'Feed error':stale?`Cached ${Math.max(1,Math.round(stale/60000))} min old`:w?.wet?`Wet ${fmtTime(w.start)}–${fmtTime(w.end)}`:w?.wet===false?'No near event':'Precipitation fields unavailable'});});
     cards.forEach(card=>{const el=document.createElement('article');el.className='source-card';el.dataset.state=card.state;el.innerHTML=`<span><small>${esc(card.role)}</small><b>${esc(card.name)}</b></span><em>${esc(card.value)}</em>`;sourceGrid.append(el);});
     const support=event?event.modelWindows.filter(w=>w.wet).length:0;
-    const courtCopy=court?.active?`Forecast Court is active for this cohort after ${court.verifiedHours} verified hours; each base influence can move by at most ${Math.round((court.maxShift||0)*100)}%.`:`Forecast Court is collecting prospective evidence (${court?.verifiedHours||0}/${court?.requiredHours||48} verified hours in the strongest current cohort); base influences remain unchanged.`;
-    text('#evidence-summary',event?`${support} independent forecast families support the next event. ${courtCopy}`:`No event currently clears the declaration threshold. ${courtCopy}`);
+    const personalCopy=personal?.reviewReady?`Personal evidence has a mature shadow cohort after ${personal.verifiedHours} verified hours, but it cannot change the live forecast.`:`Personal evidence is collecting (${personal?.verifiedHours||0}/${personal?.requiredHours||48} verified hours in the strongest current cohort); live base influences remain unchanged.`;
+    const sealed=state.publicCourt?.verdict,champion=sealed?.observed?.champion;
+    const sealedCopy=sealed?.approvedForBoundedIntegrationReview?'The sealed Ontario Court passed a challenger for explicit integration review; production still requires a deliberate release.':sealed?`The sealed Ontario Court is holding the challenger (${champion?.samples||0} scored cases · ${state.publicCourt.pending||0} pending).`:'The sealed Ontario Court status is loading in the background.';
+    text('#evidence-summary',event?`${support} independent forecast families support the next event. ${personalCopy} ${sealedCopy}`:`No event currently clears the declaration threshold. ${personalCopy} ${sealedCopy}`);
     text('#change-note',memory.change);
   }
   function renderRainLine() {
@@ -605,9 +607,9 @@
     });
   }
   function renderConstellation() {
-    const wrap=$('#constellation-grid'); wrap.innerHTML=''; const court=state.courtDecision; MODELS.forEach(model=>{
+    const wrap=$('#constellation-grid'); wrap.innerHTML=''; const personal=state.personalDecision; MODELS.forEach(model=>{
       const data=state.models.get(model.id),w=modelWetWindow(model); const el=document.createElement('article'); el.className='model-card'; el.dataset.state=data?'ready':'error'; el.style.setProperty('--accent',model.accent);
-      const stale=state.modelStale.get(model.id),weight=finite(court?.weights?.[model.id])??model.weight,influence=court?.active?`Forecast Court ${Math.round(weight*100)}% · base ${Math.round(model.weight*100)}%`:`base influence ${Math.round(model.weight*100)}%`;
+      const stale=state.modelStale.get(model.id),shadow=finite(personal?.shadowWeights?.[model.id]),influence=personal?.reviewReady&&shadow!=null?`live base ${Math.round(model.weight*100)}% · personal shadow ${Math.round(shadow*100)}% (not active)`:`live base influence ${Math.round(model.weight*100)}%`;
       el.innerHTML=`<header><b>${esc(model.name)}</b><i></i></header><p>${data?(stale?`Cached guidance · ${Math.max(1,Math.round(stale/60000))} min old`:w?.wet?`Next wet signal: ${esc(timeRange(w.start,w.end))}`:w?.wet===false?'No near-term wet signal':'Precipitation fields unavailable'):'Source did not respond'} · ${esc(influence)}</p>`; wrap.append(el);
     });
   }
@@ -637,12 +639,25 @@
     void window.SkyMapForecastIQ25?.warm?.(lat,lon);
   }
 
+  async function warmPublicCourt() {
+    if(Date.now()-state.publicCourtFetchedAt<15*60*1000)return;
+    const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),5000);
+    try{
+      const response=await fetch(PUBLIC_COURT,{cache:'no-store',signal:controller.signal});
+      if(!response.ok)throw new Error(`Forecast Court HTTP ${response.status}`);
+      const data=await response.json();
+      if(data?.schema!==1||!data?.verdict||data.verdict.autoPromotes!==false)throw new Error('Forecast Court contract mismatch');
+      state.publicCourt=data; state.publicCourtFetchedAt=Date.now(); scheduleForecastRender(80);
+    }catch(_){}finally{clearTimeout(timeout);}
+  }
+
   function startEnrichment(requestId,delay=120) {
     if(state.enrichmentStarted)return;
     state.enrichmentStarted=true;
     setTimeout(()=>{
       if(requestId!==state.requestId)return;
       warmEvidence();
+      void warmPublicCourt();
       void buildFrames().then(()=>{if(requestId===state.requestId)setFeedHealth();}).catch(error=>{state.metadataErrors.push(String(error));showToast('Radar metadata is delayed; forecast guidance can still load.');});
     },delay);
   }

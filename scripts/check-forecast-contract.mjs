@@ -60,9 +60,10 @@ assert.equal(contract.dryWeatherCode(null), null, 'missing weather code cannot b
 assert.equal(contract.hasExplicitForecastEvidence(null, null), false, 'missing model hour is not scorable');
 assert.equal(contract.hasExplicitForecastEvidence(0, null), true, 'explicit zero precipitation is scorable');
 assert.equal(contract.hasExplicitForecastEvidence(null, 3), true, 'explicit weather code is scorable');
-assert.equal(contract.courtRules.minimumSamples, 48, 'Forecast Court sample floor weakened');
-assert.equal(contract.courtRules.minimumSpanDays, 30, 'Forecast Court observation span weakened');
-assert.equal(contract.courtRules.maxFactorShift, 0.14, 'Forecast Court influence cap changed');
+assert.equal(contract.personalShadowRules.minimumSamples, 48, 'personal shadow sample floor weakened');
+assert.equal(contract.personalShadowRules.minimumSpanDays, 30, 'personal shadow observation span weakened');
+assert.equal(contract.personalShadowRules.maxFactorShift, 0.14, 'personal shadow diagnostic cap changed');
+assert.equal(contract.personalShadowRules.autoPromotion, false, 'personal evidence can auto-promote');
 
 assert.doesNotMatch(source, /const finite = value => Number\.isFinite\(Number\(value\)\)/, 'legacy null-to-zero finite helper returned');
 assert.doesNotMatch(source, /if \(av == null && bv == null\) return 0/, 'legacy missing-to-dry mixer returned');

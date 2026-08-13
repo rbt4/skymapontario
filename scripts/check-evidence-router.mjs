@@ -57,7 +57,9 @@ const duplicate = router.contract.dedupeContributors([
 assert.equal(duplicate.rows.length, 2);
 assert.equal(duplicate.duplicates, 1);
 
-assert.equal(router.contract.governanceLocks.learnedModelWeights, 'forecast-court-gated');
+assert.equal(router.contract.governanceLocks.learnedModelWeights, false);
+assert.equal(router.contract.governanceLocks.shadowModelWeights, 'collect-only');
+assert.equal(router.contract.governanceLocks.promotion, 'explicit-release-after-sealed-court');
 assert.equal(router.contract.governanceLocks.timingOffsets, false);
 assert.equal(router.contract.governanceLocks.spatialOffsets, false);
 assert.equal(router.contract.governanceLocks.probabilityCalibration, false);

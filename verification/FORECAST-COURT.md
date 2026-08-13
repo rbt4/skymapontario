@@ -1,59 +1,55 @@
-# Forecast Lab 34 prospective Forecast Court
+# SkyMap Forecast Court
 
-Forecast Lab 34 turns local verification into a conservative calibration system. It does not claim that past hit rate is a future probability, and it does not let a short winning streak rewrite the forecast.
+The Forecast Court is the release gate for any learned change to SkyMap's published model weights. It compares the current champion with one sealed challenger on the same Ontario cases and against the same later ECCC observations. It never edits production by itself.
 
-## Evidence lifecycle
+## Sealed prospective process
 
-1. Each raw GEM, IFS, GFS, and AIFS forecast is frozen before its valid hour.
-2. One representative forecast is retained per model, valid hour, and lead bucket for nine days.
-3. When that hour arrives, ECCC `RADAR_1KM_RRAI` point data supplies the independent rain observation.
-4. Rain occurrence and log-scaled precipitation-rate error are scored separately, then combined as 80% occurrence and 20% amount quality.
-5. A valid hour counts once per model and lead bucket. Reloads and repeated thirty-minute forecasts cannot manufacture extra court samples.
-6. Snow and mixed-snow groups are withheld because rain-radar rate is not a valid snow truth source.
+Every six hours, `.github/workflows/forecast-court.yml`:
 
-## Cohorts
+1. freezes champion and challenger predictions before truth exists;
+2. records +24, +48, and +72 hour cases for eight Ontario cities;
+3. waits until the forecast hour is safely in the past;
+4. scores both versions against nearby ECCC climate-hourly precipitation truth;
+5. publishes a bounded public status artifact from the `forecast-court-data` branch.
 
-Evidence is retained separately by:
-
-- local 0.1° cell;
-- forecast lead bucket: 0–3, 3–12, 12–24, 24–48, 48–96, or 96+ hours;
-- meteorological season;
-- forecast regime: dry, light rain, or steady rain.
-
-The court tries the most specific mature cohort first, then falls back through local and Ontario-wide lead cohorts. A fallback is still based only on observations collected on the current device.
-
-## Promotion gate
-
-A cohort cannot adjust model influence until it has all of the following:
+The candidate must pass every guardrail:
 
 | Gate | Minimum |
 | --- | ---: |
-| Independently verified hours | 48 |
-| Observation span | 30 days |
-| Observed wet hours | 8 |
-| Observed dry hours | 16 |
-| Models meeting the sample floor | 2 |
+| Historical evidence per supported model and lead | 500 samples |
+| Historically supported models | 3 |
+| Sealed prospective cases | 300 |
+| Observed wet cases | 45 |
+| Cases at each lead | 60 |
+| Relative Brier improvement | 2% |
+| CSI degradation | no worse than 0.5 percentage points |
+| Miss-rate degradation | no worse than 1.5 percentage points |
+| False-alarm degradation | no worse than 2 percentage points |
+| Per-lead Brier degradation | no lead worse by more than 3% |
 
-Every model score is shrunk toward a 72% prior with 24 virtual samples. This makes early evidence deliberately weak. After promotion, each model's influence factor is capped between 0.86 and 1.14 of its published base influence, and total influence is conserved. The hardcoded base weights remain immutable.
+Passing produces `approvedForBoundedIntegrationReview: true`. It does not promote the challenger. A deliberate code change, review, CI pass, merge, and deployment are still required.
 
-## Controls that remain locked
+## Unsupported historical sources
 
-- event probabilities are not calibrated;
-- timing is not shifted;
-- forecast locations are not spatially moved;
-- shared ECCC, Best Match, REPS, nowcast, and WeatherNext evidence is not learned into raw-model weights;
-- radar does not grade snow.
+A source with fewer than 500 honest historical samples at any supported lead cannot acquire learned influence. It is frozen at the champion weight. The Court may evaluate a challenger when at least three models are historically supported at every lead and every unsupported model remains frozen.
 
-The user-facing evidence drawer identifies whether the Court is still collecting or active and shows both base and adjusted influence when active.
+This prevents a missing archive—currently relevant to AIFS—from both deadlocking the entire Court and receiving an invented benefit from normalization. Prospective cases can still include the source, so a later archive improvement can make it eligible without changing the truth standard.
 
-## Privacy and persistence
+## Boundaries
 
-The ledger remains in browser local storage. SkyMap sends no calibration analytics, location history, forecasts, or observations to a SkyMap server. Storage is bounded: global observation identifiers, per-cohort observations, per-model sample identifiers, and prospective snapshots all have explicit caps.
+- champion and challenger cases are immutable after sealing;
+- the same observation grades both sides;
+- model agreement is not described as probability calibration;
+- timing, spatial offsets, and probability calibration remain locked;
+- current-device personal evidence cannot bypass this Court;
+- snow is not graded by rain-radar truth;
+- the Court cannot write application code or production weights.
 
-## Executable verification
+## Verification
 
 ```bash
-node scripts/check-forecast-court.mjs
+node scripts/forecast-regime-skill.mjs --self-test
+node scripts/forecast-court.mjs --self-test
 ```
 
-The contract fails if thresholds weaken, balance or span gates disappear, influence exceeds ±14%, total model influence changes, long-range forecasts expire before verification, rain radar can grade snow, or the visible consensus bypasses eligible Court weights.
+The first check proves that unsupported sources remain exactly at champion influence. The second proves that three supported models can enter the Court, while any movement of an unsupported model rejects the challenger.

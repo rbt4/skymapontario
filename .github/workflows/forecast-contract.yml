@@ -16,6 +16,7 @@ on:
       - 'verification/EVIDENCE-ROUTER.md'
       - 'verification/PERFORMANCE-CONTRACT.md'
       - 'verification/FORECAST-COURT.md'
+      - 'verification/PERSONAL-FORECAST-EVIDENCE.md'
   push:
     branches: [main]
     paths:
@@ -32,6 +33,7 @@ on:
       - 'verification/EVIDENCE-ROUTER.md'
       - 'verification/PERFORMANCE-CONTRACT.md'
       - 'verification/FORECAST-COURT.md'
+      - 'verification/PERSONAL-FORECAST-EVIDENCE.md'
   workflow_dispatch:
 
 permissions:

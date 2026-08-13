@@ -4,7 +4,7 @@
   const VERSION = '34.0.0';
   const MODEL_CACHE_SCHEMA = '2';
   const COURT_VERSION = 1;
-  const COURT_KEY = 'skymap.accuracy.forecast-court.v1';
+  const PERSONAL_SHADOW_KEY = 'skymap.accuracy.personal-shadow.v1';
   const COURT_MIN_SAMPLES = 48;
   const COURT_MIN_SPAN_DAYS = 30;
   const COURT_MIN_WET = 8;
@@ -426,7 +426,7 @@
 
   function readCourt() {
     try {
-      const parsed = JSON.parse(localStorage.getItem(COURT_KEY) || 'null');
+      const parsed = JSON.parse(localStorage.getItem(PERSONAL_SHADOW_KEY) || 'null');
       if (parsed?.version === COURT_VERSION && parsed.tiers && typeof parsed.tiers === 'object') return parsed;
     } catch (_) {}
     return { version:COURT_VERSION, observations:[], tiers:{} };
@@ -435,7 +435,7 @@
   function writeCourt(court) {
     try {
       court.observations = [...new Set(court.observations || [])].slice(-2500);
-      localStorage.setItem(COURT_KEY, JSON.stringify(court));
+      localStorage.setItem(PERSONAL_SHADOW_KEY, JSON.stringify(court));
     } catch (_) {}
   }
 
@@ -544,7 +544,7 @@
     return Object.fromEntries(usable.map(row => [row.model.id, baseRaw[row.model.id] * factors[row.model.id]]));
   }
 
-  function courtWeightsAt(lat, lon, target, rows) {
+  function personalShadowAt(lat, lon, target, rows) {
     const modelIds = (rows || []).map(row => row?.model?.id).filter(Boolean);
     const baseWeights = boundedCourtWeights(rows, {});
     const regime = forecastRegime(rows);
@@ -560,12 +560,12 @@
       if (!collecting || eligibility.verifiedHours > collecting.verifiedHours) collecting = { tierKey, entry, ...eligibility };
       if (!eligibility.active) continue;
       const qualities = Object.fromEntries(eligibility.eligibleModels.map(id => [id, posteriorQuality(entry.models[id])]));
-      const weights = boundedCourtWeights(rows, qualities);
-      return Object.freeze({ active:true, tier:tierKey, regime, season, leadBucket:bucketName, weights:Object.freeze(weights), qualities:Object.freeze(qualities), ...eligibility, maxShift:COURT_MAX_FACTOR_SHIFT });
+      const shadowWeights = boundedCourtWeights(rows, qualities);
+      return Object.freeze({ ...eligibility, active:false, reviewReady:true, tier:tierKey, regime, season, leadBucket:bucketName, weights:Object.freeze(baseWeights), shadowWeights:Object.freeze(shadowWeights), qualities:Object.freeze(qualities), maxShift:COURT_MAX_FACTOR_SHIFT, reason:'personal-shadow-awaits-sealed-ontario-court-and-explicit-release' });
     }
     return Object.freeze({
-      active:false, tier:collecting?.tierKey || (regime === 'snow' ? 'snow-withheld' : 'collecting'), regime, season, leadBucket:bucketName,
-      weights:Object.freeze(baseWeights), verifiedHours:collecting?.verifiedHours || 0, wetHours:collecting?.wetHours || 0, dryHours:collecting?.dryHours || 0,
+      active:false, reviewReady:false, tier:collecting?.tierKey || (regime === 'snow' ? 'snow-withheld' : 'collecting'), regime, season, leadBucket:bucketName,
+      weights:Object.freeze(baseWeights), shadowWeights:Object.freeze(baseWeights), verifiedHours:collecting?.verifiedHours || 0, wetHours:collecting?.wetHours || 0, dryHours:collecting?.dryHours || 0,
       spanDays:collecting?.spanDays || 0, requiredHours:COURT_MIN_SAMPLES, reason:regime === 'snow' ? 'rain-radar-cannot-verify-snow' : 'prospective-thresholds-not-met', maxShift:COURT_MAX_FACTOR_SHIFT
     });
   }
@@ -827,14 +827,14 @@
     }
   }
 
-  function forecastCourtStats() {
+  function personalEvidenceStats() {
     try {
       const court = readCourt();
       const entries = Object.values(court.tiers || {});
-      const activeTiers = entries.filter(entry => courtEligibility(entry, Object.keys(entry.models || {})).active).length;
-      return { verifiedHours:new Set(court.observations || []).size, activeTiers, minimum:COURT_MIN_SAMPLES };
+      const reviewReadyTiers = entries.filter(entry => courtEligibility(entry, Object.keys(entry.models || {})).active).length;
+      return { verifiedHours:new Set(court.observations || []).size, reviewReadyTiers, minimum:COURT_MIN_SAMPLES, autoPromotes:false };
     } catch (_) {
-      return { verifiedHours:0, activeTiers:0, minimum:COURT_MIN_SAMPLES };
+      return { verifiedHours:0, reviewReadyTiers:0, minimum:COURT_MIN_SAMPLES, autoPromotes:false };
     }
   }
 
@@ -842,14 +842,14 @@
     const contexts = [...contextCache.values()].map(item => item.data).filter(Boolean);
     const latest = contexts.sort((a, b) => b.savedAt - a.savedAt)[0];
     const stats = accuracyStats();
-    const court = forecastCourtStats();
+    const personal = personalEvidenceStats();
     return {
       official: latest?.official?.name || null,
       reps: latest?.reps?.length || 0,
       nowcast: latest?.nowcast?.length || 0,
       samples: stats.samples,
       score: stats.score,
-      court
+      personal
     };
   }
 
@@ -897,8 +897,8 @@
       if (status.official) extras.push('official ECCC');
       if (status.reps) extras.push('REPS');
       if (status.nowcast) extras.push('point nowcast');
-      if (status.court.activeTiers) extras.push(`Forecast Court active · ${status.court.verifiedHours} verified hours`);
-      else if (status.court.verifiedHours) extras.push(`Forecast Court collecting · ${status.court.verifiedHours} verified hours`);
+      if (status.personal.reviewReadyTiers) extras.push(`personal shadow ready · ${status.personal.verifiedHours} verified hours`);
+      else if (status.personal.verifiedHours) extras.push(`personal evidence · ${status.personal.verifiedHours} verified hours`);
       const suffix = extras.length ? `Forecast IQ · ${extras.join(' · ')}` : 'Forecast IQ';
       const base = current.replace(/\s*·\s*Forecast IQ.*$/i, '');
       const next = `${base} · ${suffix}`;
@@ -911,16 +911,16 @@
   resetLegacyModelCache();
   window.SkyMapAccuracy = Object.freeze({
     version: VERSION,
-    mode: 'truth-firewall+single-pass-sidecar+radar-first+official+reps+forecast-court-calibration',
+    mode: 'truth-firewall+single-pass-sidecar+radar-first+official+reps+personal-shadow-evidence',
     status: contextStatus,
     warm: warmEvidence,
     evidenceAt,
     modelSkillAt,
-    courtWeightsAt,
-    courtStatus: forecastCourtStats,
+    personalShadowAt,
+    personalEvidenceStatus: personalEvidenceStats,
     contract: Object.freeze({
       finite, mix, dryWeatherCode, hasExplicitForecastEvidence, seasonBucket, forecastRegime, courtEligibility, boundedCourtWeights,
-      courtRules:Object.freeze({ version:COURT_VERSION, minimumSamples:COURT_MIN_SAMPLES, minimumSpanDays:COURT_MIN_SPAN_DAYS, minimumWet:COURT_MIN_WET, minimumDry:COURT_MIN_DRY, priorStrength:COURT_PRIOR_STRENGTH, maxFactorShift:COURT_MAX_FACTOR_SHIFT })
+      personalShadowRules:Object.freeze({ version:COURT_VERSION, minimumSamples:COURT_MIN_SAMPLES, minimumSpanDays:COURT_MIN_SPAN_DAYS, minimumWet:COURT_MIN_WET, minimumDry:COURT_MIN_DRY, priorStrength:COURT_PRIOR_STRENGTH, maxFactorShift:COURT_MAX_FACTOR_SHIFT, autoPromotion:false, role:'personal-shadow-only', activationAuthority:'sealed-ontario-court-plus-explicit-code-release' })
     })
   });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', decorateStatus, { once: true });
