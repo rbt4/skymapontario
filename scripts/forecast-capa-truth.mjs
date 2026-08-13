@@ -71,7 +71,18 @@ function coverageSamples(data,validAt){
   const precip=range(c.ranges,'1'),names=precip?.axisNames||[tk,yk,xk].filter(Boolean),shape=precip?.shape||names.map(k=>axisValues(axes[k]).length),values=precip?.values||[];
   let finiteCount=0,zeroCount=0,nullCount=0;
   for(const value of values){const n=finite(value);if(n==null)nullCount++;else{finiteCount++;if(n===0)zeroCount++;}}
-  return {range:Object.keys(c.ranges||{})[0]||null,shape,total:values.length,finiteCount,zeroCount,nullCount,points:LOCATIONS.map(loc=>{const xi=nearest(xv,loc.lon),yi=nearest(yv,loc.lat),indices={[xk]:xi,[yk]:yi};if(tk)indices[tk]=ti;const index=flatten(names,shape,indices);return{id:loc.id,xi,yi,index,axisX:xv[xi],axisY:yv[yi],raw:values[index]??null};})};
+  return {range:Object.keys(c.ranges||{})[0]||null,shape,total:values.length,finiteCount,zeroCount,nullCount,points:LOCATIONS.map(loc=>{const xi=nearest(xv,loc.lon),yi=nearest(yv,loc.lat),indices={[xk]:xi,[yk]:yi};if(tk)indices[tk]=ti;const index=flatten(names,shape,indices);let nearestFinite=null;
+    for(let radius=0;radius<=24&&!nearestFinite;radius++){
+      for(let dy=-radius;dy<=radius&&!nearestFinite;dy++)for(let dx=-radius;dx<=radius;dx++){
+        if(Math.max(Math.abs(dx),Math.abs(dy))!==radius)continue;
+        const px=xi+dx,py=yi+dy;
+        if(px<0||py<0||px>=shape[names.indexOf(xk)]||py>=shape[names.indexOf(yk)])continue;
+        const probe={...indices,[xk]:px,[yk]:py},probeIndex=flatten(names,shape,probe),raw=finite(values[probeIndex]);
+        if(raw!=null)nearestFinite={dx,dy,cells:Math.hypot(dx,dy),index:probeIndex,raw};
+      }
+    }
+    return{id:loc.id,xi,yi,index,axisX:xv[xi],axisY:yv[yi],raw:values[index]??null,nearestFinite};
+  })};
 }
 function gridValues(data,validAt){const c=coverage(data),axes=c.domain?.axes||{},tk=axisKey(axes,'t'),xk=axisKey(axes,'x'),yk=axisKey(axes,'y');if(!xk||!yk)throw new Error(`RDPA spatial axes missing: ${Object.keys(axes).join(',')}`);const xv=axisValues(axes[xk]),yv=axisValues(axes[yk]),tv=tk?axisValues(axes[tk]):[];if(!xv.length||!yv.length)throw new Error('RDPA grid axes empty');const ti=tk?(nearest(tv,validAt,true)):0;if(tk&&ti<0)throw new Error('RDPA time axis empty');const precip=range(c.ranges,'1'),quality=range(c.ranges,'2');if(!precip?.values)throw new Error(`RDPA precipitation range missing: ${Object.keys(c.ranges||{}).join(',')}`);const names=precip.axisNames||[tk,yk,xk].filter(Boolean),shape=precip.shape||names.map(k=>axisValues(axes[k]).length),qnames=quality?.axisNames||names,qshape=quality?.shape||shape,out=new Map();for(const loc of LOCATIONS){const xi=nearest(xv,loc.lon),yi=nearest(yv,loc.lat);if(xi<0||yi<0)continue;const indices={[xk]:xi,[yk]:yi};if(tk)indices[tk]=ti;const pi=flatten(names,shape,indices),amount=finite(precip.values[pi]);if(amount==null)continue;let confidence=null;if(quality?.values){const qi=flatten(qnames,qshape,indices),raw=finite(quality.values[qi]);if(raw!=null){if(raw>=0&&raw<=1.5)confidence=clamp(raw,0,1);else if(raw>=0&&raw<=100)confidence=clamp(raw/100,0,1);}}out.set(loc.id,{amount:Math.max(0,amount),confidence});}return out;}
 function truthUrl(validAt){const q=new URLSearchParams({f:'json',bbox:ONTARIO_BBOX,datetime:iso(validAt).replace('.000Z','Z')});return `${ECCC}/collections/${COLLECTION}/coverage?${q}`;}
