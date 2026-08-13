@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '21.0.0';
+  const VERSION = '32.0.0';
   const nativeFetch = window.fetch.bind(window);
   const OPEN_METEO = 'https://api.open-meteo.com/v1/forecast';
   const ECCC_API = 'https://api.weather.gc.ca';
@@ -14,7 +14,7 @@
   const OFFICIAL_TTL = 30 * 60 * 1000;
   const contextCache = new Map();
 
-  const finite = value => Number.isFinite(Number(value)) ? Number(value) : null;
+  const finite = value => value === null || value === undefined || value === '' || value === '__skymap_missing__' ? null : (Number.isFinite(Number(value)) ? Number(value) : null);
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const english = value => value && typeof value === 'object' && 'en' in value ? value.en : value;
   const roundHour = value => {
@@ -307,18 +307,21 @@
     context.anchor.neighbours.forEach(data => {
       const index = context.neighbourIndexes.get(data)?.get(roundHour(target));
       if (index == null) return;
-      values.push({
-        pop: finite(data.hourly?.precipitation_probability?.[index]),
-        precip: Math.max(0, finite(data.hourly?.precipitation?.[index]) || 0)
-      });
+      const pop = finite(data.hourly?.precipitation_probability?.[index]);
+      const precipRaw = finite(data.hourly?.precipitation?.[index]);
+      const precip = precipRaw == null ? null : Math.max(0, precipRaw);
+      if (pop == null && precip == null) return;
+      values.push({ pop, precip });
     });
     const pops = values.map(row => row.pop).filter(value => value != null);
-    const precips = values.map(row => row.precip);
+    const precips = values.map(row => row.precip).filter(value => value != null);
+    const scorable = values.filter(row => row.precip != null || row.pop != null);
     return {
       meanPop: pops.length ? pops.reduce((sum, value) => sum + value, 0) / pops.length : null,
       maxPop: pops.length ? Math.max(...pops) : null,
-      wetFraction: values.length ? values.filter(row => row.precip >= 0.1 || (row.pop ?? 0) >= 50).length / values.length : 0,
-      maxPrecip: precips.length ? Math.max(...precips) : 0
+      wetFraction: scorable.length ? scorable.filter(row => (row.precip != null && row.precip >= 0.1) || (row.pop != null && row.pop >= 50)).length / scorable.length : null,
+      maxPrecip: precips.length ? Math.max(...precips) : null,
+      samples: scorable.length
     };
   }
 
@@ -370,14 +373,20 @@
 
   function mix(a, b, weightB) {
     const av = finite(a), bv = finite(b);
-    if (av == null && bv == null) return 0;
+    if (av == null && bv == null) return null;
     if (av == null) return bv;
     if (bv == null) return av;
     return av * (1 - weightB) + bv * weightB;
   }
 
   function dryWeatherCode(code) {
-    return PRECIP_CODES.has(Number(code)) ? 3 : Number(code || 0);
+    const value = finite(code);
+    if (value == null) return null;
+    return PRECIP_CODES.has(value) ? 3 : value;
+  }
+
+  function hasExplicitForecastEvidence(precipitation, weatherCode) {
+    return finite(precipitation) != null || finite(weatherCode) != null;
   }
 
   function officialPopAt(context, target) {
@@ -442,12 +451,11 @@
     if (!data?.hourly?.time?.length || !context?.anchor?.exact?.hourly?.time?.length) return data;
     const hourly = data.hourly;
     const anchor = context.anchor.exact.hourly;
+    if (!Array.isArray(hourly.precipitation)) return data;
     const bucket = placeBucket(lat, lon);
     const now = Date.now();
-    const ensure = key => {
-      if (!Array.isArray(hourly[key])) hourly[key] = new Array(hourly.time.length).fill(0);
-    };
-    ['precipitation','rain','showers','snowfall','weather_code'].forEach(ensure);
+    let calibratedRows = 0;
+    let skippedMissingRows = 0;
 
     hourly.time.forEach((time, i) => {
       const target = new Date(time).getTime();
@@ -457,61 +465,81 @@
       const skill = readSkill(bucket, modelId, leadHours);
       const influence = sourceInfluence(leadHours, skill, modelId);
       const exactPop = finite(anchor.precipitation_probability?.[j]);
-      const exactPrecip = Math.max(0, finite(anchor.precipitation?.[j]) || 0);
+      const modelPrecipRaw = finite(hourly.precipitation?.[i]);
+      const exactPrecipRaw = finite(anchor.precipitation?.[j]);
+      if (modelPrecipRaw == null && exactPrecipRaw == null) {
+        skippedMissingRows++;
+        return;
+      }
+      const modelPrecip = modelPrecipRaw == null ? null : Math.max(0, modelPrecipRaw);
+      const exactPrecip = exactPrecipRaw == null ? null : Math.max(0, exactPrecipRaw);
       const officialPop = officialPopAt(context, target);
       const repsPop = repsPopAt(context, target);
       const neighbours = neighbourStats(context, target);
       const fusedPop = fusedProbability(exactPop, officialPop, repsPop, neighbours, leadHours);
       const nowcastRate = leadHours <= 2.3 ? nowcastRateAt(context, target) : null;
-      const modelPrecip = Math.max(0, finite(hourly.precipitation?.[i]) || 0);
 
-      let precip = Math.max(0, mix(modelPrecip, exactPrecip, influence));
-      let rain = Math.max(0, mix(hourly.rain?.[i], anchor.rain?.[j], influence));
-      let showers = Math.max(0, mix(hourly.showers?.[i], anchor.showers?.[j], influence));
-      let snowfall = Math.max(0, mix(hourly.snowfall?.[i], anchor.snowfall?.[j], influence));
-      let code = Number(hourly.weather_code?.[i] || 0);
-      const snowSignal = snowfall > 0.02 || SNOW_CODES.has(code) || SNOW_CODES.has(Number(anchor.weather_code?.[j] || 0));
+      let precip = mix(modelPrecip, exactPrecip, influence);
+      if (precip == null) {
+        skippedMissingRows++;
+        return;
+      }
+      precip = Math.max(0, precip);
+      const mixedRain = mix(hourly.rain?.[i], anchor.rain?.[j], influence);
+      const mixedShowers = mix(hourly.showers?.[i], anchor.showers?.[j], influence);
+      const mixedSnowfall = mix(hourly.snowfall?.[i], anchor.snowfall?.[j], influence);
+      let rain = mixedRain == null ? null : Math.max(0, mixedRain);
+      let showers = mixedShowers == null ? null : Math.max(0, mixedShowers);
+      let snowfall = mixedSnowfall == null ? null : Math.max(0, mixedSnowfall);
+      let code = finite(hourly.weather_code?.[i]);
+      const anchorCode = finite(anchor.weather_code?.[j]);
+      const snowSignal = (snowfall != null && snowfall > 0.02) || (code != null && SNOW_CODES.has(code)) || (anchorCode != null && SNOW_CODES.has(anchorCode));
 
       if (!snowSignal && nowcastRate != null && leadHours <= 2.3) {
         if (nowcastRate < 0.03 && (fusedPop == null || fusedPop < 48)) {
-          precip = rain = showers = 0;
+          precip = 0;
+          if (rain != null) rain = 0;
+          if (showers != null) showers = 0;
           code = dryWeatherCode(code);
         } else if (nowcastRate >= 0.12) {
           const targetRate = clamp(nowcastRate, 0.13, 12);
           precip = Math.max(precip, targetRate * 0.72);
-          rain = Math.max(rain, targetRate * 0.62);
+          if (rain != null) rain = Math.max(rain, targetRate * 0.62);
         }
       }
 
-      const strongDry = fusedPop != null && fusedPop < 18 && exactPrecip < 0.10 && (officialPop == null || officialPop < 30) && (repsPop == null || repsPop < 25);
-      const moderateDry = fusedPop != null && fusedPop < 30 && exactPrecip < 0.06 && modelPrecip < 0.24;
+      const strongDry = fusedPop != null && fusedPop < 18 && exactPrecip != null && exactPrecip < 0.10 && (officialPop == null || officialPop < 30) && (repsPop == null || repsPop < 25);
+      const moderateDry = fusedPop != null && fusedPop < 30 && exactPrecip != null && modelPrecip != null && exactPrecip < 0.06 && modelPrecip < 0.24;
       if (!snowSignal && (strongDry || moderateDry)) {
-        precip = rain = showers = 0;
+        precip = 0;
+        if (rain != null) rain = 0;
+        if (showers != null) showers = 0;
         code = dryWeatherCode(code);
       }
 
-      const strongWet = fusedPop != null && fusedPop >= 66 && exactPrecip >= 0.08;
+      const strongWet = fusedPop != null && fusedPop >= 66 && exactPrecip != null && exactPrecip >= 0.08;
       const officialWetAgreement = officialPop != null && officialPop >= 60 && exactPop != null && exactPop >= 55;
       if (strongWet || officialWetAgreement) {
         precip = Math.max(precip, 0.13);
-        if (!PRECIP_CODES.has(code) && PRECIP_CODES.has(Number(anchor.weather_code?.[j]))) code = Number(anchor.weather_code[j]);
+        if ((code == null || !PRECIP_CODES.has(code)) && anchorCode != null && PRECIP_CODES.has(anchorCode)) code = anchorCode;
       }
 
-      if (exactPrecip < 0.06 && (exactPop ?? 0) < 35 && neighbours.wetFraction >= 0.75 && neighbours.maxPop >= 65) {
+      if (exactPrecip != null && exactPop != null && exactPrecip < 0.06 && exactPop < 35 && neighbours.wetFraction != null && neighbours.wetFraction >= 0.75 && neighbours.maxPop != null && neighbours.maxPop >= 65) {
         precip = Math.min(precip, 0.10);
       }
 
-      if (leadHours > 30 && fusedPop != null && fusedPop < 52 && Number(anchor.weather_code?.[j]) >= 80) {
+      if (leadHours > 30 && fusedPop != null && fusedPop < 52 && anchorCode != null && anchorCode >= 80) {
         precip *= 0.76;
-        rain *= 0.76;
-        showers *= 0.76;
+        if (rain != null) rain *= 0.76;
+        if (showers != null) showers *= 0.76;
       }
 
       hourly.precipitation[i] = Number(precip.toFixed(3));
-      hourly.rain[i] = Number(rain.toFixed(3));
-      hourly.showers[i] = Number(showers.toFixed(3));
-      hourly.snowfall[i] = Number(snowfall.toFixed(3));
-      hourly.weather_code[i] = code;
+      if (rain != null && Array.isArray(hourly.rain)) hourly.rain[i] = Number(rain.toFixed(3));
+      if (showers != null && Array.isArray(hourly.showers)) hourly.showers[i] = Number(showers.toFixed(3));
+      if (snowfall != null && Array.isArray(hourly.snowfall)) hourly.snowfall[i] = Number(snowfall.toFixed(3));
+      if (code != null && Array.isArray(hourly.weather_code)) hourly.weather_code[i] = code;
+      calibratedRows++;
     });
 
     data.skymap_accuracy = {
@@ -522,6 +550,9 @@
       official: context.official.name || null,
       reps_samples: context.reps.length,
       nowcast_samples: context.nowcast.length,
+      calibrated_rows: calibratedRows,
+      skipped_missing_rows: skippedMissingRows,
+      truth_contract: 'missing weather values remain missing and cannot become dry evidence',
       calibrated_at: new Date().toISOString()
     };
     saveSnapshots(bucket, modelId, data);
@@ -537,14 +568,19 @@
       (data?.hourly?.time || []).forEach((time, i) => {
         const valid = new Date(time).getTime();
         if (valid < now + 20 * 60000 || valid > now + 48 * 3600000) return;
-        const precip = Math.max(0, finite(data.hourly.precipitation?.[i]) || 0);
-        const snowfall = Math.max(0, finite(data.hourly.snowfall?.[i]) || 0);
-        const code = Number(data.hourly.weather_code?.[i] || 0);
+        const precipRaw = finite(data.hourly.precipitation?.[i]);
+        const code = finite(data.hourly.weather_code?.[i]);
+        if (!hasExplicitForecastEvidence(precipRaw, code)) return;
+        const snowfallRaw = finite(data.hourly.snowfall?.[i]);
+        const precip = precipRaw == null ? null : Math.max(0, precipRaw);
+        const snowfall = snowfallRaw == null ? null : Math.max(0, snowfallRaw);
         const leadHours = Math.max(0, (valid - now) / 3600000);
         rows.push({
           id: `${modelId}|${roundHour(valid)}|${Math.floor(now / 1800000)}`,
           modelId, madeAt: now, validAt: roundHour(valid), leadBucket: leadBucket(leadHours),
-          wet: precip >= 0.12 || PRECIP_CODES.has(code), snow: snowfall > 0.02 || SNOW_CODES.has(code), precip
+          wet: (precip != null && precip >= 0.12) || (code != null && PRECIP_CODES.has(code)),
+          snow: (snowfall != null && snowfall > 0.02) || (code != null && SNOW_CODES.has(code)),
+          precip, evidence: { precipitation: precip != null, weatherCode: code != null }, contractVersion: VERSION
         });
       });
       const combined = [...existing, ...rows]
@@ -686,8 +722,9 @@
   resetLegacyModelCache();
   window.SkyMapAccuracy = Object.freeze({
     version: VERSION,
-    mode: 'radar-first+official+reps+spatial+local-learning',
-    status: contextStatus
+    mode: 'truth-firewall+radar-first+official+reps+spatial+local-learning',
+    status: contextStatus,
+    contract: Object.freeze({ finite, mix, dryWeatherCode, hasExplicitForecastEvidence })
   });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', decorateStatus, { once: true });
   else decorateStatus();
