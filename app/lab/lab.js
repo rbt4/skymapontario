@@ -4,6 +4,7 @@
   const GEOMET = 'https://geo.weather.gc.ca/geomet';
   const GEOCODE = 'https://geocoding-api.open-meteo.com/v1/search';
   const MODEL_CACHE_MS = 45 * 60 * 1000;
+  const PERFORMANCE_KEY = 'skymap.lab.performance.v1';
   const WET_THRESHOLD = 0.12;
   const SPEEDS = [1, 2, 4];
   const PRECIP_CODES = new Set([51,53,55,56,57,61,63,65,66,67,71,73,75,77,80,81,82,85,86,95,96,99]);
@@ -33,6 +34,7 @@
     place: loadPlace(), map:null, marker:null, overlay:null, frames:[], frameIndex:0,
     playing:false, playTimer:null, speedIndex:0, loopCount:0,
     models:new Map(), modelErrors:new Map(), modelStale:new Map(), evidenceReady:new Set(), enrichmentStarted:false, timezone:'America/Toronto', consensus:[], events:[],
+    modelControllers:new Map(), mapLayersStarted:false, transport:null,
     searchTimer:null, requestId:0, metadataErrors:[], frameReading:null, liveRadarReading:null,
     pointReadoutFrame:0
   };
@@ -76,13 +78,56 @@
     return remainder ? `${hours}h ${remainder}m` : `${hours}h`;
   }
 
+  const monotonicNow = () => globalThis.performance?.now?.() ?? Date.now();
+  const median = values => {
+    const sorted=values.filter(Number.isFinite).sort((a,b)=>a-b); if(!sorted.length)return null;
+    const middle=Math.floor(sorted.length/2); return sorted.length%2?sorted[middle]:(sorted[middle-1]+sorted[middle])/2;
+  };
+  function performanceHistory() {
+    try { const rows=JSON.parse(localStorage.getItem(PERFORMANCE_KEY)||'[]'); return Array.isArray(rows)?rows:[]; } catch(_){ return []; }
+  }
+  function transportPlan() {
+    const connection=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+    const effectiveType=connection?.effectiveType||'unknown';
+    const constrained=connection?.saveData===true||effectiveType==='slow-2g'||effectiveType==='2g';
+    const prior=performanceHistory().filter(row=>row?.profile===(constrained?'constrained':'normal')).slice(-8);
+    const observed=median(prior.map(row=>finite(row.firstPaintMs)));
+    const minimum=constrained?900:420, maximum=constrained?2200:1050, fallback=constrained?1400:650;
+    const hedgeMs=observed==null?fallback:clamp(Math.round(observed*.52),minimum,maximum);
+    return {
+      constrained,effectiveType,saveData:connection?.saveData===true,hedgeMs,
+      expansionMs:hedgeMs+(constrained?950:550),deferredMs:constrained?420:90,enrichmentMs:constrained?650:180
+    };
+  }
+  function noteModelTransport(requestId,modelId,startedAt,source,ok=true) {
+    if(state.transport?.requestId!==requestId)return;
+    state.transport.models[modelId]={ms:Math.max(0,Math.round(monotonicNow()-startedAt)),source,ok};
+  }
+  function finishFirstPaint(requestId) {
+    const transport=state.transport; if(transport?.requestId!==requestId||transport.firstPaintMs!=null)return;
+    transport.firstPaintMs=Math.max(0,Math.round(monotonicNow()-transport.startedAt));
+    const rows=performanceHistory();
+    rows.push({
+      savedAt:Date.now(),profile:transport.plan.constrained?'constrained':'normal',effectiveType:transport.plan.effectiveType,
+      firstPaintMs:transport.firstPaintMs,models:transport.models
+    });
+    try{localStorage.setItem(PERFORMANCE_KEY,JSON.stringify(rows.slice(-20)))}catch(_){}
+    setFeedHealth();
+  }
+  function afterNextPaint(callback) {
+    let complete=false; const finish=()=>{if(complete)return;complete=true;clearTimeout(fallback);callback();};
+    const fallback=setTimeout(finish,500);
+    requestAnimationFrame(()=>requestAnimationFrame(finish));
+  }
+  function abortModelRequests() {
+    state.modelControllers.forEach(controller=>controller.abort()); state.modelControllers.clear();
+  }
+
   function initMap() {
     state.map=L.map('future-map',{zoomControl:false,attributionControl:true,minZoom:4,maxZoom:15,preferCanvas:true,fadeAnimation:true,zoomAnimation:true}).setView([state.place.lat,state.place.lon],state.place.zoom||10);
     state.map.attributionControl.setPrefix(false);
     state.map.createPane('weather'); state.map.getPane('weather').style.zIndex=340;
     state.map.createPane('labels'); state.map.getPane('labels').style.zIndex=380;
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:20,opacity:.98,attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}).addTo(state.map);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:20,opacity:.92,pane:'labels'}).addTo(state.map);
     placeMarker();
     state.map.on('click', e => {
       const name=`Pinned point · ${e.latlng.lat.toFixed(3)}, ${e.latlng.lng.toFixed(3)}`;
@@ -93,6 +138,13 @@
       setPlace({name,lat:e.latlng.lat,lon:e.latlng.lng,zoom:Math.max(11,state.map.getZoom())},true);
     });
     state.map.on('move zoom resize',()=>requestPointReadoutPosition());
+  }
+
+  function startMapLayers() {
+    if(state.mapLayersStarted||!state.map)return;
+    state.mapLayersStarted=true;
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:20,opacity:.98,attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}).addTo(state.map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:20,opacity:.92,pane:'labels'}).addTo(state.map);
   }
 
   function pointIcon(stateName='loading') {
@@ -293,24 +345,29 @@
     });
     return `${model.endpoint}?${params}`;
   }
-  async function fetchModel(model,requestId) {
+  async function fetchModel(model,requestId,{forceLive=false}={}) {
+    const startedAt=monotonicNow();
     const cacheKey=`skymap.lab.model.${model.id}.${state.place.lat.toFixed(2)}.${state.place.lon.toFixed(2)}`;
     let cached=null;
     try {
       cached=JSON.parse(localStorage.getItem(cacheKey)||'null');
-      if(cached?.savedAt&&Date.now()-cached.savedAt<MODEL_CACHE_MS&&cached.data?.hourly?.time?.length){state.models.set(model.id,cached.data);return cached.data;}
+      if(!forceLive&&cached?.savedAt&&Date.now()-cached.savedAt<MODEL_CACHE_MS&&cached.data?.hourly?.time?.length){
+        state.models.set(model.id,cached.data); state.modelStale.set(model.id,Date.now()-cached.savedAt); noteModelTransport(requestId,model.id,startedAt,'cache'); return cached.data;
+      }
     } catch(_){}
     try {
       const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),10000); let response;
-      try{response=await fetch(modelUrl(model),{cache:'no-store',signal:controller.signal});}finally{clearTimeout(timeout);}
+      const controllerKey=`${requestId}:${model.id}`; state.modelControllers.set(controllerKey,controller);
+      try{response=await fetch(modelUrl(model),{cache:'no-store',signal:controller.signal});}finally{clearTimeout(timeout);if(state.modelControllers.get(controllerKey)===controller)state.modelControllers.delete(controllerKey);}
       if(!response.ok)throw new Error(`HTTP ${response.status}`); const data=await response.json();
       if(requestId!==state.requestId)return null; if(!data?.hourly?.time?.length)throw new Error('No hourly data');
       state.models.set(model.id,data); state.modelErrors.delete(model.id); state.modelStale.delete(model.id); if(data.timezone)state.timezone=data.timezone;
+      noteModelTransport(requestId,model.id,startedAt,'live');
       try{localStorage.setItem(cacheKey,JSON.stringify({savedAt:Date.now(),data}))}catch(_){} return data;
     } catch(error){
       if(requestId!==state.requestId)return null;
-      if(cached?.savedAt&&Date.now()-cached.savedAt<6*3600000&&cached.data?.hourly?.time?.length){state.models.set(model.id,cached.data);state.modelStale.set(model.id,Date.now()-cached.savedAt);state.modelErrors.delete(model.id);return cached.data;}
-      state.modelErrors.set(model.id,String(error));return null;
+      if(cached?.savedAt&&Date.now()-cached.savedAt<6*3600000&&cached.data?.hourly?.time?.length){state.models.set(model.id,cached.data);state.modelStale.set(model.id,Date.now()-cached.savedAt);state.modelErrors.delete(model.id);noteModelTransport(requestId,model.id,startedAt,'stale');return cached.data;}
+      state.modelErrors.set(model.id,String(error));noteModelTransport(requestId,model.id,startedAt,'error',false);return null;
     }
   }
   function pointAt(model,data,target) {
@@ -544,14 +601,17 @@
     });
   }
   function setFeedHealth(tileError=false) {
-    const ready=state.models.size,frames=state.frames.length,evidence=state.evidenceReady.size; const health=$('#feed-health'); let stateName='ready',title=ready>=2?'Core forecast ready':'Connecting forecast families',detail=`${ready}/${MODELS.length} forecast families · ${frames} time frames · ${evidence}/3 evidence layers`;
+    const ready=state.models.size,frames=state.frames.length,evidence=state.evidenceReady.size,cached=state.modelStale.size;
+    const speed=state.transport?.firstPaintMs!=null?` · core ${(state.transport.firstPaintMs/1000).toFixed(1)}s`:'';
+    const cacheNote=cached?` · ${cached} cached`:'';
+    const health=$('#feed-health'); let stateName='ready',title=ready>=2?'Core forecast ready':'Connecting forecast families',detail=`${ready}/${MODELS.length} forecast families${speed}${cacheNote} · ${frames} time frames · ${evidence}/3 evidence layers`;
     if(tileError||ready<2){stateName='partial';title='Some forecast sources are delayed';detail=`${ready}/${MODELS.length} forecast families · ${state.metadataErrors.length} map issue${state.metadataErrors.length===1?'':'s'}`;}
-    else if(!frames){detail=`${ready}/${MODELS.length} forecast families · radar timeline loading · ${evidence}/3 evidence layers`;}
+    else if(!frames){detail=`${ready}/${MODELS.length} forecast families${speed}${cacheNote} · radar timeline loading · ${evidence}/3 evidence layers`;}
     health.dataset.state=stateName; text('#feed-title',title); text('#feed-detail',detail);
   }
 
-  function renderForecastProducts() {
-    if(state.models.size<1)return;
+  function renderForecastProducts({allowPartial=false}={}) {
+    if(state.models.size<(allowPartial?1:2))return;
     buildConsensus(); renderAnswer(); renderRainLine(); renderConstellation(); setFeedHealth();
   }
 
@@ -566,22 +626,53 @@
     void window.SkyMapForecastIQ25?.warm?.(lat,lon);
   }
 
-  function startEnrichment(requestId) {
+  function startEnrichment(requestId,delay=120) {
     if(state.enrichmentStarted)return;
     state.enrichmentStarted=true;
     setTimeout(()=>{
       if(requestId!==state.requestId)return;
       warmEvidence();
       void buildFrames().then(()=>{if(requestId===state.requestId)setFeedHealth();}).catch(error=>{state.metadataErrors.push(String(error));showToast('Radar metadata is delayed; forecast guidance can still load.');});
-    },120);
+    },delay);
   }
 
-  async function refreshAll() {
-    const id=++state.requestId; state.models.clear(); state.modelErrors.clear(); state.modelStale.clear(); state.evidenceReady.clear(); state.enrichmentStarted=false; state.frameReading=null; state.liveRadarReading=null;
+  async function refreshAll({forceLive=false}={}) {
+    const id=++state.requestId; abortModelRequests(); clearTimeout(scheduleForecastRender.timer);
+    state.models.clear(); state.modelErrors.clear(); state.modelStale.clear(); state.evidenceReady.clear(); state.enrichmentStarted=false; state.frameReading=null; state.liveRadarReading=null;
+    const plan=transportPlan(); state.transport={requestId:id,startedAt:monotonicNow(),firstPaintMs:null,models:{},plan};
     text('#feed-title','Connecting weather sources'); text('#feed-detail','ECCC + four forecast families'); $('#feed-health').dataset.state='loading';
-    const tasks=MODELS.map(async model=>{await fetchModel(model,id);if(id===state.requestId&&state.models.size>=2){scheduleForecastRender();startEnrichment(id);}});
-    await Promise.allSettled(tasks); if(id!==state.requestId)return;
-    renderForecastProducts(); startEnrichment(id);
+    const requests=new Map(); let deferredStarted=false;
+    const startModel=model=>{
+      if(requests.has(model.id))return requests.get(model.id);
+      const task=fetchModel(model,id,{forceLive}).then(result=>{
+        if(id!==state.requestId)return result;
+        if(state.models.size>=2)revealCore();
+        return result;
+      });
+      requests.set(model.id,task); return task;
+    };
+    const startRemaining=()=>MODELS.filter(model=>!requests.has(model.id)).forEach(startModel);
+    const revealCore=()=>{
+      if(deferredStarted||id!==state.requestId||state.models.size<2)return;
+      deferredStarted=true; renderForecastProducts();
+      afterNextPaint(()=>{
+        if(id!==state.requestId)return;
+        finishFirstPaint(id);
+        setTimeout(()=>{
+          if(id!==state.requestId)return;
+          startMapLayers(); startRemaining(); startEnrichment(id,plan.enrichmentMs);
+        },plan.deferredMs);
+      });
+    };
+
+    const primary=MODELS.filter(model=>model.id==='gem'||model.id==='ifs').map(startModel);
+    const hedge=setTimeout(()=>{if(id===state.requestId&&state.models.size<2)startModel(MODELS.find(model=>model.id==='gfs'));},plan.hedgeMs);
+    const expansion=setTimeout(()=>{if(id===state.requestId&&state.models.size<2)startModel(MODELS.find(model=>model.id==='aifs'));},plan.expansionMs);
+    await Promise.allSettled(primary); if(id!==state.requestId)return;
+    if(state.models.size<2)await Promise.allSettled(MODELS.filter(model=>!requests.has(model.id)).map(startModel));
+    clearTimeout(hedge); clearTimeout(expansion); if(id!==state.requestId)return;
+    if(state.models.size>=2)revealCore();
+    else {renderForecastProducts({allowPartial:true});startMapLayers();startEnrichment(id,0);}
   }
   async function setPlace(place,fromMap=false) {
     state.place={...state.place,...place}; savePlace(); placeMarker('loading'); text('#place-name',state.place.name);
@@ -640,7 +731,7 @@
   async function init() {
     renderQuickPlaces(); bind(); initMap(); text('#place-name',state.place.name); await refreshAll();
     if(!localStorage.getItem('skymap.lab.locationAsked')&&navigator.geolocation){try{localStorage.setItem('skymap.lab.locationAsked','1');useLocation();}catch(_){} }
-    setInterval(()=>{if(!document.hidden)refreshAll();},30*60*1000);
+    setInterval(()=>{if(!document.hidden)refreshAll({forceLive:true});},30*60*1000);
   }
 
   if(window.L)init(); else {text('#point-readout-title','Map library could not load');text('#point-readout-copy','Reload the page or use the current SkyMap app.');text('#answer-title','Map unavailable');}
