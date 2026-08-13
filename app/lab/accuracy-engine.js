@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '32.0.0';
+  const VERSION = '33.0.0';
   const nativeFetch = window.fetch.bind(window);
   const OPEN_METEO = 'https://api.open-meteo.com/v1/forecast';
   const ECCC_API = 'https://api.weather.gc.ca';
@@ -363,14 +363,6 @@
     } catch (_) {}
   }
 
-  function sourceInfluence(leadHours, skill, modelId) {
-    let base = leadHours <= 2 ? 0.22 : leadHours <= 18 ? 0.54 : leadHours <= 48 ? 0.48 : leadHours <= 96 ? 0.34 : 0.22;
-    if (modelId === 'gem' && leadHours <= 48) base -= 0.07;
-    if ((modelId === 'ifs' || modelId === 'aifs') && leadHours > 48) base -= 0.04;
-    if (modelId === 'gfs' && leadHours <= 24) base += 0.04;
-    return clamp(base + (0.72 - skill) * 0.58, 0.12, 0.72);
-  }
-
   function mix(a, b, weightB) {
     const av = finite(a), bv = finite(b);
     if (av == null && bv == null) return null;
@@ -399,18 +391,6 @@
 
   function nowcastRateAt(context, target) {
     return nearestRow(context.nowcast, target, 24 * 60000)?.rate ?? null;
-  }
-
-  function fusedProbability(exactPop, officialPop, repsPop, neighbour, leadHours) {
-    const values = [];
-    const add = (value, weight) => { if (value != null) values.push({ value: clamp(value, 0, 100), weight }); };
-    add(exactPop, leadHours <= 48 ? 0.52 : 0.72);
-    if (leadHours <= 54) add(officialPop, 0.26);
-    if (leadHours <= 54) add(repsPop, 0.30);
-    add(neighbour.meanPop, leadHours <= 48 ? 0.09 : 0.06);
-    if (!values.length) return null;
-    const total = values.reduce((sum, row) => sum + row.weight, 0);
-    return values.reduce((sum, row) => sum + row.value * row.weight, 0) / total;
   }
 
   async function buildContext(lat, lon) {
@@ -447,113 +427,52 @@
     return promise;
   }
 
-  function calibrateModel(data, context, modelId, lat, lon) {
-    if (!data?.hourly?.time?.length || !context?.anchor?.exact?.hourly?.time?.length) return data;
-    const hourly = data.hourly;
+  function evidenceAt(lat, lon, target) {
+    const context = contextCache.get(placeBucket(lat, lon))?.data;
+    if (!context?.anchor?.exact?.hourly?.time?.length) return null;
+    const j = context.anchorIndex.get(roundHour(target));
+    if (j == null) return null;
     const anchor = context.anchor.exact.hourly;
-    if (!Array.isArray(hourly.precipitation)) return data;
+    const exactPrecip = finite(anchor.precipitation?.[j]);
+    const exactRain = finite(anchor.rain?.[j]);
+    const exactShowers = finite(anchor.showers?.[j]);
+    const exactSnowfall = finite(anchor.snowfall?.[j]);
+    return {
+      exactPop: finite(anchor.precipitation_probability?.[j]),
+      exactPrecip: exactPrecip == null ? null : Math.max(0, exactPrecip),
+      exactRain: exactRain == null ? null : Math.max(0, exactRain),
+      exactShowers: exactShowers == null ? null : Math.max(0, exactShowers),
+      exactSnowfall: exactSnowfall == null ? null : Math.max(0, exactSnowfall),
+      exactCode: finite(anchor.weather_code?.[j]),
+      officialPop: officialPopAt(context, target),
+      officialName: context.official.name || null,
+      repsPop: repsPopAt(context, target),
+      nowcastRate: nowcastRateAt(context, target),
+      neighbours: neighbourStats(context, target),
+      collectedAt: context.savedAt
+    };
+  }
+
+  function modelSkillAt(lat, lon, modelId, target) {
+    const leadHours = Math.max(0, (new Date(target).getTime() - Date.now()) / 3600000);
+    return readSkill(placeBucket(lat, lon), modelId, leadHours);
+  }
+
+  function annotateModel(data, context, modelId, lat, lon) {
+    if (!data?.hourly?.time?.length) return data;
     const bucket = placeBucket(lat, lon);
-    const now = Date.now();
-    let calibratedRows = 0;
-    let skippedMissingRows = 0;
-
-    hourly.time.forEach((time, i) => {
-      const target = new Date(time).getTime();
-      const j = context.anchorIndex.get(roundHour(target));
-      if (j == null) return;
-      const leadHours = Math.max(0, (target - now) / 3600000);
-      const skill = readSkill(bucket, modelId, leadHours);
-      const influence = sourceInfluence(leadHours, skill, modelId);
-      const exactPop = finite(anchor.precipitation_probability?.[j]);
-      const modelPrecipRaw = finite(hourly.precipitation?.[i]);
-      const exactPrecipRaw = finite(anchor.precipitation?.[j]);
-      if (modelPrecipRaw == null && exactPrecipRaw == null) {
-        skippedMissingRows++;
-        return;
-      }
-      const modelPrecip = modelPrecipRaw == null ? null : Math.max(0, modelPrecipRaw);
-      const exactPrecip = exactPrecipRaw == null ? null : Math.max(0, exactPrecipRaw);
-      const officialPop = officialPopAt(context, target);
-      const repsPop = repsPopAt(context, target);
-      const neighbours = neighbourStats(context, target);
-      const fusedPop = fusedProbability(exactPop, officialPop, repsPop, neighbours, leadHours);
-      const nowcastRate = leadHours <= 2.3 ? nowcastRateAt(context, target) : null;
-
-      let precip = mix(modelPrecip, exactPrecip, influence);
-      if (precip == null) {
-        skippedMissingRows++;
-        return;
-      }
-      precip = Math.max(0, precip);
-      const mixedRain = mix(hourly.rain?.[i], anchor.rain?.[j], influence);
-      const mixedShowers = mix(hourly.showers?.[i], anchor.showers?.[j], influence);
-      const mixedSnowfall = mix(hourly.snowfall?.[i], anchor.snowfall?.[j], influence);
-      let rain = mixedRain == null ? null : Math.max(0, mixedRain);
-      let showers = mixedShowers == null ? null : Math.max(0, mixedShowers);
-      let snowfall = mixedSnowfall == null ? null : Math.max(0, mixedSnowfall);
-      let code = finite(hourly.weather_code?.[i]);
-      const anchorCode = finite(anchor.weather_code?.[j]);
-      const snowSignal = (snowfall != null && snowfall > 0.02) || (code != null && SNOW_CODES.has(code)) || (anchorCode != null && SNOW_CODES.has(anchorCode));
-
-      if (!snowSignal && nowcastRate != null && leadHours <= 2.3) {
-        if (nowcastRate < 0.03 && (fusedPop == null || fusedPop < 48)) {
-          precip = 0;
-          if (rain != null) rain = 0;
-          if (showers != null) showers = 0;
-          code = dryWeatherCode(code);
-        } else if (nowcastRate >= 0.12) {
-          const targetRate = clamp(nowcastRate, 0.13, 12);
-          precip = Math.max(precip, targetRate * 0.72);
-          if (rain != null) rain = Math.max(rain, targetRate * 0.62);
-        }
-      }
-
-      const strongDry = fusedPop != null && fusedPop < 18 && exactPrecip != null && exactPrecip < 0.10 && (officialPop == null || officialPop < 30) && (repsPop == null || repsPop < 25);
-      const moderateDry = fusedPop != null && fusedPop < 30 && exactPrecip != null && modelPrecip != null && exactPrecip < 0.06 && modelPrecip < 0.24;
-      if (!snowSignal && (strongDry || moderateDry)) {
-        precip = 0;
-        if (rain != null) rain = 0;
-        if (showers != null) showers = 0;
-        code = dryWeatherCode(code);
-      }
-
-      const strongWet = fusedPop != null && fusedPop >= 66 && exactPrecip != null && exactPrecip >= 0.08;
-      const officialWetAgreement = officialPop != null && officialPop >= 60 && exactPop != null && exactPop >= 55;
-      if (strongWet || officialWetAgreement) {
-        precip = Math.max(precip, 0.13);
-        if ((code == null || !PRECIP_CODES.has(code)) && anchorCode != null && PRECIP_CODES.has(anchorCode)) code = anchorCode;
-      }
-
-      if (exactPrecip != null && exactPop != null && exactPrecip < 0.06 && exactPop < 35 && neighbours.wetFraction != null && neighbours.wetFraction >= 0.75 && neighbours.maxPop != null && neighbours.maxPop >= 65) {
-        precip = Math.min(precip, 0.10);
-      }
-
-      if (leadHours > 30 && fusedPop != null && fusedPop < 52 && anchorCode != null && anchorCode >= 80) {
-        precip *= 0.76;
-        if (rain != null) rain *= 0.76;
-        if (showers != null) showers *= 0.76;
-      }
-
-      hourly.precipitation[i] = Number(precip.toFixed(3));
-      if (rain != null && Array.isArray(hourly.rain)) hourly.rain[i] = Number(rain.toFixed(3));
-      if (showers != null && Array.isArray(hourly.showers)) hourly.showers[i] = Number(showers.toFixed(3));
-      if (snowfall != null && Array.isArray(hourly.snowfall)) hourly.snowfall[i] = Number(snowfall.toFixed(3));
-      if (code != null && Array.isArray(hourly.weather_code)) hourly.weather_code[i] = code;
-      calibratedRows++;
-    });
-
     data.skymap_accuracy = {
       version: VERSION,
       model: modelId,
+      mode: 'raw-model-plus-shared-evidence-sidecar',
       local_skill: readSkill(bucket, modelId, 12),
-      anchor: 'open-meteo-best-match',
-      official: context.official.name || null,
-      reps_samples: context.reps.length,
-      nowcast_samples: context.nowcast.length,
-      calibrated_rows: calibratedRows,
-      skipped_missing_rows: skippedMissingRows,
-      truth_contract: 'missing weather values remain missing and cannot become dry evidence',
-      calibrated_at: new Date().toISOString()
+      anchor: context?.anchor?.exact ? 'open-meteo-best-match' : null,
+      official: context?.official?.name || null,
+      reps_samples: context?.reps?.length || 0,
+      nowcast_samples: context?.nowcast?.length || 0,
+      model_rows_mutated: 0,
+      truth_contract: 'shared evidence is routed once after raw model consensus; missing values stay missing',
+      annotated_at: new Date().toISOString()
     };
     saveSnapshots(bucket, modelId, data);
     return data;
@@ -680,7 +599,7 @@
       if (!response.ok || !context) return response;
       try {
         const data = await response.clone().json();
-        calibrateModel(data, context, modelId, lat, lon);
+        annotateModel(data, context, modelId, lat, lon);
         return cloneJsonResponse(response, data);
       } catch (_) {
         return response;
@@ -722,8 +641,10 @@
   resetLegacyModelCache();
   window.SkyMapAccuracy = Object.freeze({
     version: VERSION,
-    mode: 'truth-firewall+radar-first+official+reps+spatial+local-learning',
+    mode: 'truth-firewall+single-pass-sidecar+radar-first+official+reps+spatial+local-learning',
     status: contextStatus,
+    evidenceAt,
+    modelSkillAt,
     contract: Object.freeze({ finite, mix, dryWeatherCode, hasExplicitForecastEvidence })
   });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', decorateStatus, { once: true });

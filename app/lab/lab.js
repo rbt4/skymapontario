@@ -25,7 +25,7 @@
   const $ = selector => document.querySelector(selector);
   const $$ = selector => [...document.querySelectorAll(selector)];
   const clamp = (value,min,max) => Math.max(min,Math.min(max,value));
-  const finite = value => Number.isFinite(Number(value)) ? Number(value) : null;
+  const finite = value => value === null || value === undefined || value === '' || value === '__skymap_missing__' ? null : (Number.isFinite(Number(value)) ? Number(value) : null);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   const state = {
@@ -300,20 +300,29 @@
   function pointAt(model,data,target) {
     const hourly=data?.hourly; if(!hourly?.time?.length)return null; const wanted=new Date(target).getTime(); let best=0,delta=Infinity;
     hourly.time.forEach((v,i)=>{const d=Math.abs(modelDate(data,v).getTime()-wanted);if(d<delta){best=i;delta=d;}});
-    const val=k=>finite(hourly[k]?.[best])??0; const code=val('weather_code'); const precip=Math.max(0,val('precipitation'),val('rain')+val('showers'),val('snowfall')*.7);
+    const val=k=>finite(hourly[k]?.[best]); const code=val('weather_code');
+    const rainValue=val('rain'),showersValue=val('showers'),snowfallValue=val('snowfall'),precipitationValue=val('precipitation');
+    const rainParts=[rainValue,showersValue].filter(value=>value!=null); const rain=rainParts.length?Math.max(0,rainParts.reduce((sum,value)=>sum+value,0)):null;
+    const precipCandidates=[precipitationValue,rain,snowfallValue==null?null:snowfallValue*.7].filter(value=>value!=null);
+    const precip=precipCandidates.length?Math.max(0,...precipCandidates):null; const snow=snowfallValue==null?null:Math.max(0,snowfallValue);
+    const temp=val('temperature_2m'),cloud=val('cloud_cover'),wind=val('wind_speed_10m'),gust=val('wind_gusts_10m'),direction=val('wind_direction_10m');
+    const wetKnown=precip!=null||code!=null;
     return {
-      model,time:modelDate(data,hourly.time[best]),precip,rain:Math.max(0,val('rain')+val('showers')),snow:Math.max(0,val('snowfall')),code,
-      temp:val('temperature_2m'),cloud:clamp(val('cloud_cover'),0,100),wind:Math.max(0,val('wind_speed_10m')),gust:Math.max(0,val('wind_gusts_10m')),
-      direction:clamp(val('wind_direction_10m'),0,360),wet:precip>=WET_THRESHOLD||PRECIP_CODES.has(code)
+      model,time:modelDate(data,hourly.time[best]),precip,rain,snow,code,temp,cloud:cloud==null?null:clamp(cloud,0,100),
+      wind:wind==null?null:Math.max(0,wind),gust:gust==null?null:Math.max(0,gust),direction:direction==null?null:clamp(direction,0,360),
+      wetKnown,wet:wetKnown&&(precip>=WET_THRESHOLD||PRECIP_CODES.has(code))
     };
   }
   function blendAt(target) {
     const rows=MODELS.map(model=>{const p=pointAt(model,state.models.get(model.id),target);return p?{...p,weight:model.weight}:null;}).filter(Boolean); if(!rows.length)return null;
-    const total=rows.reduce((s,r)=>s+r.weight,0); const wetWeight=rows.reduce((s,r)=>s+(r.wet?r.weight:0),0)/total; const precip=rows.reduce((s,r)=>s+r.precip*r.weight,0)/total;
-    const snowWeight=rows.reduce((s,r)=>s+(r.snow>0?r.weight:0),0)/total;
-    const sin=rows.reduce((s,r)=>s+Math.sin(r.direction*Math.PI/180)*r.weight,0), cos=rows.reduce((s,r)=>s+Math.cos(r.direction*Math.PI/180)*r.weight,0);
-    const direction=(Math.atan2(sin,cos)*180/Math.PI+360)%360;
-    return {time:new Date(target),rows,wet:Math.round(wetWeight*100),precip,snow:Math.round(snowWeight*100),wetModels:rows.filter(r=>r.wet).length,totalModels:rows.length,agreement:Math.round(Math.max(wetWeight,1-wetWeight)*100),direction};
+    const average=key=>{const known=rows.filter(row=>finite(row[key])!=null);const total=known.reduce((sum,row)=>sum+row.weight,0);return total?known.reduce((sum,row)=>sum+row[key]*row.weight,0)/total:null;};
+    const wetRows=rows.filter(row=>row.wetKnown),wetTotal=wetRows.reduce((sum,row)=>sum+row.weight,0),wetWeight=wetTotal?wetRows.reduce((sum,row)=>sum+(row.wet?row.weight:0),0)/wetTotal:null;
+    const snowRows=rows.filter(row=>row.snow!=null||SNOW_CODES.has(row.code)),snowTotal=snowRows.reduce((sum,row)=>sum+row.weight,0),snowWeight=snowTotal?snowRows.reduce((sum,row)=>sum+((row.snow>0||SNOW_CODES.has(row.code))?row.weight:0),0)/snowTotal:null;
+    const directionRows=rows.filter(row=>row.direction!=null),sin=directionRows.reduce((sum,row)=>sum+Math.sin(row.direction*Math.PI/180)*row.weight,0),cos=directionRows.reduce((sum,row)=>sum+Math.cos(row.direction*Math.PI/180)*row.weight,0);
+    const direction=directionRows.length?(Math.atan2(sin,cos)*180/Math.PI+360)%360:null;
+    const codeWeights=new Map(); rows.forEach(row=>{if(row.code!=null)codeWeights.set(row.code,(codeWeights.get(row.code)||0)+row.weight);}); let code=null,codeWeight=-1; for(const [candidate,weight] of codeWeights)if(weight>codeWeight){code=candidate;codeWeight=weight;}
+    const base={time:new Date(target),rows,wet:wetWeight==null?null:Math.round(wetWeight*100),precip:average('precip'),snow:snowWeight==null?null:Math.round(snowWeight*100),code,wetModels:wetRows.filter(row=>row.wet).length,totalModels:wetRows.length,agreement:wetWeight==null?null:Math.round(Math.max(wetWeight,1-wetWeight)*100),direction};
+    return window.SkyMapEvidenceRouter?.route(base,{target,place:state.place})||base;
   }
   function buildConsensus() {
     const now=new Date(); now.setMinutes(0,0,0); const points=[];
@@ -332,7 +341,8 @@
   }
   function finalizeEvent(event) {
     event.end=new Date(new Date(event.end).getTime()+3600000); event.maxWet=Math.max(...event.points.map(p=>p.wet)); event.meanWet=Math.round(event.points.reduce((s,p)=>s+p.wet,0)/event.points.length);
-    event.total=event.points.reduce((s,p)=>s+p.precip,0); event.snow=Math.max(...event.points.map(p=>p.snow)); event.modelWindows=modelEventWindows(event.start,event.end); return event;
+    const amounts=event.points.map(point=>finite(point.precip)).filter(value=>value!=null),snowChances=event.points.map(point=>finite(point.snow)).filter(value=>value!=null);
+    event.total=amounts.length?amounts.reduce((sum,value)=>sum+value,0):null; event.snow=snowChances.length?Math.max(...snowChances):null; event.modelWindows=modelEventWindows(event.start,event.end); return event;
   }
   function modelEventWindows(start,end) {
     return MODELS.map(model=>{
@@ -349,7 +359,7 @@
     return {label:eventLabel,timing,state:support>=.64?'likely':'uncertain',support,spread,lead};
   }
   function modelWetWindow(model) {
-    const data=state.models.get(model.id); if(!data)return null; const now=Date.now(); const points=data.hourly.time.map(v=>pointAt(model,data,modelDate(data,v))).filter(p=>p&&p.time>=now-3600000); const first=points.findIndex(p=>p.wet); if(first<0)return {wet:false}; let end=first; while(end+1<points.length&&points[end+1].wet)end++; return {wet:true,start:points[first].time,end:new Date(points[end].time.getTime()+3600000),peak:points.slice(first,end+1).reduce((a,b)=>a.precip>b.precip?a:b)};
+    const data=state.models.get(model.id); if(!data)return null; const now=Date.now(); const points=data.hourly.time.map(v=>pointAt(model,data,modelDate(data,v))).filter(p=>p&&p.time>=now-3600000); const scorable=points.filter(point=>point.wetKnown); if(!scorable.length)return {wet:null}; const first=points.findIndex(p=>p.wet); if(first<0)return {wet:false}; let end=first; while(end+1<points.length&&points[end+1].wet)end++; return {wet:true,start:points[first].time,end:new Date(points[end].time.getTime()+3600000),peak:points.slice(first,end+1).reduce((a,b)=>(finite(a.precip)??-1)>(finite(b.precip)??-1)?a:b)};
   }
   function predictionMemory(event) {
     const key=`skymap.lab.prediction.${state.place.lat.toFixed(2)}.${state.place.lon.toFixed(2)}`; let previous=null; try{previous=JSON.parse(localStorage.getItem(key)||'null');}catch(_){}
@@ -365,18 +375,21 @@
   }
 
   function classifyCondition(precip,snow=0,code=0) {
-    if(snow>.05||[71,73,75,77,85,86].includes(code))return {label:snow>=1?'Steady snow':'Light snow',short:'Snow',state:'snow'};
-    if(precip<.03&&!PRECIP_CODES.has(code))return {label:'Dry now',short:'Dry',state:'dry'};
-    if(precip<.18)return {label:'A few drops',short:'Few drops',state:'uncertain'};
-    if(precip<1.5)return {label:'Light rain',short:'Light rain',state:'wet'};
-    if(precip<5)return {label:'Steady rain',short:'Rain',state:'wet'};
+    const amount=finite(precip),snowAmount=finite(snow),weatherCode=finite(code);
+    if((snowAmount!=null&&snowAmount>.05)||(weatherCode!=null&&[71,73,75,77,85,86].includes(weatherCode)))return {label:(snowAmount??0)>=1?'Steady snow':'Light snow',short:'Snow',state:'snow'};
+    if(amount==null&&weatherCode==null)return {label:'Checking now',short:'Checking',state:'loading'};
+    if(amount!=null&&amount<.03&&(weatherCode==null||!PRECIP_CODES.has(weatherCode)))return {label:'Dry now',short:'Dry',state:'dry'};
+    if(amount==null)return {label:'Precipitation signal',short:'Precipitation',state:'uncertain'};
+    if(amount<.18)return {label:'A few drops',short:'Few drops',state:'uncertain'};
+    if(amount<1.5)return {label:'Light rain',short:'Light rain',state:'wet'};
+    if(amount<5)return {label:'Steady rain',short:'Rain',state:'wet'};
     return {label:'Heavy rain',short:'Heavy rain',state:'wet'};
   }
   function currentCondition() {
     const radar=state.liveRadarReading;
     if(radar&&Number.isFinite(radar.rate))return classifyCondition(radar.rate,0,0);
     const current=blendAt(new Date());
-    return current?classifyCondition(current.precip,current.snow>40?.3:0,current.rows[0]?.code||0):{label:'Checking now',short:'Checking',state:'loading'};
+    return current?classifyCondition(current.precip,current.snow>40?.3:0,current.code):{label:'Checking now',short:'Checking',state:'loading'};
   }
 
   async function queryPointValue(frame,live=false) {
@@ -392,14 +405,15 @@
       if(frame.reference)params.set('reference_time',frame.reference);
       const response=await fetch(`${GEOMET}?${params}`,{cache:'no-store'}); if(!response.ok)throw new Error(`Point query ${response.status}`);
       const data=await response.json(); const feature=data?.features?.[0];
-      let rate=0;
+      let rate=null;
       if(feature?.properties){
         const plausible=([key,value])=>!/(time|date|lat|lon|x|y|id|index)/i.test(key)&&Number.isFinite(Number(value))&&Number(value)>=0&&Number(value)<=500;
         const entries=Object.entries(feature.properties);
         const preferred=entries.find(([key,value])=>/^(value|val)$|precip|rain.*rate|rate|band_?1|pixel/i.test(key)&&plausible([key,value]));
         const fallback=entries.find(plausible);
-        rate=Math.max(0,Number(preferred?.[1]??fallback?.[1]??0));
+        const candidate=finite(preferred?.[1]??fallback?.[1]); if(candidate!=null)rate=Math.max(0,candidate);
       }
+      if(rate==null){if(queryPointValue.latest===requestToken){state.frameReading=null;if(live)state.liveRadarReading=null;renderPointReadout();}return null;}
       const reading={rate,frame,time:frame.time};
       if(queryPointValue.latest===requestToken){
         state.frameReading=reading;
@@ -419,7 +433,7 @@
     if(frame&&frame.time&&Math.abs(minutesFromNow(frame.time))>15){
       const selectedReading=state.frameReading?.time===frame.time&&state.frameReading?.frame?.layer===frame.layer?state.frameReading:null;
       const point=blendAt(frame.time);
-      const condition=selectedReading?classifyCondition(selectedReading.rate):point?classifyCondition(point.precip,point.snow>40?.3:0,point.rows[0]?.code||0):null;
+      const condition=selectedReading?classifyCondition(selectedReading.rate):point?classifyCondition(point.precip,point.snow>40?.3:0,point.code):null;
       title=condition?condition.label:'Forecast point'; stateName=condition?.state||'loading'; copy=`${fmtTime(frame.time)} · ${frame.kind==='nowcast'?'near-future':'model guidance'}`;
     } else if(event){
       const lead=Math.round((event.start-Date.now())/60000);
@@ -449,10 +463,11 @@
     const now=Date.now(); const event=state.events.find(e=>e.end>now)||null; const confidence=eventConfidence(event); const memory=predictionMemory(event); const current=blendAt(new Date()); const rail=$('#rail-status'); const condition=currentCondition();
     text('#place-name',state.place.name); text('#answer-updated',fmtTime(new Date())); text('#forecast-stability',memory.stability); text('#change-note',memory.change); text('#now-condition',condition.short);
     if(!event){
-      rail.dataset.state='dry'; text('#answer-eyebrow','AT THIS EXACT POINT'); text('#answer-title','No strong precipitation event found');
-      text('#answer-copy','The available guidance keeps this point mostly dry. SkyMap will update when a reliable rain or snow signal appears.');
-      text('#first-possible','None found'); text('#main-window','No declared event'); text('#likely-end','—'); text('#event-confidence','Dry signal'); text('#timing-confidence','No window');
-      text('#event-name','No declared rain or snow event'); text('#event-state','DRY SIGNAL'); text('#event-story','No precipitation event currently clears SkyMap’s declaration threshold across the available independent guidance.');
+      const hasEvidence=state.consensus.some(point=>point.wet!=null||point.precip!=null);
+      rail.dataset.state=hasEvidence?'dry':'loading'; text('#answer-eyebrow','AT THIS EXACT POINT'); text('#answer-title',hasEvidence?'No strong precipitation event found':'Forecast guidance is incomplete');
+      text('#answer-copy',hasEvidence?'The available guidance keeps this point mostly dry. SkyMap will update when a reliable rain or snow signal appears.':'SkyMap will not translate missing precipitation values into a dry forecast.');
+      text('#first-possible',hasEvidence?'None found':'—'); text('#main-window',hasEvidence?'No declared event':'Awaiting evidence'); text('#likely-end','—'); text('#event-confidence',hasEvidence?'Dry signal':'Unknown'); text('#timing-confidence','No window');
+      text('#event-name',hasEvidence?'No declared rain or snow event':'Forecast evidence unavailable'); text('#event-state',hasEvidence?'DRY SIGNAL':'UNKNOWN'); text('#event-story',hasEvidence?'No precipitation event currently clears SkyMap’s declaration threshold across the available independent guidance.':'The truth firewall withheld a dry declaration because the forecast fields are missing.');
       renderEventFlow(null); renderEvidence(null,current,memory); text('#forecast-stage','No declared event'); renderPointReadout(); renderEventWindow(); return;
     }
     const leadHours=(event.start-now)/3600000; const type=event.snow>=45?'snow':event.snow>=20?'mixed precipitation':'rain'; const starts=event.modelWindows.filter(w=>w.wet&&w.start).map(w=>w.start); const early=starts.length?new Date(Math.min(...starts.map(d=>d.getTime()))):event.start;
@@ -480,7 +495,7 @@
     const start=new Date(event.start.getTime()-6*3600000); const count=Math.min(42,Math.max(20,Math.ceil((event.end-start)/3600000)+6));
     for(let i=0;i<count;i++){
       const t=new Date(start.getTime()+i*3600000),p=blendAt(t); const el=document.createElement('i'); el.className='flow-step';
-      if(Math.abs(t-Date.now())<1800000)el.classList.add('now'); el.style.setProperty('--strength',p?clamp(p.wet,4,100):4); el.title=`${fmtTime(t)} · ${p?.wet||0}% weighted wet support`; wrap.append(el);
+      if(Math.abs(t-Date.now())<1800000)el.classList.add('now'); const wet=finite(p?.wet); el.style.setProperty('--strength',wet==null?4:clamp(wet,4,100)); el.title=`${fmtTime(t)} · ${wet==null?'unknown':`${wet}% weighted wet support`}`; wrap.append(el);
     }
   }
   function renderEvidence(event,current,memory) {
@@ -489,7 +504,7 @@
       {name:'ECCC extrapolation',role:'0–2 hour official nowcast',state:state.frames.some(f=>f.kind==='nowcast')?'ready':'error',value:state.frames.some(f=>f.kind==='nowcast')?'Connected':'Unavailable'},
       {name:'HRDPS',role:'2.5 km Canadian map guidance',state:state.frames.some(f=>f.kind==='guidance')?'ready':'error',value:state.frames.some(f=>f.kind==='guidance')?'Connected':'Unavailable'}
     ];
-    MODELS.forEach(model=>{const w=modelWetWindow(model);cards.push({name:model.name,role:model.role,state:state.modelErrors.has(model.id)?'error':w?.wet?'wet':'dry',value:state.modelErrors.has(model.id)?'Feed error':w?.wet?`Wet ${fmtTime(w.start)}–${fmtTime(w.end)}`:'No near event'});});
+    MODELS.forEach(model=>{const w=modelWetWindow(model);cards.push({name:model.name,role:model.role,state:state.modelErrors.has(model.id)?'error':w?.wet?'wet':w?.wet===false?'dry':'ready',value:state.modelErrors.has(model.id)?'Feed error':w?.wet?`Wet ${fmtTime(w.start)}–${fmtTime(w.end)}`:w?.wet===false?'No near event':'Precipitation fields unavailable'});});
     cards.forEach(card=>{const el=document.createElement('article');el.className='source-card';el.dataset.state=card.state;el.innerHTML=`<span><small>${esc(card.role)}</small><b>${esc(card.name)}</b></span><em>${esc(card.value)}</em>`;sourceGrid.append(el);});
     const support=event?event.modelWindows.filter(w=>w.wet).length:0;
     text('#evidence-summary',event?`${support} independent forecast families support the next event. Canadian guidance receives the highest base influence; agreement and timing spread control how strongly SkyMap speaks.`:'No event currently clears the declaration threshold.');
@@ -499,17 +514,17 @@
     const wrap=$('#rainline'); wrap.innerHTML=''; if(!state.consensus.length){wrap.innerHTML='<div class="rainline-loading">Forecast guidance is unavailable for this point.</div>';return;}
     const groups=new Map(); state.consensus.forEach(p=>{const key=dateKey(p.time);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(p);});
     [...groups.entries()].slice(0,8).forEach(([key,points],dayIndex)=>{
-      const maxWet=Math.max(...points.map(p=>p.wet)); const wetHours=points.filter(p=>p.wet>=42).length; const first=points.find(p=>p.wet>=42); const last=[...points].reverse().find(p=>p.wet>=42);
-      const line=document.createElement('article'); line.className='day-line'; line.dataset.state=maxWet>=64?'likely':wetHours?'watching':'dry'; line.style.setProperty('--wet',maxWet);
-      const ribbon=points.map((p,i)=>{if(p.wet<25)return '';const level=p.wet>=80?4:p.wet>=62?3:p.wet>=42?2:1;return `<i class="hour-cell" data-level="${level}" style="left:${i/points.length*100}%;width:${100/points.length+.3}%" title="${esc(fmtTime(p.time))}: ${p.wet}% weighted wet support"></i>`;}).join('');
-      const label=dayIndex===0?'Today':dayIndex===1?'Tomorrow':fmtDay(points[0].time); const status=!wetHours?'No strong event':`${fmtTime(first.time)}–${fmtTime(new Date(last.time.getTime()+3600000))}`;
+      const known=points.map(point=>finite(point.wet)).filter(value=>value!=null),maxWet=known.length?Math.max(...known):null; const wetHours=points.filter(p=>finite(p.wet)!=null&&p.wet>=42).length; const first=points.find(p=>finite(p.wet)!=null&&p.wet>=42); const last=[...points].reverse().find(p=>finite(p.wet)!=null&&p.wet>=42);
+      const line=document.createElement('article'); line.className='day-line'; line.dataset.state=maxWet==null?'unknown':maxWet>=64?'likely':wetHours?'watching':'dry'; line.style.setProperty('--wet',maxWet??4);
+      const ribbon=points.map((p,i)=>{const wet=finite(p.wet);if(wet==null||wet<25)return '';const level=wet>=80?4:wet>=62?3:wet>=42?2:1;return `<i class="hour-cell" data-level="${level}" style="left:${i/points.length*100}%;width:${100/points.length+.3}%" title="${esc(fmtTime(p.time))}: ${wet}% weighted wet support"></i>`;}).join('');
+      const label=dayIndex===0?'Today':dayIndex===1?'Tomorrow':fmtDay(points[0].time); const status=maxWet==null?'Guidance unavailable':!wetHours?'No strong event':`${fmtTime(first.time)}–${fmtTime(new Date(last.time.getTime()+3600000))}`;
       line.innerHTML=`<span class="day-label"><b>${esc(label)}</b><small>${esc(fmtDate(points[0].time))}</small></span><div class="day-ribbon">${ribbon}</div><em>${esc(status)}</em>`; wrap.append(line);
     });
   }
   function renderConstellation() {
     const wrap=$('#constellation-grid'); wrap.innerHTML=''; MODELS.forEach(model=>{
       const data=state.models.get(model.id),w=modelWetWindow(model); const el=document.createElement('article'); el.className='model-card'; el.dataset.state=data?'ready':'error'; el.style.setProperty('--accent',model.accent);
-      el.innerHTML=`<header><b>${esc(model.name)}</b><i></i></header><p>${data?(w?.wet?`Next wet signal: ${esc(timeRange(w.start,w.end))}`:'No near-term wet signal'):'Source did not respond'} · base influence ${Math.round(model.weight*100)}%</p>`; wrap.append(el);
+      el.innerHTML=`<header><b>${esc(model.name)}</b><i></i></header><p>${data?(w?.wet?`Next wet signal: ${esc(timeRange(w.start,w.end))}`:w?.wet===false?'No near-term wet signal':'Precipitation fields unavailable'):'Source did not respond'} · base influence ${Math.round(model.weight*100)}%</p>`; wrap.append(el);
     });
   }
   function setFeedHealth(tileError=false) {
