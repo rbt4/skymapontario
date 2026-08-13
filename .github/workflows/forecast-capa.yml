@@ -1,0 +1,86 @@
+name: SkyMap CaPA precipitation truth
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '11 */12 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/forecast-capa-truth.mjs'
+      - '.github/workflows/forecast-capa.yml'
+      - 'verification/CAPA-TRUTH.md'
+  pull_request:
+    paths:
+      - 'scripts/forecast-capa-truth.mjs'
+      - '.github/workflows/forecast-capa.yml'
+      - 'verification/CAPA-TRUTH.md'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: forecast-capa-truth
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Validate CaPA truth engine
+        run: |
+          node --check scripts/forecast-capa-truth.mjs
+          node scripts/forecast-capa-truth.mjs --self-test
+      - name: Live archived forecast + RDPA final-analysis smoke
+        if: github.event_name == 'pull_request'
+        env:
+          CAPA_CHUNK_DAYS: '7'
+        run: |
+          rm -rf verification-capa
+          # Production begins at 2024-01-01 to map real archive coverage.
+          # The smoke uses a mature archive period so it tests the RDPA integration itself.
+          sed -i "s/const START='2024-01-01';/const START='2026-04-15';/" scripts/forecast-capa-truth.mjs
+          node scripts/forecast-capa-truth.mjs --smoke
+
+  backfill:
+    if: github.event_name != 'pull_request'
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Restore bounded CaPA truth state
+        run: |
+          mkdir -p verification-capa
+          git fetch origin forecast-capa-data || true
+          git show origin/forecast-capa-data:verification-capa/state.json > verification-capa/state.json 2>/dev/null || true
+      - name: Advance each forecast archive against final precipitation analysis
+        run: node scripts/forecast-capa-truth.mjs
+      - name: Publish bounded CaPA truth branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p /tmp/skymap-capa
+          cp verification-capa/state.json verification-capa/public.json /tmp/skymap-capa/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout --orphan forecast-capa-data-next
+          git rm -rf .
+          mkdir -p verification-capa
+          cp /tmp/skymap-capa/* verification-capa/
+          cat > README.md <<'EOF'
+          # SkyMap CaPA / RDPA Precipitation Truth Data
+
+          Machine-generated historical verification of fixed-lead forecast precipitation amounts against ECCC's final 6-hour RDPA analysis. This gridded analysis is used for regional precipitation amount truth; exact-point timing and presence remain separately verified by radar/station systems. Failed downloads do not advance a source cursor. The branch is force-replaced to keep Git history bounded.
+          EOF
+          git add README.md verification-capa
+          git commit -m "Advance CaPA precipitation truth $(date -u +'%Y-%m-%dT%H:%MZ')"
+          git push --force origin HEAD:forecast-capa-data
