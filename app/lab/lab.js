@@ -32,7 +32,7 @@
   const state = {
     place: loadPlace(), map:null, marker:null, overlay:null, frames:[], frameIndex:0,
     playing:false, playTimer:null, speedIndex:0, loopCount:0,
-    models:new Map(), modelErrors:new Map(), modelStale:new Map(), evidenceReady:new Set(), timezone:'America/Toronto', consensus:[], events:[],
+    models:new Map(), modelErrors:new Map(), modelStale:new Map(), evidenceReady:new Set(), enrichmentStarted:false, timezone:'America/Toronto', consensus:[], events:[],
     searchTimer:null, requestId:0, metadataErrors:[], frameReading:null, liveRadarReading:null,
     pointReadoutFrame:0
   };
@@ -566,14 +566,22 @@
     void window.SkyMapForecastIQ25?.warm?.(lat,lon);
   }
 
+  function startEnrichment(requestId) {
+    if(state.enrichmentStarted)return;
+    state.enrichmentStarted=true;
+    setTimeout(()=>{
+      if(requestId!==state.requestId)return;
+      warmEvidence();
+      void buildFrames().then(()=>{if(requestId===state.requestId)setFeedHealth();}).catch(error=>{state.metadataErrors.push(String(error));showToast('Radar metadata is delayed; forecast guidance can still load.');});
+    },120);
+  }
+
   async function refreshAll() {
-    const id=++state.requestId; state.models.clear(); state.modelErrors.clear(); state.modelStale.clear(); state.evidenceReady.clear(); state.frameReading=null; state.liveRadarReading=null;
+    const id=++state.requestId; state.models.clear(); state.modelErrors.clear(); state.modelStale.clear(); state.evidenceReady.clear(); state.enrichmentStarted=false; state.frameReading=null; state.liveRadarReading=null;
     text('#feed-title','Connecting weather sources'); text('#feed-detail','ECCC + four forecast families'); $('#feed-health').dataset.state='loading';
-    warmEvidence();
-    void buildFrames().then(()=>{if(id===state.requestId)setFeedHealth();}).catch(error=>{state.metadataErrors.push(String(error));showToast('Radar metadata is delayed; forecast guidance can still load.');});
-    const tasks=MODELS.map(async model=>{await fetchModel(model,id);if(id===state.requestId&&state.models.size>=2)scheduleForecastRender();});
+    const tasks=MODELS.map(async model=>{await fetchModel(model,id);if(id===state.requestId&&state.models.size>=2){scheduleForecastRender();startEnrichment(id);}});
     await Promise.allSettled(tasks); if(id!==state.requestId)return;
-    renderForecastProducts();
+    renderForecastProducts(); startEnrichment(id);
   }
   async function setPlace(place,fromMap=false) {
     state.place={...state.place,...place}; savePlace(); placeMarker('loading'); text('#place-name',state.place.name);

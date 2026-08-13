@@ -1,4 +1,4 @@
-# Forecast Lab 33.1 performance contract
+# Forecast Lab 33.1.1 performance contract
 
 Trustworthy does not mean blocking. Forecast Lab 33.1 separates the minimum evidence needed to show a forecast from the slower evidence used to refine it.
 
@@ -6,9 +6,10 @@ Trustworthy does not mean blocking. Forecast Lab 33.1 separates the minimum evid
 
 1. Load raw numerical models in parallel.
 2. Render as soon as two independent models are usable.
-3. Add the remaining models progressively.
-4. Load radar metadata, Best Match, ECCC official guidance, REPS, point nowcast, and WeatherNext outside the critical path.
-5. Re-run the governed single-pass router when each evidence family becomes ready.
+3. Give the core model requests first priority on the network.
+4. Add the remaining models progressively.
+5. Only after the two-model render, load radar metadata, Best Match, ECCC official guidance, REPS, point nowcast, and WeatherNext outside the critical path.
+6. Re-run the governed single-pass router when each evidence family becomes ready.
 
 The first view is therefore a real raw-model consensus, never placeholder weather. Later evidence can refine it only within the Lab 33 horizon budgets.
 

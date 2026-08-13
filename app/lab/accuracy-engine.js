@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '33.1.0';
+  const VERSION = '33.1.1';
   const nativeFetch = window.fetch.bind(window);
   const OPEN_METEO = 'https://api.open-meteo.com/v1/forecast';
   const ECCC_API = 'https://api.weather.gc.ca';
@@ -641,7 +641,6 @@
       const lat = finite(parsed.searchParams.get('latitude'));
       const lon = finite(parsed.searchParams.get('longitude'));
       const modelId = modelIdFromUrl(requestUrl);
-      if (lat != null && lon != null) void warmEvidence(lat, lon, false);
       const response = await nativeFetch(input, init);
       if (!response.ok) return response;
       try {
