@@ -1,0 +1,41 @@
+name: SkyMap forecast truth contract
+
+on:
+  pull_request:
+    paths:
+      - 'app/lab/accuracy-engine.js'
+      - 'app/lab/forecast-intelligence-25.js'
+      - 'scripts/check-forecast-contract.mjs'
+      - '.github/workflows/forecast-contract.yml'
+      - 'verification/FORECAST-CONTRACT.md'
+  push:
+    branches: [main]
+    paths:
+      - 'app/lab/accuracy-engine.js'
+      - 'app/lab/forecast-intelligence-25.js'
+      - 'scripts/check-forecast-contract.mjs'
+      - '.github/workflows/forecast-contract.yml'
+      - 'verification/FORECAST-CONTRACT.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: forecast-truth-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Validate live forecast engine contract
+        run: |
+          node --check app/lab/accuracy-engine.js
+          node --check app/lab/forecast-intelligence-25.js
+          node --check scripts/check-forecast-contract.mjs
+          node scripts/check-forecast-contract.mjs
