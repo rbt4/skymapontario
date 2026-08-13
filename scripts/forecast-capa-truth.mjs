@@ -59,7 +59,7 @@ function rangeEntry(ranges,kind){
     const label=`${key} ${JSON.stringify(value?.parameter||{})}`.toLowerCase();
     const score=kind==='precip'
       ?(/(^|[^a-z])apcp([^a-z]|$)|precip|rain/.test(label)?3:0)
-      :(quality|confidence|quality index|qi/.test(label)?3:0);
+      :(/quality|confidence|quality index|(^|[^a-z])qi([^a-z]|$)/.test(label)?3:0);
     return{key,value,score};
   }).sort((a,b)=>b.score-a.score);
   if(scored[0]?.score>0)return scored[0].value;
