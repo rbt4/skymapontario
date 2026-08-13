@@ -63,6 +63,7 @@ jobs:
           grep -q '<script src="evidence-router.js"></script>' app/lab/index.html
           grep -q 'governed-single-pass' app/lab/evidence-router.js
           grep -q 'model_rows_mutated: 0' app/lab/accuracy-engine.js
+          grep -q '33.2.0-experimental.1' app/lab/version.json
       - name: Live Google WeatherNext 2 ensemble smoke test
         if: github.event_name == 'pull_request'
         run: node scripts/check-weathernext.mjs
