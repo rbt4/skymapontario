@@ -47,7 +47,7 @@ jobs:
           grep -q 'forecast-intelligence-25.js' app/lab/index.html
           grep -q 'ensemble-api.open-meteo.com' app/lab/index.html
           grep -q 'https://api.weather.gc.ca' app/lab/index.html
-          grep -q "VERSION = '33.1.0'" app/lab/accuracy-engine.js
+          grep -q "VERSION = '33.1.1'" app/lab/accuracy-engine.js
           grep -q "VERSION = '25.0.0'" app/lab/forecast-intelligence-25.js
           grep -q 'google_weathernext2_ensemble' app/lab/forecast-intelligence-25.js
           grep -q '__skymap_missing__' app/lab/forecast-intelligence-25.js

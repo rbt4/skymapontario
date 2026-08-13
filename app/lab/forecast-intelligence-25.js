@@ -226,7 +226,6 @@
     const lon = finite(parsed.searchParams.get('longitude'));
     if (lat == null || lon == null) return upstreamFetch(input, init);
 
-    void warmWeatherNext(lat, lon, false);
     const response = await upstreamFetch(input, init);
     if (!response.ok) return response;
     try {

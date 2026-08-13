@@ -1,8 +1,8 @@
 {
   "name": "SkyMap Future Lab",
-  "version": "33.1.0-experimental.1",
+  "version": "33.1.1-experimental.1",
   "channel": "experimental",
-  "engine": "living-future-radar+truth-firewall-33.1+progressive-fast-path+governed-evidence-router+forecast-iq-25",
+  "engine": "living-future-radar+truth-firewall-33.1.1+core-first-progressive-fast-path+governed-evidence-router+forecast-iq-25",
   "released": "2026-08-13",
   "experience": "instant-raw-consensus+background-evidence-enrichment+stale-safe-resilience+single-pass-governance"
 }
