@@ -81,7 +81,54 @@ async function loadState(){try{const s=JSON.parse(await fs.readFile(STATE_PATH,'
 function cov(state,id){return state.coverage[id]||(state.coverage[id]={attempts:0,success:0,empty:0,failures:0,pairs:0,lastError:null});}
 async function processSource(state,source,getCtx,truthCache){const c=chunk(state.sourceCursors[source.id]);if(!c)return{source:source.id,status:'caught-up',pairs:0};const coverage=cov(state,source.id);coverage.attempts++;let payloads;try{payloads=normaliseMulti(await fetchJson(previousUrl(source,c.start,c.end),3,45000),LOCATIONS.length);}catch(e){coverage.failures++;coverage.lastError=String(e.message||e);return{source:source.id,status:'retry',error:coverage.lastError,pairs:0};}let usable=0;for(const data of payloads)for(const lead of LEADS){const d=lead/24;for(const v of data?.hourly?.[`precipitation_previous_day${d}`]||[])if(finite(v)!=null)usable++;for(const v of data?.hourly?.[`weather_code_previous_day${d}`]||[])if(finite(v)!=null)usable++;}if(!usable){coverage.empty++;coverage.success++;coverage.lastError=null;state.sourceCursors[source.id]=c.next;return{source:source.id,status:'empty',pairs:0};}const tk=`${c.start}|${c.end}`;if(!truthCache.has(tk))truthCache.set(tk,await loadTruth(c));const truth=truthCache.get(tk);if(truth.size<MIN_TRUTH_LOCATIONS){coverage.failures++;coverage.lastError=`only ${truth.size} truth locations`;return{source:source.id,status:'retry',error:coverage.lastError,pairs:0};}let pairs=0;for(let li=0;li<LOCATIONS.length;li++){const loc=LOCATIONS[li],obsMap=truth.get(loc.id),data=payloads[li];if(!obsMap||!data)continue;for(let t=c.startMs;t<=c.endMs;t+=3600000){if(!SAMPLE_HOURS.includes(new Date(t).getUTCHours()))continue;const obs=obsMap.get(t);if(!obs)continue;const date=dateOnly(t),ctx=getCtx(date),buckets=bucketsFor(loc,t,ctx);for(const lead of LEADS){const pred=predictionAt(data,lead,t);if(!pred)continue;const w=recencyWeight(t);for(const bucket of buckets)addScore(state,source.id,lead,bucket,pred,obs,w);pairs++;}}}if(!pairs){coverage.failures++;coverage.lastError='zero regime pairs';return{source:source.id,status:'retry',pairs:0};}coverage.success++;coverage.pairs+=pairs;coverage.lastError=null;state.sourceCursors[source.id]=c.next;return{source:source.id,status:'success',pairs};}
 function currentContext(context){const r=context?.results||{},latest=rows=>rows?.length?rows.at(-1):null,pna=latest(r.pna?.data),nao=latest(r.nao?.data),ao=latest(r.ao?.data),nino=latest(r.nino34?.data),mjo=latest(r.mjo?.data);return{asOf:[pna?.[0],nao?.[0],ao?.[0],nino?.[0],mjo?.[0]].filter(Boolean).sort().at(-1)||null,pna:phase(finite(pna?.[1])),nao:phase(finite(nao?.[1])),ao:phase(finite(ao?.[1])),enso:ensoPhase(finite(nino?.[1])),mjo:mjoPhase(mjo)};}
-function candidateWeights(state,context){const active=currentContext(context),out={};for(const lead of LEADS){const raw={};for(const id of Object.keys(BASE_WEIGHTS)){const base=BASE_WEIGHTS[id],all=state.metrics[metricKey(id,lead,'all')],buckets=[`pna:${active.pna}`,`nao:${active.nao}`,`ao:${active.ao}`,`enso:${active.enso}`,`mjo:${active.mjo}`];let score=all?eventSkill(all):null,totalWeight=all?Math.min(1,all.weightedSamples/180):0;if(score==null)score=.48;let blended=score*totalWeight+.48*(1-totalWeight),evidence=all?.samples||0;for(const bucket of buckets){const m=state.metrics[metricKey(id,lead,bucket)];if(!m||m.samples<35)continue;const s=eventSkill(m);if(s==null)continue;const w=Math.min(.22,m.samples/500);blended=blended*(1-w)+s*w;evidence+=m.samples;}const relative=clamp(1+(blended-.48)*.75,.82,1.18);raw[id]={value:base*relative,evidence,skill:+blended.toFixed(4)};}const sum=Object.values(raw).reduce((s,x)=>s+x.value,0)||1;out[lead]=Object.fromEntries(Object.entries(raw).map(([id,x])=>[id,{weight:+(x.value/sum).toFixed(4),samples:x.evidence,skill:x.skill}]));}const minEvidence=Math.min(...Object.values(out[24]||{}).map(x=>x.samples||0));return{schema:1,generatedAt:iso(Date.now()),mode:'shadow-only',approved:false,reason:minEvidence<500?'Gathering regime-conditioned evidence; no production weight change is allowed yet.':'Evidence threshold reached, but champion-vs-challenger case-level verification is still required before activation.',currentRegime:active,baselineWeights:BASE_WEIGHTS,proposedByLead:out,guardrails:{maxRelativeWeightShift:'18%',minimumEvidenceBeforeReview:500,activationRequires:'out-of-sample champion-vs-challenger improvement'}};}
-async function selfTest(){if(finite(null)!==null||finite('')!==null||phase(.8)!=='positive'||phase(-.9)!=='negative'||ensoPhase(.6)!=='el-nino')throw new Error('regime self-test failed');const m=emptyMetric('x',24,'all');scoreMetric(m,{wet:true},{wet:true},1);scoreMetric(m,{wet:true},{wet:false},1);if(m.hits!==1||m.falseAlarms!==1)throw new Error('metric self-test failed');console.log('✓ regime-aware shadow learner self-test passed');}
+function boundedSupportedWeights(raw,supported){
+  const ids=Object.keys(BASE_WEIGHTS),supportedSet=new Set(supported),weights=Object.fromEntries(ids.map(id=>[id,supportedSet.has(id)?raw[id].value:BASE_WEIGHTS[id]]));
+  const target=supported.reduce((sum,id)=>sum+BASE_WEIGHTS[id],0);
+  for(let pass=0;pass<10&&supported.length;pass++){
+    const sum=supported.reduce((total,id)=>total+weights[id],0),delta=target-sum;
+    if(Math.abs(delta)<1e-10)break;
+    const capacity=Object.fromEntries(supported.map(id=>[id,delta>0?BASE_WEIGHTS[id]*1.18-weights[id]:weights[id]-BASE_WEIGHTS[id]*.82]));
+    const totalCapacity=Object.values(capacity).reduce((total,value)=>total+Math.max(0,value),0);
+    if(totalCapacity<=0)break;
+    for(const id of supported)weights[id]=clamp(weights[id]+delta*Math.max(0,capacity[id])/totalCapacity,BASE_WEIGHTS[id]*.82,BASE_WEIGHTS[id]*1.18);
+  }
+  return weights;
+}
+function candidateWeights(state,context){
+  const active=currentContext(context),out={};
+  for(const lead of LEADS){
+    const raw={};
+    for(const id of Object.keys(BASE_WEIGHTS)){
+      const base=BASE_WEIGHTS[id],all=state.metrics[metricKey(id,lead,'all')],buckets=[`pna:${active.pna}`,`nao:${active.nao}`,`ao:${active.ao}`,`enso:${active.enso}`,`mjo:${active.mjo}`];
+      let score=all?eventSkill(all):null,totalWeight=all?Math.min(1,all.weightedSamples/180):0;
+      if(score==null)score=.48;
+      let blended=score*totalWeight+.48*(1-totalWeight);
+      const evidence=all?.samples||0;
+      for(const bucket of buckets){
+        const m=state.metrics[metricKey(id,lead,bucket)];
+        if(!m||m.samples<35)continue;
+        const s=eventSkill(m);
+        if(s==null)continue;
+        const w=Math.min(.22,m.samples/500);
+        blended=blended*(1-w)+s*w;
+      }
+      const relative=clamp(1+(blended-.48)*.75,.82,1.18);
+      raw[id]={value:base*relative,evidence,skill:+blended.toFixed(4),supported:evidence>=500};
+    }
+    const supported=Object.keys(raw).filter(id=>raw[id].supported),weights=boundedSupportedWeights(raw,supported);
+    out[lead]=Object.fromEntries(Object.entries(raw).map(([id,item])=>[id,{weight:+weights[id].toFixed(4),samples:item.evidence,skill:item.skill,supported:item.supported,frozen:!item.supported}]));
+  }
+  const supportedModels=Object.keys(BASE_WEIGHTS).filter(id=>LEADS.every(lead=>out[lead][id].supported));
+  return{schema:1,generatedAt:iso(Date.now()),mode:'shadow-only',approved:false,reason:supportedModels.length<3?`Gathering honest historical evidence (${supportedModels.length}/3 models supported at every lead); unsupported sources remain frozen at champion weight.`:'Historical evidence is ready for the sealed champion-vs-challenger Court; no production weight change is allowed without a passing prospective verdict and explicit code release.',currentRegime:active,baselineWeights:BASE_WEIGHTS,proposedByLead:out,guardrails:{maxRelativeWeightShift:'18%',minimumEvidenceBeforeReview:500,minimumSupportedModels:3,unsupportedSources:'frozen at champion weight',activationRequires:'passing sealed out-of-sample Court plus explicit code release'}};
+}
+async function selfTest(){
+  if(finite(null)!==null||finite('')!==null||phase(.8)!=='positive'||phase(-.9)!=='negative'||ensoPhase(.6)!=='el-nino')throw new Error('regime self-test failed');
+  const m=emptyMetric('x',24,'all');scoreMetric(m,{wet:true},{wet:true},1);scoreMetric(m,{wet:true},{wet:false},1);if(m.hits!==1||m.falseAlarms!==1)throw new Error('metric self-test failed');
+  const state={metrics:{}};
+  for(const id of ['gem','ifs','gfs'])for(const lead of LEADS){const metric=emptyMetric(id,lead,'all');Object.assign(metric,{samples:600,weightedSamples:600,weightedHits:id==='gem'?360:300,weightedMisses:100,weightedFalseAlarms:id==='gfs'?180:80,weightedCorrectDry:60});state.metrics[metricKey(id,lead,'all')]=metric;}
+  const challenger=candidateWeights(state,{results:{}});
+  for(const lead of LEADS){const row=challenger.proposedByLead[lead];if(row.aifs.weight!==BASE_WEIGHTS.aifs||!row.aifs.frozen)throw new Error('unsupported AIFS was not frozen');const sum=Object.values(row).reduce((total,item)=>total+item.weight,0);if(Math.abs(sum-1)>.001)throw new Error('candidate weights do not conserve influence');}
+  console.log('✓ regime-aware shadow learner self-test passed');
+}
 async function main(){if(process.argv.includes('--self-test'))return selfTest();const context=JSON.parse(await fs.readFile(CONTEXT_PATH,'utf8')),getCtx=contextAccessor(context),state=await loadState(),truthCache=new Map(),results=[];for(const source of SOURCES){const r=await processSource(state,source,getCtx,truthCache);results.push(r);console.log(`${r.status==='success'||r.status==='empty'||r.status==='caught-up'?'✓':'⚠'} regime ${source.id}: ${r.status}${r.pairs?` · ${r.pairs} pairs`:''}${r.error?` · ${r.error}`:''}`);await new Promise(r=>setTimeout(r,250));}state.runs++;state.updatedAt=iso(Date.now());state.lastRun={at:state.updatedAt,results};await fs.writeFile(STATE_PATH,JSON.stringify(state));const challenger=candidateWeights(state,context);await fs.writeFile(CHALLENGER_PATH,JSON.stringify(challenger,null,2));console.log(`✓ shadow challenger written · ${challenger.reason}`);}
 await main();

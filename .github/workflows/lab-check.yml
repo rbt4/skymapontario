@@ -8,6 +8,7 @@ on:
       - 'scripts/check-forecast-contract.mjs'
       - 'scripts/check-evidence-router.mjs'
       - 'scripts/check-progressive-fast-path.mjs'
+      - 'scripts/check-forecast-court.mjs'
       - '.github/workflows/lab-check.yml'
   push:
     branches: [main]
@@ -17,6 +18,7 @@ on:
       - 'scripts/check-forecast-contract.mjs'
       - 'scripts/check-evidence-router.mjs'
       - 'scripts/check-progressive-fast-path.mjs'
+      - 'scripts/check-forecast-court.mjs'
       - '.github/workflows/lab-check.yml'
 
 permissions:
@@ -40,14 +42,16 @@ jobs:
           node --check scripts/check-forecast-contract.mjs
           node --check scripts/check-evidence-router.mjs
           node --check scripts/check-progressive-fast-path.mjs
+          node --check scripts/check-forecast-court.mjs
           node scripts/check-forecast-contract.mjs
           node scripts/check-evidence-router.mjs
           node scripts/check-progressive-fast-path.mjs
+          node scripts/check-forecast-court.mjs
           grep -q '<script src="accuracy-engine.js"></script>' app/lab/index.html
           grep -q 'forecast-intelligence-25.js' app/lab/index.html
           grep -q 'ensemble-api.open-meteo.com' app/lab/index.html
           grep -q 'https://api.weather.gc.ca' app/lab/index.html
-          grep -q "VERSION = '33.1.1'" app/lab/accuracy-engine.js
+          grep -q "VERSION = '34.0.0'" app/lab/accuracy-engine.js
           grep -q "VERSION = '25.0.0'" app/lab/forecast-intelligence-25.js
           grep -q 'google_weathernext2_ensemble' app/lab/forecast-intelligence-25.js
           grep -q '__skymap_missing__' app/lab/forecast-intelligence-25.js
@@ -63,7 +67,7 @@ jobs:
           grep -q '<script src="evidence-router.js"></script>' app/lab/index.html
           grep -q 'governed-single-pass' app/lab/evidence-router.js
           grep -q 'model_rows_mutated: 0' app/lab/accuracy-engine.js
-          grep -q '33.2.0-experimental.1' app/lab/version.json
+          grep -q '34.0.0-experimental.1' app/lab/version.json
       - name: Live Google WeatherNext 2 ensemble smoke test
         if: github.event_name == 'pull_request'
         run: node scripts/check-weathernext.mjs

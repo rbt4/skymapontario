@@ -12,7 +12,7 @@ const window = {};
 vm.runInNewContext(routerSource, { window, Date, Math, Number, Object, Array, Map, Set, String }, { filename:'evidence-router.js' });
 
 const router = window.SkyMapEvidenceRouter;
-assert.equal(router?.version, '33.0.0');
+assert.equal(router?.version, '34.0.0');
 assert.equal(router?.mode, 'governed-single-pass');
 assert.ok(router?.contract, 'router contract export missing');
 
@@ -57,9 +57,12 @@ const duplicate = router.contract.dedupeContributors([
 assert.equal(duplicate.rows.length, 2);
 assert.equal(duplicate.duplicates, 1);
 
-for (const value of Object.values(router.contract.governanceLocks)) {
-  if (typeof value === 'boolean') assert.equal(value, false, 'learned parameters must remain locked before Forecast Court promotion');
-}
+assert.equal(router.contract.governanceLocks.learnedModelWeights, false);
+assert.equal(router.contract.governanceLocks.shadowModelWeights, 'collect-only');
+assert.equal(router.contract.governanceLocks.promotion, 'explicit-release-after-sealed-court');
+assert.equal(router.contract.governanceLocks.timingOffsets, false);
+assert.equal(router.contract.governanceLocks.spatialOffsets, false);
+assert.equal(router.contract.governanceLocks.probabilityCalibration, false);
 
 assert.doesNotMatch(accuracySource, /function calibrateModel\b|calibrateModel\(/, 'shared evidence is still being injected into each model');
 assert.match(accuracySource, /model_rows_mutated:\s*0/);
@@ -68,4 +71,4 @@ assert.match(weatherNextSource, /weathernext-ensemble-single-pass-sidecar/);
 assert.equal((labSource.match(/SkyMapEvidenceRouter\?\.route/g) || []).length, 1, 'router must run exactly once after raw consensus');
 assert.doesNotMatch(labSource, /const val=k=>finite\(hourly\[k\]\?\.\[best\]\)\?\?0/, 'visible consensus still fabricates zeroes');
 
-console.log('✓ Forecast Lab 33 governed evidence router passed');
+console.log('✓ Forecast Lab 34 governed evidence router passed');

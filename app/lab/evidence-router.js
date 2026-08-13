@@ -1,15 +1,17 @@
 (() => {
   'use strict';
 
-  const VERSION = '33.0.0';
+  const VERSION = '34.0.0';
   const PRECIP_CODES = new Set([51,53,55,56,57,61,63,65,66,67,71,73,75,77,80,81,82,85,86,95,96,99]);
   const SNOW_CODES = new Set([71,73,75,77,85,86]);
   const GOVERNANCE_LOCKS = Object.freeze({
     learnedModelWeights: false,
+    shadowModelWeights: 'collect-only',
+    promotion: 'explicit-release-after-sealed-court',
     timingOffsets: false,
     spatialOffsets: false,
     probabilityCalibration: false,
-    reason: 'Observation may update local skill scores, but promotion requires the public Forecast Court.'
+    reason: 'Personal and historical evidence may produce shadow challengers only. Live model influence requires a passing sealed Ontario Court and an explicit code release; timing, spatial and probability calibration remain locked.'
   });
 
   const finite = value => value === null || value === undefined || value === '' || value === '__skymap_missing__'

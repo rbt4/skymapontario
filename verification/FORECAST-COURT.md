@@ -1,46 +1,55 @@
-# Forecast Court
+# SkyMap Forecast Court
 
-Forecast Court is SkyMap's prospective champion-versus-challenger gate. Its job is to prevent a historically attractive calibration from being promoted merely because it looks clever in retrospective data.
+The Forecast Court is the release gate for any learned change to SkyMap's published model weights. It compares the current champion with one sealed challenger on the same Ontario cases and against the same later ECCC observations. It never edits production by itself.
 
-## Sealed experiment
+## Sealed prospective process
 
-Every run retrieves the same raw GEM, IFS, GFS and AIFS forecasts for eight Ontario locations at +24, +48 and +72 hours. It creates two predictions before the outcome exists:
+Every six hours, `.github/workflows/forecast-court.yml`:
 
-- **Champion:** today's fixed baseline model weights.
-- **Challenger:** the current regime-conditioned shadow weights produced by Forecast Lab's historical learner.
+1. freezes champion and challenger predictions before truth exists;
+2. records +24, +48, and +72 hour cases for eight Ontario cities;
+3. waits until the forecast hour is safely in the past;
+4. scores both versions against nearby ECCC climate-hourly precipitation truth;
+5. publishes a bounded public status artifact from the `forecast-court-data` branch.
 
-The case stores both predictions and the exact challenger weight snapshot. After the valid time passes and ECCC observations are available, both are scored against the same truth.
+The candidate must pass every guardrail:
 
-## What is scored
+| Gate | Minimum |
+| --- | ---: |
+| Historical evidence per supported model and lead | 500 samples |
+| Historically supported models | 3 |
+| Sealed prospective cases | 300 |
+| Observed wet cases | 45 |
+| Cases at each lead | 60 |
+| Relative Brier improvement | 2% |
+| CSI degradation | no worse than 0.5 percentage points |
+| Miss-rate degradation | no worse than 1.5 percentage points |
+| False-alarm degradation | no worse than 2 percentage points |
+| Per-lead Brier degradation | no lead worse by more than 3% |
 
-Forecast Court tracks:
+Passing produces `approvedForBoundedIntegrationReview: true`. It does not promote the challenger. A deliberate code change, review, CI pass, merge, and deployment are still required.
 
-- Brier score from the weighted wet-model vote
-- Critical Success Index (CSI)
-- probability of detection / miss rate
-- false alarm ratio
-- precipitation amount MAE when comparable observations exist
-- total samples and, separately, actual wet outcomes
-- performance at each lead time rather than one pooled headline number
+## Unsupported historical sources
 
-Dry-hour accuracy alone is deliberately not a promotion criterion.
+A source with fewer than 500 honest historical samples at any supported lead cannot acquire learned influence. It is frozen at the champion weight. The Court may evaluate a challenger when at least three models are historically supported at every lead and every unsupported model remains frozen.
 
-## Promotion floor
+This prevents a missing archive—currently relevant to AIFS—from both deadlocking the entire Court and receiving an invented benefit from normalization. Prospective cases can still include the source, so a later archive improvement can make it eligible without changing the truth standard.
 
-The challenger is held unless all of the following are true:
+## Boundaries
 
-1. Its proposed weights are genuinely different from the champion.
-2. Historical regime evidence reaches at least 500 samples per model/lead before review.
-3. The challenger snapshot is fresh.
-4. The prospective court has at least 300 scored cases, including at least 45 wet truths and at least 60 cases at each +24/+48/+72 lead.
-5. Brier score improves by at least 2% overall.
-6. CSI is no more than 0.5 percentage points worse.
-7. Miss rate is no more than 1.5 percentage points worse.
-8. False alarm ratio is no more than 2 percentage points worse.
-9. No individual lead is allowed to have a Brier score more than 3% worse.
+- champion and challenger cases are immutable after sealing;
+- the same observation grades both sides;
+- model agreement is not described as probability calibration;
+- timing, spatial offsets, and probability calibration remain locked;
+- current-device personal evidence cannot bypass this Court;
+- snow is not graded by rain-radar truth;
+- the Court cannot write application code or production weights.
 
-Passing produces only `approvedForBoundedIntegrationReview: true`. It **does not** alter production. A code release is still required to consume the candidate weights, preserving an explicit final safety boundary.
+## Verification
 
-## Why this matters
+```bash
+node scripts/forecast-regime-skill.mjs --self-test
+node scripts/forecast-court.mjs --self-test
+```
 
-The historical learner and the prospective court answer different questions. History asks which forecast families tended to work under a given circulation regime. Forecast Court asks whether using that knowledge actually helps on new weather that was not available when the weights were generated. Both are required.
+The first check proves that unsupported sources remain exactly at champion influence. The second proves that three supported models can enter the Court, while any movement of an unsupported model rejects the challenger.
