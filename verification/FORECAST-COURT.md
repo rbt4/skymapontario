@@ -1,46 +1,59 @@
-# Forecast Court
+# Forecast Lab 34 prospective Forecast Court
 
-Forecast Court is SkyMap's prospective champion-versus-challenger gate. Its job is to prevent a historically attractive calibration from being promoted merely because it looks clever in retrospective data.
+Forecast Lab 34 turns local verification into a conservative calibration system. It does not claim that past hit rate is a future probability, and it does not let a short winning streak rewrite the forecast.
 
-## Sealed experiment
+## Evidence lifecycle
 
-Every run retrieves the same raw GEM, IFS, GFS and AIFS forecasts for eight Ontario locations at +24, +48 and +72 hours. It creates two predictions before the outcome exists:
+1. Each raw GEM, IFS, GFS, and AIFS forecast is frozen before its valid hour.
+2. One representative forecast is retained per model, valid hour, and lead bucket for nine days.
+3. When that hour arrives, ECCC `RADAR_1KM_RRAI` point data supplies the independent rain observation.
+4. Rain occurrence and log-scaled precipitation-rate error are scored separately, then combined as 80% occurrence and 20% amount quality.
+5. A valid hour counts once per model and lead bucket. Reloads and repeated thirty-minute forecasts cannot manufacture extra court samples.
+6. Snow and mixed-snow groups are withheld because rain-radar rate is not a valid snow truth source.
 
-- **Champion:** today's fixed baseline model weights.
-- **Challenger:** the current regime-conditioned shadow weights produced by Forecast Lab's historical learner.
+## Cohorts
 
-The case stores both predictions and the exact challenger weight snapshot. After the valid time passes and ECCC observations are available, both are scored against the same truth.
+Evidence is retained separately by:
 
-## What is scored
+- local 0.1° cell;
+- forecast lead bucket: 0–3, 3–12, 12–24, 24–48, 48–96, or 96+ hours;
+- meteorological season;
+- forecast regime: dry, light rain, or steady rain.
 
-Forecast Court tracks:
+The court tries the most specific mature cohort first, then falls back through local and Ontario-wide lead cohorts. A fallback is still based only on observations collected on the current device.
 
-- Brier score from the weighted wet-model vote
-- Critical Success Index (CSI)
-- probability of detection / miss rate
-- false alarm ratio
-- precipitation amount MAE when comparable observations exist
-- total samples and, separately, actual wet outcomes
-- performance at each lead time rather than one pooled headline number
+## Promotion gate
 
-Dry-hour accuracy alone is deliberately not a promotion criterion.
+A cohort cannot adjust model influence until it has all of the following:
 
-## Promotion floor
+| Gate | Minimum |
+| --- | ---: |
+| Independently verified hours | 48 |
+| Observation span | 30 days |
+| Observed wet hours | 8 |
+| Observed dry hours | 16 |
+| Models meeting the sample floor | 2 |
 
-The challenger is held unless all of the following are true:
+Every model score is shrunk toward a 72% prior with 24 virtual samples. This makes early evidence deliberately weak. After promotion, each model's influence factor is capped between 0.86 and 1.14 of its published base influence, and total influence is conserved. The hardcoded base weights remain immutable.
 
-1. Its proposed weights are genuinely different from the champion.
-2. Historical regime evidence reaches at least 500 samples per model/lead before review.
-3. The challenger snapshot is fresh.
-4. The prospective court has at least 300 scored cases, including at least 45 wet truths and at least 60 cases at each +24/+48/+72 lead.
-5. Brier score improves by at least 2% overall.
-6. CSI is no more than 0.5 percentage points worse.
-7. Miss rate is no more than 1.5 percentage points worse.
-8. False alarm ratio is no more than 2 percentage points worse.
-9. No individual lead is allowed to have a Brier score more than 3% worse.
+## Controls that remain locked
 
-Passing produces only `approvedForBoundedIntegrationReview: true`. It **does not** alter production. A code release is still required to consume the candidate weights, preserving an explicit final safety boundary.
+- event probabilities are not calibrated;
+- timing is not shifted;
+- forecast locations are not spatially moved;
+- shared ECCC, Best Match, REPS, nowcast, and WeatherNext evidence is not learned into raw-model weights;
+- radar does not grade snow.
 
-## Why this matters
+The user-facing evidence drawer identifies whether the Court is still collecting or active and shows both base and adjusted influence when active.
 
-The historical learner and the prospective court answer different questions. History asks which forecast families tended to work under a given circulation regime. Forecast Court asks whether using that knowledge actually helps on new weather that was not available when the weights were generated. Both are required.
+## Privacy and persistence
+
+The ledger remains in browser local storage. SkyMap sends no calibration analytics, location history, forecasts, or observations to a SkyMap server. Storage is bounded: global observation identifiers, per-cohort observations, per-model sample identifiers, and prospective snapshots all have explicit caps.
+
+## Executable verification
+
+```bash
+node scripts/check-forecast-court.mjs
+```
+
+The contract fails if thresholds weaken, balance or span gates disappear, influence exceeds ±14%, total model influence changes, long-range forecasts expire before verification, rain radar can grade snow, or the visible consensus bypasses eligible Court weights.

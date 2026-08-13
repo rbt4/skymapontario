@@ -33,7 +33,7 @@
   const state = {
     place: loadPlace(), map:null, marker:null, overlay:null, frames:[], frameIndex:0,
     playing:false, playTimer:null, speedIndex:0, loopCount:0,
-    models:new Map(), modelErrors:new Map(), modelStale:new Map(), evidenceReady:new Set(), enrichmentStarted:false, timezone:'America/Toronto', consensus:[], events:[],
+    models:new Map(), modelErrors:new Map(), modelStale:new Map(), evidenceReady:new Set(), enrichmentStarted:false, timezone:'America/Toronto', consensus:[], events:[], courtDecision:null,
     modelControllers:new Map(), mapLayersStarted:false, transport:null,
     searchTimer:null, requestId:0, metadataErrors:[], frameReading:null, liveRadarReading:null,
     pointReadoutFrame:0
@@ -386,21 +386,28 @@
       wetKnown,wet:wetKnown&&(precip>=WET_THRESHOLD||PRECIP_CODES.has(code))
     };
   }
+  function modelRowsAt(target) {
+    const rows=MODELS.map(model=>{const p=pointAt(model,state.models.get(model.id),target);return p?{...p,weight:model.weight,baseWeight:model.weight}:null;}).filter(Boolean);
+    if(!rows.length)return {rows,decision:null};
+    const decision=window.SkyMapAccuracy?.courtWeightsAt?.(state.place.lat,state.place.lon,target,rows)||null;
+    if(decision?.weights)rows.forEach(row=>{const adjusted=finite(decision.weights[row.model.id]);if(adjusted!=null)row.weight=adjusted;});
+    return {rows,decision};
+  }
   function blendAt(target) {
-    const rows=MODELS.map(model=>{const p=pointAt(model,state.models.get(model.id),target);return p?{...p,weight:model.weight}:null;}).filter(Boolean); if(!rows.length)return null;
+    const {rows,decision}=modelRowsAt(target); if(!rows.length)return null;
     const average=key=>{const known=rows.filter(row=>finite(row[key])!=null);const total=known.reduce((sum,row)=>sum+row.weight,0);return total?known.reduce((sum,row)=>sum+row[key]*row.weight,0)/total:null;};
     const wetRows=rows.filter(row=>row.wetKnown),wetTotal=wetRows.reduce((sum,row)=>sum+row.weight,0),wetWeight=wetTotal?wetRows.reduce((sum,row)=>sum+(row.wet?row.weight:0),0)/wetTotal:null;
     const snowRows=rows.filter(row=>row.snow!=null||SNOW_CODES.has(row.code)),snowTotal=snowRows.reduce((sum,row)=>sum+row.weight,0),snowWeight=snowTotal?snowRows.reduce((sum,row)=>sum+((row.snow>0||SNOW_CODES.has(row.code))?row.weight:0),0)/snowTotal:null;
     const directionRows=rows.filter(row=>row.direction!=null),sin=directionRows.reduce((sum,row)=>sum+Math.sin(row.direction*Math.PI/180)*row.weight,0),cos=directionRows.reduce((sum,row)=>sum+Math.cos(row.direction*Math.PI/180)*row.weight,0);
     const direction=directionRows.length?(Math.atan2(sin,cos)*180/Math.PI+360)%360:null;
     const codeWeights=new Map(); rows.forEach(row=>{if(row.code!=null)codeWeights.set(row.code,(codeWeights.get(row.code)||0)+row.weight);}); let code=null,codeWeight=-1; for(const [candidate,weight] of codeWeights)if(weight>codeWeight){code=candidate;codeWeight=weight;}
-    const base={time:new Date(target),rows,wet:wetWeight==null?null:Math.round(wetWeight*100),precip:average('precip'),snow:snowWeight==null?null:Math.round(snowWeight*100),code,wetModels:wetRows.filter(row=>row.wet).length,totalModels:wetRows.length,agreement:wetWeight==null?null:Math.round(Math.max(wetWeight,1-wetWeight)*100),direction};
+    const base={time:new Date(target),rows,wet:wetWeight==null?null:Math.round(wetWeight*100),precip:average('precip'),snow:snowWeight==null?null:Math.round(snowWeight*100),code,wetModels:wetRows.filter(row=>row.wet).length,totalModels:wetRows.length,agreement:wetWeight==null?null:Math.round(Math.max(wetWeight,1-wetWeight)*100),direction,calibration:decision};
     return window.SkyMapEvidenceRouter?.route(base,{target,place:state.place})||base;
   }
   function buildConsensus() {
     const now=new Date(); now.setMinutes(0,0,0); const points=[];
     for(let h=0;h<8*24;h++){const point=blendAt(new Date(now.getTime()+h*3600000));if(point)points.push(point);}
-    state.consensus=points; state.events=identifyEvents(points); return points;
+    state.consensus=points; state.courtDecision=points[0]?.calibration||null; state.events=identifyEvents(points); return points;
   }
   function identifyEvents(points) {
     const events=[]; let active=null;
@@ -418,15 +425,16 @@
     event.total=amounts.length?amounts.reduce((sum,value)=>sum+value,0):null; event.snow=snowChances.length?Math.max(...snowChances):null; event.modelWindows=modelEventWindows(event.start,event.end); return event;
   }
   function modelEventWindows(start,end) {
+    const effective=Object.fromEntries(modelRowsAt(start).rows.map(row=>[row.model.id,row.weight]));
     return MODELS.map(model=>{
       const data=state.models.get(model.id); if(!data)return {model,error:true}; const times=data.hourly.time.map(v=>modelDate(data,v)); const wet=[];
       times.forEach(t=>{if(t>=new Date(start.getTime()-12*3600000)&&t<=new Date(end.getTime()+12*3600000)){const p=pointAt(model,data,t);if(p?.wet)wet.push(t);}});
-      return {model,start:wet[0]||null,end:wet.length?new Date(wet.at(-1).getTime()+3600000):null,wet:Boolean(wet.length)};
+      return {model,weight:effective[model.id]??model.weight,start:wet[0]||null,end:wet.length?new Date(wet.at(-1).getTime()+3600000):null,wet:Boolean(wet.length)};
     });
   }
   function eventConfidence(event) {
     if(!event)return {label:'No event',timing:'No window',state:'dry',support:0,spread:0,lead:Infinity};
-    const lead=(event.start-Date.now())/3600000; const windows=event.modelWindows.filter(w=>w.wet&&w.start); const support=windows.reduce((s,w)=>s+w.model.weight,0); const starts=windows.map(w=>w.start.getTime()); const spread=starts.length>1?(Math.max(...starts)-Math.min(...starts))/3600000:12;
+    const lead=(event.start-Date.now())/3600000; const windows=event.modelWindows.filter(w=>w.wet&&w.start); const support=windows.reduce((s,w)=>s+(w.weight??w.model.weight),0); const starts=windows.map(w=>w.start.getTime()); const spread=starts.length>1?(Math.max(...starts)-Math.min(...starts))/3600000:12;
     const eventLabel=support>=.82?'Very strong':support>=.64?'Strong':support>=.45?'Developing':'Watching';
     const timing=lead<=3?'Radar handoff':spread<=2?'Narrowing':spread<=5?'Broad window':'Too early';
     return {label:eventLabel,timing,state:support>=.64?'likely':'uncertain',support,spread,lead};
@@ -577,10 +585,12 @@
       {name:'ECCC extrapolation',role:'0–2 hour official nowcast',state:state.frames.some(f=>f.kind==='nowcast')?'ready':'error',value:state.frames.some(f=>f.kind==='nowcast')?'Connected':'Unavailable'},
       {name:'HRDPS',role:'2.5 km Canadian map guidance',state:state.frames.some(f=>f.kind==='guidance')?'ready':'error',value:state.frames.some(f=>f.kind==='guidance')?'Connected':'Unavailable'}
     ];
-    MODELS.forEach(model=>{const w=modelWetWindow(model),stale=state.modelStale.get(model.id);cards.push({name:model.name,role:model.role,state:state.modelErrors.has(model.id)?'error':w?.wet?'wet':w?.wet===false?'dry':'ready',value:state.modelErrors.has(model.id)?'Feed error':stale?`Cached ${Math.max(1,Math.round(stale/60000))} min old`:w?.wet?`Wet ${fmtTime(w.start)}–${fmtTime(w.end)}`:w?.wet===false?'No near event':'Precipitation fields unavailable'});});
+    const court=state.courtDecision;
+    MODELS.forEach(model=>{const w=modelWetWindow(model),stale=state.modelStale.get(model.id),weight=finite(court?.weights?.[model.id])??model.weight;cards.push({name:model.name,role:`${model.role} · ${Math.round(weight*100)}% ${court?.active?'court':'base'} influence`,state:state.modelErrors.has(model.id)?'error':w?.wet?'wet':w?.wet===false?'dry':'ready',value:state.modelErrors.has(model.id)?'Feed error':stale?`Cached ${Math.max(1,Math.round(stale/60000))} min old`:w?.wet?`Wet ${fmtTime(w.start)}–${fmtTime(w.end)}`:w?.wet===false?'No near event':'Precipitation fields unavailable'});});
     cards.forEach(card=>{const el=document.createElement('article');el.className='source-card';el.dataset.state=card.state;el.innerHTML=`<span><small>${esc(card.role)}</small><b>${esc(card.name)}</b></span><em>${esc(card.value)}</em>`;sourceGrid.append(el);});
     const support=event?event.modelWindows.filter(w=>w.wet).length:0;
-    text('#evidence-summary',event?`${support} independent forecast families support the next event. Canadian guidance receives the highest base influence; agreement and timing spread control how strongly SkyMap speaks.`:'No event currently clears the declaration threshold.');
+    const courtCopy=court?.active?`Forecast Court is active for this cohort after ${court.verifiedHours} verified hours; each base influence can move by at most ${Math.round((court.maxShift||0)*100)}%.`:`Forecast Court is collecting prospective evidence (${court?.verifiedHours||0}/${court?.requiredHours||48} verified hours in the strongest current cohort); base influences remain unchanged.`;
+    text('#evidence-summary',event?`${support} independent forecast families support the next event. ${courtCopy}`:`No event currently clears the declaration threshold. ${courtCopy}`);
     text('#change-note',memory.change);
   }
   function renderRainLine() {
@@ -595,9 +605,10 @@
     });
   }
   function renderConstellation() {
-    const wrap=$('#constellation-grid'); wrap.innerHTML=''; MODELS.forEach(model=>{
+    const wrap=$('#constellation-grid'); wrap.innerHTML=''; const court=state.courtDecision; MODELS.forEach(model=>{
       const data=state.models.get(model.id),w=modelWetWindow(model); const el=document.createElement('article'); el.className='model-card'; el.dataset.state=data?'ready':'error'; el.style.setProperty('--accent',model.accent);
-      const stale=state.modelStale.get(model.id); el.innerHTML=`<header><b>${esc(model.name)}</b><i></i></header><p>${data?(stale?`Cached guidance · ${Math.max(1,Math.round(stale/60000))} min old`:w?.wet?`Next wet signal: ${esc(timeRange(w.start,w.end))}`:w?.wet===false?'No near-term wet signal':'Precipitation fields unavailable'):'Source did not respond'} · base influence ${Math.round(model.weight*100)}%</p>`; wrap.append(el);
+      const stale=state.modelStale.get(model.id),weight=finite(court?.weights?.[model.id])??model.weight,influence=court?.active?`Forecast Court ${Math.round(weight*100)}% · base ${Math.round(model.weight*100)}%`:`base influence ${Math.round(model.weight*100)}%`;
+      el.innerHTML=`<header><b>${esc(model.name)}</b><i></i></header><p>${data?(stale?`Cached guidance · ${Math.max(1,Math.round(stale/60000))} min old`:w?.wet?`Next wet signal: ${esc(timeRange(w.start,w.end))}`:w?.wet===false?'No near-term wet signal':'Precipitation fields unavailable'):'Source did not respond'} · ${esc(influence)}</p>`; wrap.append(el);
     });
   }
   function setFeedHealth(tileError=false) {

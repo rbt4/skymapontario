@@ -29,7 +29,7 @@ The budgets are correction weights, not new model votes. Best Match plus its nei
 
 ## Learning governance
 
-Radar verification may continue to collect local model-skill scores. Lab 33 does not automatically promote those observations into model weights, timing offsets, spatial offsets, or probability calibration. Those controls remain locked until they pass the public Forecast Court with prospective, reproducible evidence.
+Forecast Lab 34 promotes exactly one learned control: raw-model influence may move through the prospective Forecast Court described in `FORECAST-COURT.md`. Promotion requires a mature, balanced cohort and remains bounded to ±14% of each published base influence. Timing offsets, spatial offsets, and probability calibration remain locked. Shared evidence is still routed once after the calibrated raw-model blend and is never multiplied into four votes.
 
 ## Executable verification
 

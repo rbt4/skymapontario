@@ -44,7 +44,7 @@ vm.runInNewContext(source, {
 }, { filename: 'accuracy-engine.js' });
 
 const engine = window.SkyMapAccuracy;
-assert.equal(engine?.version, '33.1.1');
+assert.equal(engine?.version, '34.0.0');
 assert.match(engine?.mode || '', /truth-firewall/);
 const contract = engine?.contract;
 assert.ok(contract, 'forecast contract export missing');
@@ -60,9 +60,12 @@ assert.equal(contract.dryWeatherCode(null), null, 'missing weather code cannot b
 assert.equal(contract.hasExplicitForecastEvidence(null, null), false, 'missing model hour is not scorable');
 assert.equal(contract.hasExplicitForecastEvidence(0, null), true, 'explicit zero precipitation is scorable');
 assert.equal(contract.hasExplicitForecastEvidence(null, 3), true, 'explicit weather code is scorable');
+assert.equal(contract.courtRules.minimumSamples, 48, 'Forecast Court sample floor weakened');
+assert.equal(contract.courtRules.minimumSpanDays, 30, 'Forecast Court observation span weakened');
+assert.equal(contract.courtRules.maxFactorShift, 0.14, 'Forecast Court influence cap changed');
 
 assert.doesNotMatch(source, /const finite = value => Number\.isFinite\(Number\(value\)\)/, 'legacy null-to-zero finite helper returned');
 assert.doesNotMatch(source, /if \(av == null && bv == null\) return 0/, 'legacy missing-to-dry mixer returned');
 assert.doesNotMatch(source, /new Array\(hourly\.time\.length\)\.fill\(0\)/, 'missing model arrays are being fabricated');
 
-console.log('✓ Forecast Lab 33 truth contract passed');
+console.log('✓ Forecast Lab 34 truth contract passed');

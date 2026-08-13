@@ -1,15 +1,15 @@
 (() => {
   'use strict';
 
-  const VERSION = '33.0.0';
+  const VERSION = '34.0.0';
   const PRECIP_CODES = new Set([51,53,55,56,57,61,63,65,66,67,71,73,75,77,80,81,82,85,86,95,96,99]);
   const SNOW_CODES = new Set([71,73,75,77,85,86]);
   const GOVERNANCE_LOCKS = Object.freeze({
-    learnedModelWeights: false,
+    learnedModelWeights: 'forecast-court-gated',
     timingOffsets: false,
     spatialOffsets: false,
     probabilityCalibration: false,
-    reason: 'Observation may update local skill scores, but promotion requires the public Forecast Court.'
+    reason: 'Only prospective ECCC-radar verification may adjust raw-model influence after cohort thresholds; timing, spatial and probability calibration remain locked.'
   });
 
   const finite = value => value === null || value === undefined || value === '' || value === '__skymap_missing__'

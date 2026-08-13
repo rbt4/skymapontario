@@ -10,10 +10,12 @@ on:
       - 'scripts/check-forecast-contract.mjs'
       - 'scripts/check-evidence-router.mjs'
       - 'scripts/check-progressive-fast-path.mjs'
+      - 'scripts/check-forecast-court.mjs'
       - '.github/workflows/forecast-contract.yml'
       - 'verification/FORECAST-CONTRACT.md'
       - 'verification/EVIDENCE-ROUTER.md'
       - 'verification/PERFORMANCE-CONTRACT.md'
+      - 'verification/FORECAST-COURT.md'
   push:
     branches: [main]
     paths:
@@ -24,10 +26,12 @@ on:
       - 'scripts/check-forecast-contract.mjs'
       - 'scripts/check-evidence-router.mjs'
       - 'scripts/check-progressive-fast-path.mjs'
+      - 'scripts/check-forecast-court.mjs'
       - '.github/workflows/forecast-contract.yml'
       - 'verification/FORECAST-CONTRACT.md'
       - 'verification/EVIDENCE-ROUTER.md'
       - 'verification/PERFORMANCE-CONTRACT.md'
+      - 'verification/FORECAST-COURT.md'
   workflow_dispatch:
 
 permissions:
@@ -54,6 +58,8 @@ jobs:
           node --check scripts/check-forecast-contract.mjs
           node --check scripts/check-evidence-router.mjs
           node --check scripts/check-progressive-fast-path.mjs
+          node --check scripts/check-forecast-court.mjs
           node scripts/check-forecast-contract.mjs
           node scripts/check-evidence-router.mjs
           node scripts/check-progressive-fast-path.mjs
+          node scripts/check-forecast-court.mjs

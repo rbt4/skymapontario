@@ -1,7 +1,17 @@
 (() => {
   'use strict';
 
-  const VERSION = '33.1.1';
+  const VERSION = '34.0.0';
+  const MODEL_CACHE_SCHEMA = '2';
+  const COURT_VERSION = 1;
+  const COURT_KEY = 'skymap.accuracy.forecast-court.v1';
+  const COURT_MIN_SAMPLES = 48;
+  const COURT_MIN_SPAN_DAYS = 30;
+  const COURT_MIN_WET = 8;
+  const COURT_MIN_DRY = 16;
+  const COURT_PRIOR_STRENGTH = 24;
+  const COURT_PRIOR_QUALITY = 0.72;
+  const COURT_MAX_FACTOR_SHIFT = 0.14;
   const nativeFetch = window.fetch.bind(window);
   const OPEN_METEO = 'https://api.open-meteo.com/v1/forecast';
   const ECCC_API = 'https://api.weather.gc.ca';
@@ -38,10 +48,13 @@
 
   function resetLegacyModelCache() {
     try {
-      if (localStorage.getItem('skymap.accuracy.version') === VERSION) return;
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('skymap.lab.model.')) localStorage.removeItem(key);
-      });
+      const schemaKey = 'skymap.accuracy.model-cache-schema';
+      if (localStorage.getItem(schemaKey) !== MODEL_CACHE_SCHEMA && !localStorage.getItem('skymap.accuracy.version')) {
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('skymap.lab.model.')) localStorage.removeItem(key);
+        });
+      }
+      localStorage.setItem(schemaKey, MODEL_CACHE_SCHEMA);
       localStorage.setItem('skymap.accuracy.version', VERSION);
     } catch (_) {}
   }
@@ -378,6 +391,185 @@
     } catch (_) {}
   }
 
+  const calibrationPlaceBucket = (lat, lon) => `${Number(lat).toFixed(1)},${Number(lon).toFixed(1)}`;
+  const seasonBucket = value => {
+    const month = new Date(value).getUTCMonth() + 1;
+    if (month === 12 || month <= 2) return 'winter';
+    if (month <= 5) return 'spring';
+    if (month <= 8) return 'summer';
+    return 'autumn';
+  };
+
+  function forecastRegime(rows) {
+    const scorable = (rows || []).filter(row => row?.wet !== undefined && row?.wet !== null);
+    if (!scorable.length) return 'unknown';
+    const snowVotes = scorable.filter(row => row.snow).length;
+    if (snowVotes >= Math.max(2, Math.ceil(scorable.length / 2))) return 'snow';
+    const wetVotes = scorable.filter(row => row.wet).length;
+    if (wetVotes < Math.ceil(scorable.length / 2)) return 'dry';
+    const amounts = scorable.map(row => finite(row.precip)).filter(value => value != null);
+    const mean = amounts.length ? amounts.reduce((sum, value) => sum + value, 0) / amounts.length : 0;
+    return mean >= 1.5 ? 'steady-rain' : 'light-rain';
+  }
+
+  function courtTierKeys(place, bucketName, season, regime) {
+    const local = `local:${place}|lead:${bucketName}`;
+    const province = `ontario|lead:${bucketName}`;
+    return [
+      `${local}|season:${season}|regime:${regime}`,
+      `${local}|season:${season}`,
+      local,
+      `${province}|season:${season}|regime:${regime}`,
+      province
+    ];
+  }
+
+  function readCourt() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(COURT_KEY) || 'null');
+      if (parsed?.version === COURT_VERSION && parsed.tiers && typeof parsed.tiers === 'object') return parsed;
+    } catch (_) {}
+    return { version:COURT_VERSION, observations:[], tiers:{} };
+  }
+
+  function writeCourt(court) {
+    try {
+      court.observations = [...new Set(court.observations || [])].slice(-2500);
+      localStorage.setItem(COURT_KEY, JSON.stringify(court));
+    } catch (_) {}
+  }
+
+  function courtEligibility(entry, modelIds = []) {
+    const first = finite(entry?.firstObservedAt), last = finite(entry?.lastObservedAt);
+    const spanDays = first == null || last == null ? 0 : Math.max(0, (last - first) / 86400000);
+    const verifiedHours = Number(entry?.observations?.length) || 0;
+    const wetHours = Number(entry?.wetHours) || 0;
+    const dryHours = Number(entry?.dryHours) || 0;
+    const eligibleModels = modelIds.filter(id => Number(entry?.models?.[id]?.samples) >= COURT_MIN_SAMPLES);
+    const active = verifiedHours >= COURT_MIN_SAMPLES && spanDays >= COURT_MIN_SPAN_DAYS && wetHours >= COURT_MIN_WET && dryHours >= COURT_MIN_DRY && eligibleModels.length >= 2;
+    return {
+      active, verifiedHours, wetHours, dryHours, spanDays:Number(spanDays.toFixed(1)), eligibleModels,
+      thresholds:Object.freeze({ samples:COURT_MIN_SAMPLES, spanDays:COURT_MIN_SPAN_DAYS, wet:COURT_MIN_WET, dry:COURT_MIN_DRY, models:2 })
+    };
+  }
+
+  function snapshotQuality(row, observedWet, rate) {
+    const occurrence = Boolean(row?.wet) === Boolean(observedWet) ? 1 : 0;
+    const forecastAmount = Math.max(0, finite(row?.precip) ?? 0);
+    const observedAmount = Math.max(0, finite(rate) ?? 0);
+    const amount = !row?.wet && !observedWet
+      ? 1
+      : 1 - clamp(Math.abs(Math.log1p(forecastAmount) - Math.log1p(observedAmount)) / Math.log1p(8), 0, 1);
+    return { occurrence, amount, quality:occurrence * .8 + amount * .2 };
+  }
+
+  function recordCourtObservation(lat, lon, validAt, rows, rate) {
+    const observedWet = rate >= 0.12;
+    const regime = forecastRegime(rows);
+    if (regime === 'snow' || regime === 'unknown') return false;
+    const court = readCourt();
+    const place = calibrationPlaceBucket(lat, lon);
+    const season = seasonBucket(validAt);
+    const observationId = `${place}|${roundHour(validAt)}`;
+    if (!court.observations.includes(observationId)) court.observations.push(observationId);
+    let changed = false;
+    const byLead = new Map();
+    rows.forEach(row => {
+      const name = row.leadBucket || leadBucket((row.validAt - row.madeAt) / 3600000);
+      if (!byLead.has(name)) byLead.set(name, []);
+      byLead.get(name).push(row);
+    });
+    byLead.forEach((leadRows, bucketName) => {
+      courtTierKeys(place, bucketName, season, regime).forEach(tierKey => {
+        const entry = court.tiers[tierKey] ||= { observations:[], wetHours:0, dryHours:0, firstObservedAt:null, lastObservedAt:null, models:{} };
+        if (!entry.observations.includes(observationId)) {
+          entry.observations.push(observationId);
+          entry.observations = entry.observations.slice(-750);
+          entry[observedWet ? 'wetHours' : 'dryHours'] = (entry[observedWet ? 'wetHours' : 'dryHours'] || 0) + 1;
+          entry.firstObservedAt = entry.firstObservedAt == null ? validAt : Math.min(entry.firstObservedAt, validAt);
+          entry.lastObservedAt = entry.lastObservedAt == null ? validAt : Math.max(entry.lastObservedAt, validAt);
+        }
+        leadRows.forEach(row => {
+          const model = entry.models[row.modelId] ||= { samples:0, qualityTotal:0, occurrenceHits:0, amountTotal:0, missedWet:0, falseWet:0, samplesSeen:[] };
+          const sampleId = `${row.modelId}|${roundHour(validAt)}|${bucketName}`;
+          if (model.samplesSeen.includes(sampleId)) return;
+          const score = snapshotQuality(row, observedWet, rate);
+          model.samplesSeen.push(sampleId);
+          model.samplesSeen = model.samplesSeen.slice(-750);
+          model.samples += 1;
+          model.qualityTotal += score.quality;
+          model.occurrenceHits += score.occurrence;
+          model.amountTotal += score.amount;
+          if (observedWet && !row.wet) model.missedWet += 1;
+          if (!observedWet && row.wet) model.falseWet += 1;
+          changed = true;
+        });
+      });
+    });
+    if (changed) writeCourt(court);
+    return changed;
+  }
+
+  function posteriorQuality(model) {
+    const samples = Number(model?.samples) || 0;
+    const total = Number(model?.qualityTotal) || 0;
+    return (total + COURT_PRIOR_QUALITY * COURT_PRIOR_STRENGTH) / (samples + COURT_PRIOR_STRENGTH);
+  }
+
+  function boundedCourtWeights(rows, qualities = {}) {
+    const usable = (rows || []).filter(row => row?.model?.id && finite(row.weight) != null && row.weight > 0);
+    const baseTotal = usable.reduce((sum, row) => sum + row.weight, 0);
+    if (!baseTotal) return {};
+    const baseRaw = Object.fromEntries(usable.map(row => [row.model.id, row.weight]));
+    const base = Object.fromEntries(usable.map(row => [row.model.id, row.weight / baseTotal]));
+    const raw = Object.fromEntries(usable.map(row => {
+      const quality = finite(qualities[row.model.id]);
+      return [row.model.id, quality == null ? 1 : clamp(quality / COURT_PRIOR_QUALITY, 1 - COURT_MAX_FACTOR_SHIFT, 1 + COURT_MAX_FACTOR_SHIFT)];
+    }));
+    const rawMean = usable.reduce((sum, row) => sum + base[row.model.id] * raw[row.model.id], 0) || 1;
+    const factors = Object.fromEntries(usable.map(row => [row.model.id, clamp(raw[row.model.id] / rawMean, 1 - COURT_MAX_FACTOR_SHIFT, 1 + COURT_MAX_FACTOR_SHIFT)]));
+    for (let pass = 0; pass < 3; pass++) {
+      const total = usable.reduce((sum, row) => sum + base[row.model.id] * factors[row.model.id], 0);
+      const delta = 1 - total;
+      if (Math.abs(delta) < 1e-9) break;
+      const limit = delta > 0 ? 1 + COURT_MAX_FACTOR_SHIFT : 1 - COURT_MAX_FACTOR_SHIFT;
+      const capacity = usable.reduce((sum, row) => sum + base[row.model.id] * Math.abs(limit - factors[row.model.id]), 0);
+      if (!capacity) break;
+      usable.forEach(row => {
+        const id = row.model.id;
+        factors[id] += delta * Math.abs(limit - factors[id]) / capacity;
+        factors[id] = clamp(factors[id], 1 - COURT_MAX_FACTOR_SHIFT, 1 + COURT_MAX_FACTOR_SHIFT);
+      });
+    }
+    return Object.fromEntries(usable.map(row => [row.model.id, baseRaw[row.model.id] * factors[row.model.id]]));
+  }
+
+  function courtWeightsAt(lat, lon, target, rows) {
+    const modelIds = (rows || []).map(row => row?.model?.id).filter(Boolean);
+    const baseWeights = boundedCourtWeights(rows, {});
+    const regime = forecastRegime(rows);
+    const season = seasonBucket(target);
+    const bucketName = leadBucket(Math.max(0, (new Date(target).getTime() - Date.now()) / 3600000));
+    const court = readCourt();
+    const candidates = regime === 'snow' ? [] : courtTierKeys(calibrationPlaceBucket(lat, lon), bucketName, season, regime);
+    let collecting = null;
+    for (const tierKey of candidates) {
+      const entry = court.tiers[tierKey];
+      if (!entry) continue;
+      const eligibility = courtEligibility(entry, modelIds);
+      if (!collecting || eligibility.verifiedHours > collecting.verifiedHours) collecting = { tierKey, entry, ...eligibility };
+      if (!eligibility.active) continue;
+      const qualities = Object.fromEntries(eligibility.eligibleModels.map(id => [id, posteriorQuality(entry.models[id])]));
+      const weights = boundedCourtWeights(rows, qualities);
+      return Object.freeze({ active:true, tier:tierKey, regime, season, leadBucket:bucketName, weights:Object.freeze(weights), qualities:Object.freeze(qualities), ...eligibility, maxShift:COURT_MAX_FACTOR_SHIFT });
+    }
+    return Object.freeze({
+      active:false, tier:collecting?.tierKey || (regime === 'snow' ? 'snow-withheld' : 'collecting'), regime, season, leadBucket:bucketName,
+      weights:Object.freeze(baseWeights), verifiedHours:collecting?.verifiedHours || 0, wetHours:collecting?.wetHours || 0, dryHours:collecting?.dryHours || 0,
+      spanDays:collecting?.spanDays || 0, requiredHours:COURT_MIN_SAMPLES, reason:regime === 'snow' ? 'rain-radar-cannot-verify-snow' : 'prospective-thresholds-not-met', maxShift:COURT_MAX_FACTOR_SHIFT
+    });
+  }
+
   function mix(a, b, weightB) {
     const av = finite(a), bv = finite(b);
     if (av == null && bv == null) return null;
@@ -535,7 +727,7 @@
       const rows = [];
       (data?.hourly?.time || []).forEach((time, i) => {
         const valid = new Date(time).getTime();
-        if (valid < now + 20 * 60000 || valid > now + 48 * 3600000) return;
+        if (valid < now + 20 * 60000 || valid > now + 168 * 3600000) return;
         const precipRaw = finite(data.hourly.precipitation?.[i]);
         const code = finite(data.hourly.weather_code?.[i]);
         if (!hasExplicitForecastEvidence(precipRaw, code)) return;
@@ -543,18 +735,24 @@
         const precip = precipRaw == null ? null : Math.max(0, precipRaw);
         const snowfall = snowfallRaw == null ? null : Math.max(0, snowfallRaw);
         const leadHours = Math.max(0, (valid - now) / 3600000);
+        const bucketName = leadBucket(leadHours);
         rows.push({
-          id: `${modelId}|${roundHour(valid)}|${Math.floor(now / 1800000)}`,
+          id: `${modelId}|${roundHour(valid)}|${bucketName}`,
           modelId, madeAt: now, validAt: roundHour(valid), leadBucket: leadBucket(leadHours),
           wet: (precip != null && precip >= 0.12) || (code != null && PRECIP_CODES.has(code)),
           snow: (snowfall != null && snowfall > 0.02) || (code != null && SNOW_CODES.has(code)),
           precip, evidence: { precipitation: precip != null, weatherCode: code != null }, contractVersion: VERSION
         });
       });
-      const combined = [...existing, ...rows]
-        .filter(item => item?.madeAt && now - item.madeAt < 60 * 3600000)
-        .slice(-1000);
-      localStorage.setItem(key, JSON.stringify(combined));
+      const prospective = new Map();
+      [...existing, ...rows]
+        .filter(item => item?.madeAt && now - item.madeAt < 9 * 86400000)
+        .sort((a, b) => a.madeAt - b.madeAt)
+        .forEach(item => {
+          const itemKey = `${item.modelId}|${roundHour(item.validAt)}|${item.leadBucket || leadBucket((item.validAt - item.madeAt) / 3600000)}`;
+          if (!prospective.has(itemKey) || item.verified) prospective.set(itemKey, item);
+        });
+      localStorage.setItem(key, JSON.stringify([...prospective.values()].slice(-4000)));
     } catch (_) {}
   }
 
@@ -579,16 +777,26 @@
       const key = `skymap.accuracy.snapshots.${bucket}`;
       const rows = JSON.parse(localStorage.getItem(key) || '[]');
       let changed = false;
-      rows.forEach(row => {
-        if (row.verified || row.snow) return;
-        if (Math.abs(row.validAt - validAt) > 75 * 60000) return;
-        if (validAt - row.madeAt < 25 * 60000) return;
-        row.verified = true;
-        row.verifiedAt = Date.now();
-        row.observedWet = observedWet;
-        const correct = row.wet === observedWet ? 1 : 0;
-        writeSkill(bucket, row.modelId, row.leadBucket || leadBucket((row.validAt - row.madeAt) / 3600000), correct);
-        changed = true;
+      const candidates = rows.filter(row => !row.verified && Math.abs(row.validAt - validAt) <= 75 * 60000 && validAt - row.madeAt >= 25 * 60000);
+      const groups = new Map();
+      candidates.forEach(row => {
+        const issue = Math.floor(row.madeAt / 1800000);
+        const groupKey = `${row.validAt}|${issue}`;
+        if (!groups.has(groupKey)) groups.set(groupKey, []);
+        groups.get(groupKey).push(row);
+      });
+      groups.forEach(group => {
+        if (group.some(row => row.snow)) return;
+        recordCourtObservation(lat, lon, validAt, group, rate);
+        group.forEach(row => {
+          row.verified = true;
+          row.verifiedAt = Date.now();
+          row.observedWet = observedWet;
+          row.observedRate = rate;
+          const correct = row.wet === observedWet ? 1 : 0;
+          writeSkill(bucket, row.modelId, row.leadBucket || leadBucket((row.validAt - row.madeAt) / 3600000), correct);
+          changed = true;
+        });
       });
       if (changed) localStorage.setItem(key, JSON.stringify(rows.slice(-1000)));
     } catch (_) {}
@@ -619,16 +827,29 @@
     }
   }
 
+  function forecastCourtStats() {
+    try {
+      const court = readCourt();
+      const entries = Object.values(court.tiers || {});
+      const activeTiers = entries.filter(entry => courtEligibility(entry, Object.keys(entry.models || {})).active).length;
+      return { verifiedHours:new Set(court.observations || []).size, activeTiers, minimum:COURT_MIN_SAMPLES };
+    } catch (_) {
+      return { verifiedHours:0, activeTiers:0, minimum:COURT_MIN_SAMPLES };
+    }
+  }
+
   function contextStatus() {
     const contexts = [...contextCache.values()].map(item => item.data).filter(Boolean);
     const latest = contexts.sort((a, b) => b.savedAt - a.savedAt)[0];
     const stats = accuracyStats();
+    const court = forecastCourtStats();
     return {
       official: latest?.official?.name || null,
       reps: latest?.reps?.length || 0,
       nowcast: latest?.nowcast?.length || 0,
       samples: stats.samples,
-      score: stats.score
+      score: stats.score,
+      court
     };
   }
 
@@ -676,7 +897,8 @@
       if (status.official) extras.push('official ECCC');
       if (status.reps) extras.push('REPS');
       if (status.nowcast) extras.push('point nowcast');
-      if (status.samples >= 8 && status.score != null) extras.push(`${status.score}% local hit rate`);
+      if (status.court.activeTiers) extras.push(`Forecast Court active · ${status.court.verifiedHours} verified hours`);
+      else if (status.court.verifiedHours) extras.push(`Forecast Court collecting · ${status.court.verifiedHours} verified hours`);
       const suffix = extras.length ? `Forecast IQ · ${extras.join(' · ')}` : 'Forecast IQ';
       const base = current.replace(/\s*·\s*Forecast IQ.*$/i, '');
       const next = `${base} · ${suffix}`;
@@ -689,12 +911,17 @@
   resetLegacyModelCache();
   window.SkyMapAccuracy = Object.freeze({
     version: VERSION,
-    mode: 'truth-firewall+single-pass-sidecar+radar-first+official+reps+spatial+local-learning',
+    mode: 'truth-firewall+single-pass-sidecar+radar-first+official+reps+forecast-court-calibration',
     status: contextStatus,
     warm: warmEvidence,
     evidenceAt,
     modelSkillAt,
-    contract: Object.freeze({ finite, mix, dryWeatherCode, hasExplicitForecastEvidence })
+    courtWeightsAt,
+    courtStatus: forecastCourtStats,
+    contract: Object.freeze({
+      finite, mix, dryWeatherCode, hasExplicitForecastEvidence, seasonBucket, forecastRegime, courtEligibility, boundedCourtWeights,
+      courtRules:Object.freeze({ version:COURT_VERSION, minimumSamples:COURT_MIN_SAMPLES, minimumSpanDays:COURT_MIN_SPAN_DAYS, minimumWet:COURT_MIN_WET, minimumDry:COURT_MIN_DRY, priorStrength:COURT_PRIOR_STRENGTH, maxFactorShift:COURT_MAX_FACTOR_SHIFT })
+    })
   });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', decorateStatus, { once: true });
   else decorateStatus();
