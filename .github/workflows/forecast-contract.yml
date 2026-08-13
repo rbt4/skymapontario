@@ -5,17 +5,25 @@ on:
     paths:
       - 'app/lab/accuracy-engine.js'
       - 'app/lab/forecast-intelligence-25.js'
+      - 'app/lab/evidence-router.js'
+      - 'app/lab/lab.js'
       - 'scripts/check-forecast-contract.mjs'
+      - 'scripts/check-evidence-router.mjs'
       - '.github/workflows/forecast-contract.yml'
       - 'verification/FORECAST-CONTRACT.md'
+      - 'verification/EVIDENCE-ROUTER.md'
   push:
     branches: [main]
     paths:
       - 'app/lab/accuracy-engine.js'
       - 'app/lab/forecast-intelligence-25.js'
+      - 'app/lab/evidence-router.js'
+      - 'app/lab/lab.js'
       - 'scripts/check-forecast-contract.mjs'
+      - 'scripts/check-evidence-router.mjs'
       - '.github/workflows/forecast-contract.yml'
       - 'verification/FORECAST-CONTRACT.md'
+      - 'verification/EVIDENCE-ROUTER.md'
   workflow_dispatch:
 
 permissions:
@@ -37,5 +45,9 @@ jobs:
         run: |
           node --check app/lab/accuracy-engine.js
           node --check app/lab/forecast-intelligence-25.js
+          node --check app/lab/evidence-router.js
+          node --check app/lab/lab.js
           node --check scripts/check-forecast-contract.mjs
+          node --check scripts/check-evidence-router.mjs
           node scripts/check-forecast-contract.mjs
+          node scripts/check-evidence-router.mjs

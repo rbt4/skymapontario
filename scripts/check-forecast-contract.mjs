@@ -44,7 +44,7 @@ vm.runInNewContext(source, {
 }, { filename: 'accuracy-engine.js' });
 
 const engine = window.SkyMapAccuracy;
-assert.equal(engine?.version, '32.0.0');
+assert.equal(engine?.version, '33.0.0');
 assert.match(engine?.mode || '', /truth-firewall/);
 const contract = engine?.contract;
 assert.ok(contract, 'forecast contract export missing');
@@ -65,4 +65,4 @@ assert.doesNotMatch(source, /const finite = value => Number\.isFinite\(Number\(v
 assert.doesNotMatch(source, /if \(av == null && bv == null\) return 0/, 'legacy missing-to-dry mixer returned');
 assert.doesNotMatch(source, /new Array\(hourly\.time\.length\)\.fill\(0\)/, 'missing model arrays are being fabricated');
 
-console.log('✓ Forecast Lab 32 truth contract passed');
+console.log('✓ Forecast Lab 33 truth contract passed');

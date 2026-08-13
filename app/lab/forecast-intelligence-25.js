@@ -54,13 +54,10 @@
   const ENSEMBLE = 'https://ensemble-api.open-meteo.com/v1/ensemble';
   const WEATHER_NEXT_MODEL = 'google_weathernext2_ensemble';
   const MODEL_RE = /^https:\/\/api\.open-meteo\.com\/v1\/(gem|ecmwf|gfs)(?:\?|$)/i;
-  const PRECIP_CODES = new Set([51,53,55,56,57,61,63,65,66,67,71,73,75,77,80,81,82,85,86,95,96,99]);
-  const SNOW_CODES = new Set([71,73,75,77,85,86]);
   const CACHE_TTL = 30 * 60 * 1000;
   const contextCache = new Map();
 
   const finite = value => value === null || value === undefined || value === '' || value === MISSING ? null : (Number.isFinite(Number(value)) ? Number(value) : null);
-  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const roundHour = value => {
     const date = new Date(value);
     date.setMinutes(0, 0, 0);
@@ -161,83 +158,18 @@
     return delta <= 75 * 60000 ? best : null;
   }
 
-  function dryCode(code) {
-    return PRECIP_CODES.has(Number(code)) ? 3 : Number(code || 0);
-  }
-
-  function augment(data, context, id) {
+  function annotate(data, context, id) {
     restoreMissing(data);
-    if (!data?.hourly?.time?.length || !context) return data;
-    const hourly = data.hourly;
-    const now = Date.now();
-    let used = 0;
-    let probabilitySum = 0;
-    let maxMembers = 0;
-
-    hourly.time.forEach((time, index) => {
-      const target = new Date(time).getTime();
-      if (!Number.isFinite(target)) return;
-      const leadHours = Math.max(0, (target - now) / 3600000);
-      if (leadHours <= 2.3 || leadHours > 168) return;
-      const wn = weatherNextAt(context, target);
-      if (!wn || wn.members < 20) return;
-
-      const precip0 = finite(hourly.precipitation?.[index]);
-      if (precip0 == null) return;
-      let precip = Math.max(0, precip0);
-      let rain = Math.max(0, finite(hourly.rain?.[index]) || 0);
-      let showers = Math.max(0, finite(hourly.showers?.[index]) || 0);
-      const snowfall = Math.max(0, finite(hourly.snowfall?.[index]) || 0);
-      let code = finite(hourly.weather_code?.[index]);
-      if (code == null) code = 0;
-      const snowSignal = snowfall > 0.02 || SNOW_CODES.has(code);
-      const probability = clamp(wn.probability, 0, 100);
-      const confidence = Math.abs(probability - 50) / 50;
-      const baseWeight = leadHours <= 24 ? 0.13 : leadHours <= 72 ? 0.19 : 0.14;
-      const weight = baseWeight * (0.55 + 0.45 * confidence);
-      const probabilityFactor = clamp(0.72 + 0.56 * probability / 100, 0.72, 1.28);
-      const amountFactor = wn.mean > 0 ? clamp(0.78 + Math.min(0.42, wn.mean * 0.25), 0.78, 1.20) : 0.82;
-      const factor = probabilityFactor * 0.72 + amountFactor * 0.28;
-      const blendedFactor = 1 + (factor - 1) * weight;
-
-      precip *= blendedFactor;
-      rain *= blendedFactor;
-      showers *= blendedFactor;
-
-      if (probability >= 35 && probability <= 65 && wn.spread > 0.8 && leadHours > 24) {
-        precip *= 0.92;
-        rain *= 0.92;
-        showers *= 0.92;
-      }
-
-      if (!snowSignal && probability <= 8 && precip0 < 0.30) {
-        precip *= 0.72;
-        rain *= 0.72;
-        showers *= 0.72;
-        if (precip < 0.09) code = dryCode(code);
-      } else if (probability >= 80 && wn.mean >= 0.06 && precip < 0.13) {
-        precip = 0.13;
-        if (rain + showers < 0.10) rain = Math.max(rain, 0.10);
-      }
-
-      hourly.precipitation[index] = Number(Math.max(0, precip).toFixed(3));
-      if (Array.isArray(hourly.rain)) hourly.rain[index] = Number(Math.max(0, rain).toFixed(3));
-      if (Array.isArray(hourly.showers)) hourly.showers[index] = Number(Math.max(0, showers).toFixed(3));
-      if (Array.isArray(hourly.weather_code)) hourly.weather_code[index] = code;
-      used++;
-      probabilitySum += probability;
-      maxMembers = Math.max(maxMembers, wn.members);
-    });
-
+    if (!data?.hourly?.time?.length) return data;
     data.skymap_iq25 = {
       version: VERSION,
       model: id,
-      mode: 'weathernext-ensemble-shadow-augmentation',
-      null_guard: 'known numeric nulls stay missing through legacy calibration',
-      weathernext_rows_used: used,
-      weathernext_members: maxMembers || context.members || 0,
-      mean_weathernext_probability: used ? Number((probabilitySum / used).toFixed(1)) : null,
-      note: 'WeatherNext is a bounded cross-check. ECCC radar and official short-range guidance retain priority.'
+      mode: 'weathernext-ensemble-single-pass-sidecar',
+      null_guard: 'known numeric nulls stay missing through model loading and consensus routing',
+      weathernext_rows_available: context?.rows?.size || 0,
+      weathernext_members: context?.members || 0,
+      model_rows_mutated: 0,
+      note: 'WeatherNext is exposed to the Lab 33 router once; model arrays remain raw.'
     };
     return data;
   }
@@ -262,7 +194,7 @@
     try {
       const data = restoreMissing(await response.clone().json());
       if (!context) return cloneJsonResponse(response, data);
-      return cloneJsonResponse(response, augment(data, context, modelId(url)));
+      return cloneJsonResponse(response, annotate(data, context, modelId(url)));
     } catch (_) {
       return response;
     }
@@ -271,7 +203,10 @@
   window.SkyMapForecastIQ25 = {
     version: VERSION,
     source: 'Google DeepMind WeatherNext 2 via Open-Meteo Ensemble API',
-    mode: 'bounded-ensemble-cross-check+legacy-null-guard',
-    cache: contextCache
+    mode: 'single-pass-sidecar+legacy-null-guard',
+    cache: contextCache,
+    at(lat, lon, target) {
+      return weatherNextAt(contextCache.get(placeKey(lat, lon))?.data, target);
+    }
   };
 })();
