@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '33.0.0';
+  const VERSION = '33.1.0';
   const nativeFetch = window.fetch.bind(window);
   const OPEN_METEO = 'https://api.open-meteo.com/v1/forecast';
   const ECCC_API = 'https://api.weather.gc.ca';
@@ -13,6 +13,7 @@
   const ANCHOR_TTL = 20 * 60 * 1000;
   const OFFICIAL_TTL = 30 * 60 * 1000;
   const contextCache = new Map();
+  const capabilitiesCache = { savedAt:0, xml:null, promise:null };
 
   const finite = value => value === null || value === undefined || value === '' || value === '__skymap_missing__' ? null : (Number.isFinite(Number(value)) ? Number(value) : null);
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -175,11 +176,25 @@
     return null;
   }
 
+  async function geometCapabilities() {
+    if (capabilitiesCache.xml && Date.now() - capabilitiesCache.savedAt < 10 * 60 * 1000) return capabilitiesCache.xml;
+    if (capabilitiesCache.promise) return capabilitiesCache.promise;
+    const params = new URLSearchParams({ service:'WMS', request:'GetCapabilities', version:'1.3.0', lang:'en' });
+    capabilitiesCache.promise = nativeFetch(`${GEOMET}?${params}`, { cache:'no-store' })
+      .then(async response => {
+        if (!response.ok) throw new Error(`GeoMet metadata ${response.status}`);
+        const xml = new DOMParser().parseFromString(await response.text(), 'application/xml');
+        capabilitiesCache.xml = xml;
+        capabilitiesCache.savedAt = Date.now();
+        capabilitiesCache.promise = null;
+        return xml;
+      })
+      .catch(error => { capabilitiesCache.promise = null; throw error; });
+    return capabilitiesCache.promise;
+  }
+
   async function layerMetadata(layer) {
-    const params = new URLSearchParams({ service: 'WMS', request: 'GetCapabilities', version: '1.3.0', lang: 'en', layer, _: String(Date.now()) });
-    const response = await nativeFetch(`${GEOMET}?${params}`, { cache: 'no-store' });
-    if (!response.ok) throw new Error(`GeoMet metadata ${response.status}`);
-    const xml = new DOMParser().parseFromString(await response.text(), 'application/xml');
+    const xml = await geometCapabilities();
     const node = findLayer(xml, layer);
     if (!node) throw new Error(`${layer} unavailable`);
     const dims = [...(node.getElementsByTagNameNS('*', 'Dimension') || [])];
@@ -393,19 +408,34 @@
     return nearestRow(context.nowcast, target, 24 * 60000)?.rate ?? null;
   }
 
+  function notifyEvidence(source, context) {
+    try {
+      window.dispatchEvent(new CustomEvent('skymap:evidence-ready', { detail:{ source, placeKey:placeBucket(context.lat, context.lon), savedAt:context.savedAt } }));
+    } catch (_) {}
+  }
+
   async function buildContext(lat, lon) {
     const anchor = await fetchBestMatch(lat, lon);
     if (!anchor.exact?.hourly?.time?.length) throw new Error('Best Match unavailable');
-    const [official, nowcast, reps] = await Promise.all([
-      fetchOfficial(lat, lon),
-      fetchNowcast(lat, lon),
-      fetchReps(lat, lon, anchor.exact)
-    ]);
     const neighbourIndexes = new Map(anchor.neighbours.map(data => [data, indexByTime(data)]));
     return {
       lat: Number(lat), lon: Number(lon), savedAt: Date.now(), anchor, anchorIndex: indexByTime(anchor.exact),
-      neighbourIndexes, official, nowcast, reps
+      neighbourIndexes, official:{ name:null, updated:null, hourly:[] }, nowcast:[], reps:[], enriched:false
     };
+  }
+
+  async function enrichContext(context) {
+    const [official, nowcast, reps] = await Promise.all([
+      fetchOfficial(context.lat, context.lon),
+      fetchNowcast(context.lat, context.lon),
+      fetchReps(context.lat, context.lon, context.anchor.exact)
+    ]);
+    context.official = official;
+    context.nowcast = nowcast;
+    context.reps = reps;
+    context.savedAt = Date.now();
+    context.enriched = true;
+    return context;
   }
 
   async function getContext(lat, lon) {
@@ -416,7 +446,15 @@
     if (cached?.promise) return cached.promise;
     const promise = buildContext(lat, lon)
       .then(data => {
-        contextCache.set(key, { savedAt: Date.now(), data });
+        const entry = { savedAt: Date.now(), data, enrichPromise:null };
+        contextCache.set(key, entry);
+        notifyEvidence('best-match', data);
+        entry.enrichPromise = enrichContext(data).then(enriched => {
+          entry.savedAt = Date.now();
+          entry.enrichPromise = null;
+          notifyEvidence('eccc-guidance', enriched);
+          return enriched;
+        }).catch(() => { entry.enrichPromise = null; return data; });
         return data;
       })
       .catch(error => {
@@ -425,6 +463,17 @@
       });
     contextCache.set(key, { savedAt: 0, data: null, promise });
     return promise;
+  }
+
+  function warmEvidence(lat, lon, announceReady = true) {
+    if (finite(lat) == null || finite(lon) == null) return Promise.resolve(null);
+    return getContext(lat, lon).then(context => {
+      if (announceReady) {
+        notifyEvidence('best-match', context);
+        if (context.enriched) notifyEvidence('eccc-guidance', context);
+      }
+      return context;
+    }).catch(() => null);
   }
 
   function evidenceAt(lat, lon, target) {
@@ -592,13 +641,12 @@
       const lat = finite(parsed.searchParams.get('latitude'));
       const lon = finite(parsed.searchParams.get('longitude'));
       const modelId = modelIdFromUrl(requestUrl);
-      const [response, context] = await Promise.all([
-        nativeFetch(input, init),
-        lat != null && lon != null ? getContext(lat, lon).catch(() => null) : Promise.resolve(null)
-      ]);
-      if (!response.ok || !context) return response;
+      if (lat != null && lon != null) void warmEvidence(lat, lon, false);
+      const response = await nativeFetch(input, init);
+      if (!response.ok) return response;
       try {
         const data = await response.clone().json();
+        const context = lat != null && lon != null ? contextCache.get(placeBucket(lat, lon))?.data : null;
         annotateModel(data, context, modelId, lat, lon);
         return cloneJsonResponse(response, data);
       } catch (_) {
@@ -632,7 +680,8 @@
       if (status.samples >= 8 && status.score != null) extras.push(`${status.score}% local hit rate`);
       const suffix = extras.length ? `Forecast IQ · ${extras.join(' · ')}` : 'Forecast IQ';
       const base = current.replace(/\s*·\s*Forecast IQ.*$/i, '');
-      detail.textContent = `${base} · ${suffix}`;
+      const next = `${base} · ${suffix}`;
+      if (current !== next) detail.textContent = next;
     };
     new MutationObserver(add).observe(detail, { childList: true, characterData: true, subtree: true });
     add();
@@ -643,6 +692,7 @@
     version: VERSION,
     mode: 'truth-firewall+single-pass-sidecar+radar-first+official+reps+spatial+local-learning',
     status: contextStatus,
+    warm: warmEvidence,
     evidenceAt,
     modelSkillAt,
     contract: Object.freeze({ finite, mix, dryWeatherCode, hasExplicitForecastEvidence })

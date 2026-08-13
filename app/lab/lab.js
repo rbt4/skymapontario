@@ -13,6 +13,7 @@
     { id:'gfs', name:'NOAA GFS', endpoint:'https://api.open-meteo.com/v1/gfs', model:'gfs_seamless', weight:.19, accent:'#ffd47e', role:'Independent North American guidance' },
     { id:'aifs', name:'ECMWF AIFS', endpoint:'https://api.open-meteo.com/v1/ecmwf', model:'ecmwf_aifs025_single', weight:.16, accent:'#c4a8ff', role:'Independent AI forecast signal' }
   ];
+  const capabilitiesCache = { savedAt:0, xml:null, promise:null };
   const QUICK_PLACES = [
     { name:'Toronto', detail:'Toronto, Ontario', lat:43.6532, lon:-79.3832, zoom:10 },
     { name:'Oakville', detail:'Halton, Ontario', lat:43.4675, lon:-79.6877, zoom:11 },
@@ -31,7 +32,7 @@
   const state = {
     place: loadPlace(), map:null, marker:null, overlay:null, frames:[], frameIndex:0,
     playing:false, playTimer:null, speedIndex:0, loopCount:0,
-    models:new Map(), modelErrors:new Map(), timezone:'America/Toronto', consensus:[], events:[],
+    models:new Map(), modelErrors:new Map(), modelStale:new Map(), evidenceReady:new Set(), timezone:'America/Toronto', consensus:[], events:[],
     searchTimer:null, requestId:0, metadataErrors:[], frameReading:null, liveRadarReading:null,
     pointReadoutFrame:0
   };
@@ -132,10 +133,18 @@
     if(!Number.isFinite(start)||!Number.isFinite(end)||!step)return out;
     for(let t=start;t<=end&&out.length<1500;t+=step)out.push(new Date(t).toISOString()); return out;
   }
+  async function geometCapabilities() {
+    if(capabilitiesCache.xml&&Date.now()-capabilitiesCache.savedAt<10*60*1000)return capabilitiesCache.xml;
+    if(capabilitiesCache.promise)return capabilitiesCache.promise;
+    const url=`${GEOMET}?service=WMS&request=GetCapabilities&version=1.3.0&lang=en`;
+    capabilitiesCache.promise=fetch(url,{cache:'no-store'}).then(async response=>{
+      if(!response.ok)throw new Error(`GeoMet ${response.status}`);
+      const xml=new DOMParser().parseFromString(await response.text(),'application/xml'); capabilitiesCache.xml=xml; capabilitiesCache.savedAt=Date.now(); capabilitiesCache.promise=null; return xml;
+    }).catch(error=>{capabilitiesCache.promise=null;throw error;});
+    return capabilitiesCache.promise;
+  }
   async function layerTimes(layer) {
-    const url=`${GEOMET}?service=WMS&request=GetCapabilities&version=1.3.0&lang=en&_=${Date.now()}`;
-    const response=await fetch(url,{cache:'no-store'}); if(!response.ok)throw new Error(`GeoMet ${response.status}`);
-    const xml=new DOMParser().parseFromString(await response.text(),'application/xml'); const node=findLayer(xml,layer); if(!node)throw new Error(`${layer} unavailable`);
+    const xml=await geometCapabilities(); const node=findLayer(xml,layer); if(!node)throw new Error(`${layer} unavailable`);
     const dims=[...(node.getElementsByTagNameNS('*','Dimension')||[])];
     const time=dims.find(d=>(d.getAttribute('name')||'').toLowerCase()==='time');
     const ref=dims.find(d=>(d.getAttribute('name')||'').toLowerCase()==='reference_time');
@@ -286,16 +295,23 @@
   }
   async function fetchModel(model,requestId) {
     const cacheKey=`skymap.lab.model.${model.id}.${state.place.lat.toFixed(2)}.${state.place.lon.toFixed(2)}`;
+    let cached=null;
     try {
-      const cached=JSON.parse(localStorage.getItem(cacheKey)||'null');
+      cached=JSON.parse(localStorage.getItem(cacheKey)||'null');
       if(cached?.savedAt&&Date.now()-cached.savedAt<MODEL_CACHE_MS&&cached.data?.hourly?.time?.length){state.models.set(model.id,cached.data);return cached.data;}
     } catch(_){}
     try {
-      const response=await fetch(modelUrl(model),{cache:'no-store'}); if(!response.ok)throw new Error(`HTTP ${response.status}`); const data=await response.json();
+      const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),10000); let response;
+      try{response=await fetch(modelUrl(model),{cache:'no-store',signal:controller.signal});}finally{clearTimeout(timeout);}
+      if(!response.ok)throw new Error(`HTTP ${response.status}`); const data=await response.json();
       if(requestId!==state.requestId)return null; if(!data?.hourly?.time?.length)throw new Error('No hourly data');
-      state.models.set(model.id,data); state.modelErrors.delete(model.id); if(data.timezone)state.timezone=data.timezone;
+      state.models.set(model.id,data); state.modelErrors.delete(model.id); state.modelStale.delete(model.id); if(data.timezone)state.timezone=data.timezone;
       try{localStorage.setItem(cacheKey,JSON.stringify({savedAt:Date.now(),data}))}catch(_){} return data;
-    } catch(error){state.modelErrors.set(model.id,String(error));return null;}
+    } catch(error){
+      if(requestId!==state.requestId)return null;
+      if(cached?.savedAt&&Date.now()-cached.savedAt<6*3600000&&cached.data?.hourly?.time?.length){state.models.set(model.id,cached.data);state.modelStale.set(model.id,Date.now()-cached.savedAt);state.modelErrors.delete(model.id);return cached.data;}
+      state.modelErrors.set(model.id,String(error));return null;
+    }
   }
   function pointAt(model,data,target) {
     const hourly=data?.hourly; if(!hourly?.time?.length)return null; const wanted=new Date(target).getTime(); let best=0,delta=Infinity;
@@ -504,7 +520,7 @@
       {name:'ECCC extrapolation',role:'0–2 hour official nowcast',state:state.frames.some(f=>f.kind==='nowcast')?'ready':'error',value:state.frames.some(f=>f.kind==='nowcast')?'Connected':'Unavailable'},
       {name:'HRDPS',role:'2.5 km Canadian map guidance',state:state.frames.some(f=>f.kind==='guidance')?'ready':'error',value:state.frames.some(f=>f.kind==='guidance')?'Connected':'Unavailable'}
     ];
-    MODELS.forEach(model=>{const w=modelWetWindow(model);cards.push({name:model.name,role:model.role,state:state.modelErrors.has(model.id)?'error':w?.wet?'wet':w?.wet===false?'dry':'ready',value:state.modelErrors.has(model.id)?'Feed error':w?.wet?`Wet ${fmtTime(w.start)}–${fmtTime(w.end)}`:w?.wet===false?'No near event':'Precipitation fields unavailable'});});
+    MODELS.forEach(model=>{const w=modelWetWindow(model),stale=state.modelStale.get(model.id);cards.push({name:model.name,role:model.role,state:state.modelErrors.has(model.id)?'error':w?.wet?'wet':w?.wet===false?'dry':'ready',value:state.modelErrors.has(model.id)?'Feed error':stale?`Cached ${Math.max(1,Math.round(stale/60000))} min old`:w?.wet?`Wet ${fmtTime(w.start)}–${fmtTime(w.end)}`:w?.wet===false?'No near event':'Precipitation fields unavailable'});});
     cards.forEach(card=>{const el=document.createElement('article');el.className='source-card';el.dataset.state=card.state;el.innerHTML=`<span><small>${esc(card.role)}</small><b>${esc(card.name)}</b></span><em>${esc(card.value)}</em>`;sourceGrid.append(el);});
     const support=event?event.modelWindows.filter(w=>w.wet).length:0;
     text('#evidence-summary',event?`${support} independent forecast families support the next event. Canadian guidance receives the highest base influence; agreement and timing spread control how strongly SkyMap speaks.`:'No event currently clears the declaration threshold.');
@@ -524,21 +540,40 @@
   function renderConstellation() {
     const wrap=$('#constellation-grid'); wrap.innerHTML=''; MODELS.forEach(model=>{
       const data=state.models.get(model.id),w=modelWetWindow(model); const el=document.createElement('article'); el.className='model-card'; el.dataset.state=data?'ready':'error'; el.style.setProperty('--accent',model.accent);
-      el.innerHTML=`<header><b>${esc(model.name)}</b><i></i></header><p>${data?(w?.wet?`Next wet signal: ${esc(timeRange(w.start,w.end))}`:w?.wet===false?'No near-term wet signal':'Precipitation fields unavailable'):'Source did not respond'} · base influence ${Math.round(model.weight*100)}%</p>`; wrap.append(el);
+      const stale=state.modelStale.get(model.id); el.innerHTML=`<header><b>${esc(model.name)}</b><i></i></header><p>${data?(stale?`Cached guidance · ${Math.max(1,Math.round(stale/60000))} min old`:w?.wet?`Next wet signal: ${esc(timeRange(w.start,w.end))}`:w?.wet===false?'No near-term wet signal':'Precipitation fields unavailable'):'Source did not respond'} · base influence ${Math.round(model.weight*100)}%</p>`; wrap.append(el);
     });
   }
   function setFeedHealth(tileError=false) {
-    const ready=state.models.size,frames=state.frames.length; const health=$('#feed-health'); let stateName='ready',title='Core weather systems connected',detail=`${ready}/${MODELS.length} forecast families · ${frames} time frames`;
-    if(tileError||!frames||ready<2){stateName='partial';title='Some weather sources are delayed';detail=`${ready}/${MODELS.length} forecast families · ${state.metadataErrors.length} map issue${state.metadataErrors.length===1?'':'s'}`;}
+    const ready=state.models.size,frames=state.frames.length,evidence=state.evidenceReady.size; const health=$('#feed-health'); let stateName='ready',title=ready>=2?'Core forecast ready':'Connecting forecast families',detail=`${ready}/${MODELS.length} forecast families · ${frames} time frames · ${evidence}/3 evidence layers`;
+    if(tileError||ready<2){stateName='partial';title='Some forecast sources are delayed';detail=`${ready}/${MODELS.length} forecast families · ${state.metadataErrors.length} map issue${state.metadataErrors.length===1?'':'s'}`;}
+    else if(!frames){detail=`${ready}/${MODELS.length} forecast families · radar timeline loading · ${evidence}/3 evidence layers`;}
     health.dataset.state=stateName; text('#feed-title',title); text('#feed-detail',detail);
   }
 
-  async function refreshAll() {
-    const id=++state.requestId; state.models.clear(); state.modelErrors.clear(); state.frameReading=null; state.liveRadarReading=null;
-    text('#feed-title','Connecting weather sources'); text('#feed-detail','ECCC + four forecast families'); $('#feed-health').dataset.state='loading';
-    const framePromise=buildFrames().catch(error=>{state.metadataErrors.push(String(error));showToast('Radar metadata is delayed; forecast guidance can still load.');});
-    await Promise.all(MODELS.map(model=>fetchModel(model,id))); if(id!==state.requestId)return; await framePromise;
+  function renderForecastProducts() {
+    if(state.models.size<1)return;
     buildConsensus(); renderAnswer(); renderRainLine(); renderConstellation(); setFeedHealth();
+  }
+
+  function scheduleForecastRender(delay=80) {
+    clearTimeout(scheduleForecastRender.timer);
+    scheduleForecastRender.timer=setTimeout(renderForecastProducts,delay);
+  }
+
+  function warmEvidence() {
+    const {lat,lon}=state.place;
+    void window.SkyMapAccuracy?.warm?.(lat,lon);
+    void window.SkyMapForecastIQ25?.warm?.(lat,lon);
+  }
+
+  async function refreshAll() {
+    const id=++state.requestId; state.models.clear(); state.modelErrors.clear(); state.modelStale.clear(); state.evidenceReady.clear(); state.frameReading=null; state.liveRadarReading=null;
+    text('#feed-title','Connecting weather sources'); text('#feed-detail','ECCC + four forecast families'); $('#feed-health').dataset.state='loading';
+    warmEvidence();
+    void buildFrames().then(()=>{if(id===state.requestId)setFeedHealth();}).catch(error=>{state.metadataErrors.push(String(error));showToast('Radar metadata is delayed; forecast guidance can still load.');});
+    const tasks=MODELS.map(async model=>{await fetchModel(model,id);if(id===state.requestId&&state.models.size>=2)scheduleForecastRender();});
+    await Promise.allSettled(tasks); if(id!==state.requestId)return;
+    renderForecastProducts();
   }
   async function setPlace(place,fromMap=false) {
     state.place={...state.place,...place}; savePlace(); placeMarker('loading'); text('#place-name',state.place.name);
@@ -588,6 +623,10 @@
     $('#place-search').addEventListener('input',e=>{clearTimeout(state.searchTimer);state.searchTimer=setTimeout(()=>searchPlaces(e.target.value),240);});
     document.addEventListener('keydown',e=>{if(e.key==='Escape')toggleEvidence(false);}); document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();});
     window.addEventListener('resize',requestPointReadoutPosition);
+    window.addEventListener('skymap:evidence-ready',event=>{
+      const key=`${state.place.lat.toFixed(2)},${state.place.lon.toFixed(2)}`; if(event.detail?.placeKey!==key)return;
+      state.evidenceReady.add(event.detail.source); scheduleForecastRender(120);
+    });
   }
 
   async function init() {
