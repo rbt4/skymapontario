@@ -1,0 +1,1564 @@
+{
+  "schema": 1,
+  "generatedAt": "2026-08-22T13:06:08.510Z",
+  "approved": false,
+  "autoApplies": false,
+  "guardrails": {
+    "minimumSamples": 500,
+    "minimumWetTruths": 50,
+    "minimumSamplesPerAdjustedBin": 25,
+    "priorEquivalentSamplesPerBin": 20,
+    "maxAdjustmentPercentagePoints": 15,
+    "activationRequires": "separate prospective champion-vs-challenger improvement"
+  },
+  "candidates": {
+    "best_match|6": {
+      "readyForReview": false,
+      "reason": "Need 500 samples and 50 wet truths; currently 264/7.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 234,
+          "rawObserved": 0.021367521367521368,
+          "shadowTo": 5,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 16,
+          "rawObserved": 0.125,
+          "shadowTo": 15,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 7,
+          "rawObserved": 0,
+          "shadowTo": 25,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 4,
+          "rawObserved": 0,
+          "shadowTo": 35,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 2,
+          "rawObserved": 0,
+          "shadowTo": 45,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 1,
+          "rawObserved": 0,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "weathernext2|6": {
+      "readyForReview": false,
+      "reason": "Need 500 samples and 50 wet truths; currently 264/7.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 164,
+          "rawObserved": 0.006097560975609756,
+          "shadowTo": 5,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 28,
+          "rawObserved": 0,
+          "shadowTo": 15,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 9,
+          "rawObserved": 0,
+          "shadowTo": 25,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 10,
+          "rawObserved": 0,
+          "shadowTo": 35,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 6,
+          "rawObserved": 0.16666666666666666,
+          "shadowTo": 45,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 7,
+          "rawObserved": 0.14285714285714285,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 9,
+          "rawObserved": 0.1111111111111111,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 9,
+          "rawObserved": 0.1111111111111111,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 7,
+          "rawObserved": 0,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 15,
+          "rawObserved": 0.13333333333333333,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "model_consensus|6": {
+      "readyForReview": false,
+      "reason": "Need 500 samples and 50 wet truths; currently 264/7.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 173,
+          "rawObserved": 0,
+          "shadowTo": 5,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 42,
+          "rawObserved": 0.14285714285714285,
+          "shadowTo": 15,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 8,
+          "rawObserved": 0,
+          "shadowTo": 25,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 1,
+          "rawObserved": 0,
+          "shadowTo": 35,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 25,
+          "rawObserved": 0.04,
+          "shadowTo": 45,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 5,
+          "rawObserved": 0,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 5,
+          "rawObserved": 0,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 5,
+          "rawObserved": 0,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "eccc_official|6": {
+      "readyForReview": false,
+      "reason": "Need 500 samples and 50 wet truths; currently 264/7.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 95,
+          "rawObserved": 0,
+          "shadowTo": 5,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 38,
+          "rawObserved": 0,
+          "shadowTo": 15,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 53,
+          "rawObserved": 0.05660377358490566,
+          "shadowTo": 25,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 36,
+          "rawObserved": 0.05555555555555555,
+          "shadowTo": 35,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 20,
+          "rawObserved": 0.05,
+          "shadowTo": 45,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 14,
+          "rawObserved": 0.07142857142857142,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 3,
+          "rawObserved": 0,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 5,
+          "rawObserved": 0,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "best_match|12": {
+      "readyForReview": false,
+      "reason": "Need 500 samples and 50 wet truths; currently 256/4.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 220,
+          "rawObserved": 0.00909090909090909,
+          "shadowTo": 5,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 18,
+          "rawObserved": 0.05555555555555555,
+          "shadowTo": 15,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 10,
+          "rawObserved": 0.1,
+          "shadowTo": 25,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 4,
+          "rawObserved": 0,
+          "shadowTo": 35,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 3,
+          "rawObserved": 0,
+          "shadowTo": 45,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 1,
+          "rawObserved": 0,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "weathernext2|12": {
+      "readyForReview": false,
+      "reason": "Need 500 samples and 50 wet truths; currently 256/4.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 165,
+          "rawObserved": 0,
+          "shadowTo": 5,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 23,
+          "rawObserved": 0,
+          "shadowTo": 15,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 14,
+          "rawObserved": 0,
+          "shadowTo": 25,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 5,
+          "rawObserved": 0,
+          "shadowTo": 35,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 7,
+          "rawObserved": 0,
+          "shadowTo": 45,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 7,
+          "rawObserved": 0.14285714285714285,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 6,
+          "rawObserved": 0,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 7,
+          "rawObserved": 0,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 8,
+          "rawObserved": 0.125,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 14,
+          "rawObserved": 0.14285714285714285,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "model_consensus|12": {
+      "readyForReview": false,
+      "reason": "Need 500 samples and 50 wet truths; currently 256/4.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 168,
+          "rawObserved": 0,
+          "shadowTo": 5,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 41,
+          "rawObserved": 0.04878048780487805,
+          "shadowTo": 15,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 9,
+          "rawObserved": 0,
+          "shadowTo": 25,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 35,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 19,
+          "rawObserved": 0.05263157894736842,
+          "shadowTo": 45,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 6,
+          "rawObserved": 0,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 3,
+          "rawObserved": 0,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 1,
+          "rawObserved": 0,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 7,
+          "rawObserved": 0.14285714285714285,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 2,
+          "rawObserved": 0,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "eccc_official|12": {
+      "readyForReview": false,
+      "reason": "Need 500 samples and 50 wet truths; currently 256/4.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 100,
+          "rawObserved": 0,
+          "shadowTo": 5,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 36,
+          "rawObserved": 0,
+          "shadowTo": 15,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 48,
+          "rawObserved": 0.041666666666666664,
+          "shadowTo": 25,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 28,
+          "rawObserved": 0,
+          "shadowTo": 35,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 19,
+          "rawObserved": 0.05263157894736842,
+          "shadowTo": 45,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 14,
+          "rawObserved": 0.07142857142857142,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 3,
+          "rawObserved": 0,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 8,
+          "rawObserved": 0,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "best_match|24": {
+      "readyForReview": false,
+      "reason": "Need 500 samples and 50 wet truths; currently 240/6.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 207,
+          "rawObserved": 0.01932367149758454,
+          "shadowTo": 5,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 19,
+          "rawObserved": 0.05263157894736842,
+          "shadowTo": 15,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 7,
+          "rawObserved": 0.14285714285714285,
+          "shadowTo": 25,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 4,
+          "rawObserved": 0,
+          "shadowTo": 35,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 1,
+          "rawObserved": 0,
+          "shadowTo": 45,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 2,
+          "rawObserved": 0,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "weathernext2|24": {
+      "readyForReview": false,
+      "reason": "Need 500 samples and 50 wet truths; currently 240/6.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 146,
+          "rawObserved": 0,
+          "shadowTo": 5,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 33,
+          "rawObserved": 0,
+          "shadowTo": 15,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 13,
+          "rawObserved": 0.15384615384615385,
+          "shadowTo": 25,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 5,
+          "rawObserved": 0,
+          "shadowTo": 35,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 9,
+          "rawObserved": 0,
+          "shadowTo": 45,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 6,
+          "rawObserved": 0.16666666666666666,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 4,
+          "rawObserved": 0.25,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 10,
+          "rawObserved": 0.1,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 7,
+          "rawObserved": 0,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 7,
+          "rawObserved": 0.14285714285714285,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "model_consensus|24": {
+      "readyForReview": false,
+      "reason": "Need 500 samples and 50 wet truths; currently 240/6.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 158,
+          "rawObserved": 0,
+          "shadowTo": 5,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 39,
+          "rawObserved": 0.10256410256410256,
+          "shadowTo": 15,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 9,
+          "rawObserved": 0,
+          "shadowTo": 25,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 35,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 20,
+          "rawObserved": 0.1,
+          "shadowTo": 45,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 3,
+          "rawObserved": 0,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 2,
+          "rawObserved": 0,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 6,
+          "rawObserved": 0,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 3,
+          "rawObserved": 0,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "eccc_official|24": {
+      "readyForReview": false,
+      "reason": "Need 500 samples and 50 wet truths; currently 240/6.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 98,
+          "rawObserved": 0,
+          "shadowTo": 5,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 33,
+          "rawObserved": 0,
+          "shadowTo": 15,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 49,
+          "rawObserved": 0.04081632653061224,
+          "shadowTo": 25,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 9,
+          "rawObserved": 0.1111111111111111,
+          "shadowTo": 35,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 23,
+          "rawObserved": 0.043478260869565216,
+          "shadowTo": 45,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 19,
+          "rawObserved": 0.05263157894736842,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 9,
+          "rawObserved": 0.1111111111111111,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "best_match|48": {
+      "readyForReview": false,
+      "reason": "Need 500 samples and 50 wet truths; currently 208/5.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 148,
+          "rawObserved": 0.006756756756756757,
+          "shadowTo": 5,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 20,
+          "rawObserved": 0.05,
+          "shadowTo": 15,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 7,
+          "rawObserved": 0,
+          "shadowTo": 25,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 7,
+          "rawObserved": 0.14285714285714285,
+          "shadowTo": 35,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 8,
+          "rawObserved": 0,
+          "shadowTo": 45,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 8,
+          "rawObserved": 0.125,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 5,
+          "rawObserved": 0.2,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 4,
+          "rawObserved": 0,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 1,
+          "rawObserved": 0,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "weathernext2|48": {
+      "readyForReview": false,
+      "reason": "Need 500 samples and 50 wet truths; currently 208/5.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 113,
+          "rawObserved": 0,
+          "shadowTo": 5,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 28,
+          "rawObserved": 0.03571428571428571,
+          "shadowTo": 15,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 11,
+          "rawObserved": 0,
+          "shadowTo": 25,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 14,
+          "rawObserved": 0,
+          "shadowTo": 35,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 12,
+          "rawObserved": 0.08333333333333333,
+          "shadowTo": 45,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 7,
+          "rawObserved": 0.14285714285714285,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 4,
+          "rawObserved": 0.25,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 6,
+          "rawObserved": 0,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 10,
+          "rawObserved": 0,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 3,
+          "rawObserved": 0.3333333333333333,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "model_consensus|48": {
+      "readyForReview": false,
+      "reason": "Need 500 samples and 50 wet truths; currently 208/5.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 122,
+          "rawObserved": 0,
+          "shadowTo": 5,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 26,
+          "rawObserved": 0.11538461538461539,
+          "shadowTo": 15,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 6,
+          "rawObserved": 0,
+          "shadowTo": 25,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 7,
+          "rawObserved": 0.14285714285714285,
+          "shadowTo": 35,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 9,
+          "rawObserved": 0,
+          "shadowTo": 45,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 12,
+          "rawObserved": 0,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 11,
+          "rawObserved": 0.09090909090909091,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 4,
+          "rawObserved": 0,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 2,
+          "rawObserved": 0,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 9,
+          "rawObserved": 0,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "best_match|72": {
+      "readyForReview": false,
+      "reason": "Need 500 samples and 50 wet truths; currently 176/6.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 122,
+          "rawObserved": 0,
+          "shadowTo": 5,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 17,
+          "rawObserved": 0.058823529411764705,
+          "shadowTo": 15,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 8,
+          "rawObserved": 0.125,
+          "shadowTo": 25,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 14,
+          "rawObserved": 0,
+          "shadowTo": 35,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 6,
+          "rawObserved": 0.3333333333333333,
+          "shadowTo": 45,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 9,
+          "rawObserved": 0.2222222222222222,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "weathernext2|72": {
+      "readyForReview": false,
+      "reason": "Need 500 samples and 50 wet truths; currently 176/6.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 99,
+          "rawObserved": 0,
+          "shadowTo": 5,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 13,
+          "rawObserved": 0,
+          "shadowTo": 15,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 8,
+          "rawObserved": 0,
+          "shadowTo": 25,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 11,
+          "rawObserved": 0.09090909090909091,
+          "shadowTo": 35,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 8,
+          "rawObserved": 0.125,
+          "shadowTo": 45,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 6,
+          "rawObserved": 0.16666666666666666,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 4,
+          "rawObserved": 0,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 15,
+          "rawObserved": 0.06666666666666667,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 11,
+          "rawObserved": 0.18181818181818182,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 1,
+          "rawObserved": 0,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "model_consensus|72": {
+      "readyForReview": false,
+      "reason": "Need 500 samples and 50 wet truths; currently 176/6.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 105,
+          "rawObserved": 0,
+          "shadowTo": 5,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 24,
+          "rawObserved": 0.08333333333333333,
+          "shadowTo": 15,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 3,
+          "rawObserved": 0,
+          "shadowTo": 25,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 8,
+          "rawObserved": 0,
+          "shadowTo": 35,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 12,
+          "rawObserved": 0.08333333333333333,
+          "shadowTo": 45,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 4,
+          "rawObserved": 0,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 5,
+          "rawObserved": 0.2,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 3,
+          "rawObserved": 0,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 8,
+          "rawObserved": 0.125,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 4,
+          "rawObserved": 0.25,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    }
+  }
+}
