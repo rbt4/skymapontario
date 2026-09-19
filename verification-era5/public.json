@@ -1,0 +1,133 @@
+{
+  "schema": 1,
+  "generatedAt": "2026-09-19T16:07:12.180Z",
+  "cursor": "2026-09-12",
+  "days": 31666,
+  "first": "1940-01-01",
+  "last": "2026-09-11",
+  "columns": [
+    "date",
+    "pacific_pressure",
+    "west_pressure",
+    "prairie_pressure",
+    "great_lakes_pressure",
+    "east_pressure",
+    "gulf_pressure",
+    "west_east_pressure_gradient",
+    "gulf_gl_pressure_gradient",
+    "gl_temperature",
+    "prairie_gl_temperature_contrast",
+    "gl_dewpoint",
+    "gulf_gl_moisture_gradient",
+    "gulf_northward_moisture_flux",
+    "ohio_northward_moisture_flux",
+    "gl_wind_u",
+    "gl_wind_v",
+    "gl_cyclone_proxy"
+  ],
+  "normalisation": [
+    {
+      "name": "pacific_pressure",
+      "n": 31666,
+      "mean": 1016.693,
+      "sd": 11.146
+    },
+    {
+      "name": "west_pressure",
+      "n": 31666,
+      "mean": 1015.108,
+      "sd": 7.486
+    },
+    {
+      "name": "prairie_pressure",
+      "n": 31666,
+      "mean": 1016.8,
+      "sd": 8.187
+    },
+    {
+      "name": "great_lakes_pressure",
+      "n": 31666,
+      "mean": 1016.471,
+      "sd": 8.266
+    },
+    {
+      "name": "east_pressure",
+      "n": 31666,
+      "mean": 1016.091,
+      "sd": 6.788
+    },
+    {
+      "name": "gulf_pressure",
+      "n": 31666,
+      "mean": 1017.127,
+      "sd": 4.68
+    },
+    {
+      "name": "west_east_pressure_gradient",
+      "n": 31666,
+      "mean": -0.222,
+      "sd": 14.306
+    },
+    {
+      "name": "gulf_gl_pressure_gradient",
+      "n": 31666,
+      "mean": -0.656,
+      "sd": 8.579
+    },
+    {
+      "name": "gl_temperature",
+      "n": 31666,
+      "mean": 4.896,
+      "sd": 10.014
+    },
+    {
+      "name": "prairie_gl_temperature_contrast",
+      "n": 31666,
+      "mean": 6.166,
+      "sd": 6.725
+    },
+    {
+      "name": "gl_dewpoint",
+      "n": 31666,
+      "mean": 1.88,
+      "sd": 10.116
+    },
+    {
+      "name": "gulf_gl_moisture_gradient",
+      "n": 31666,
+      "mean": 15.152,
+      "sd": 11.889
+    },
+    {
+      "name": "gulf_northward_moisture_flux",
+      "n": 31666,
+      "mean": 82.23,
+      "sd": 519.146
+    },
+    {
+      "name": "ohio_northward_moisture_flux",
+      "n": 31484,
+      "mean": 48.03,
+      "sd": 163.764
+    },
+    {
+      "name": "gl_wind_u",
+      "n": 31666,
+      "mean": 6.232,
+      "sd": 17.929
+    },
+    {
+      "name": "gl_wind_v",
+      "n": 31666,
+      "mean": -0.855,
+      "sd": 19.114
+    },
+    {
+      "name": "gl_cyclone_proxy",
+      "n": 31666,
+      "mean": -0.408,
+      "sd": 5.016
+    }
+  ],
+  "note": "Compact ERA5 analog memory. Raw global grids are intentionally not stored; physically meaningful upstream gradients and transport proxies are retained to reduce noise and overfitting."
+}
