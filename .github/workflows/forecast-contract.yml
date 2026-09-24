@@ -3,10 +3,10 @@ name: SkyMap forecast truth contract
 on:
   pull_request:
     paths:
-      - 'app/lab/accuracy-engine.js'
-      - 'app/lab/forecast-intelligence-25.js'
-      - 'app/lab/evidence-router.js'
-      - 'app/lab/lab.js'
+      - 'app/accuracy-engine.js'
+      - 'app/forecast-intelligence-25.js'
+      - 'app/evidence-router.js'
+      - 'app/app.js'
       - 'scripts/check-forecast-contract.mjs'
       - 'scripts/check-evidence-router.mjs'
       - 'scripts/check-progressive-fast-path.mjs'
@@ -20,10 +20,10 @@ on:
   push:
     branches: [main]
     paths:
-      - 'app/lab/accuracy-engine.js'
-      - 'app/lab/forecast-intelligence-25.js'
-      - 'app/lab/evidence-router.js'
-      - 'app/lab/lab.js'
+      - 'app/accuracy-engine.js'
+      - 'app/forecast-intelligence-25.js'
+      - 'app/evidence-router.js'
+      - 'app/app.js'
       - 'scripts/check-forecast-contract.mjs'
       - 'scripts/check-evidence-router.mjs'
       - 'scripts/check-progressive-fast-path.mjs'
@@ -53,10 +53,10 @@ jobs:
           node-version: '22'
       - name: Validate live forecast engine contract
         run: |
-          node --check app/lab/accuracy-engine.js
-          node --check app/lab/forecast-intelligence-25.js
-          node --check app/lab/evidence-router.js
-          node --check app/lab/lab.js
+          node --check app/accuracy-engine.js
+          node --check app/forecast-intelligence-25.js
+          node --check app/evidence-router.js
+          node --check app/app.js
           node --check scripts/check-forecast-contract.mjs
           node --check scripts/check-evidence-router.mjs
           node --check scripts/check-progressive-fast-path.mjs

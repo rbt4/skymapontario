@@ -83,7 +83,7 @@ public final class MainActivity extends Activity {
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setMediaPlaybackRequiresUserGesture(true);
-        settings.setUserAgentString(settings.getUserAgentString() + " SkyMapOntario/18.0.1");
+        settings.setUserAgentString(settings.getUserAgentString() + " SkyMapOntario/40.0.0");
 
         WebViewCompat.addWebMessageListener(
                 webView,
@@ -161,11 +161,11 @@ public final class MainActivity extends Activity {
             if (webView == null || !pageReady) return;
             String script = "(() => {"
                     + "const button=document.getElementById('locate-button');"
-                    + "const label=document.getElementById('location-name');"
+                    + "const label=document.getElementById('place-name');"
                     + "const current=(label?.textContent||'').trim();"
                     + "const force=" + force + ";"
                     + "if(!button||button.dataset.autoLocating==='true')return false;"
-                    + "if(!force&&current&&current!=='My location'&&current!=='Toronto')return false;"
+                    + "if(!force&&current&&current!=='My location'&&current!=='Toronto'&&!current.startsWith('Finding'))return false;"
                     + "button.dataset.autoLocating='true';"
                     + "button.setAttribute('aria-busy','true');"
                     + "button.click();"

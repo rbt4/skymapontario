@@ -3,10 +3,10 @@ import fs from 'node:fs/promises';
 import vm from 'node:vm';
 
 const [routerSource, accuracySource, weatherNextSource, labSource] = await Promise.all([
-  fs.readFile('app/lab/evidence-router.js', 'utf8'),
-  fs.readFile('app/lab/accuracy-engine.js', 'utf8'),
-  fs.readFile('app/lab/forecast-intelligence-25.js', 'utf8'),
-  fs.readFile('app/lab/lab.js', 'utf8')
+  fs.readFile('app/evidence-router.js', 'utf8'),
+  fs.readFile('app/accuracy-engine.js', 'utf8'),
+  fs.readFile('app/forecast-intelligence-25.js', 'utf8'),
+  fs.readFile('app/app.js', 'utf8')
 ]);
 const window = {};
 vm.runInNewContext(routerSource, { window, Date, Math, Number, Object, Array, Map, Set, String }, { filename:'evidence-router.js' });

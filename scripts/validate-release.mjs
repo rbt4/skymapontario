@@ -10,6 +10,14 @@ const privacy = read('privacy.html');
 const app = read('app/index.html');
 const appCss = read('app/app.css');
 const appJs = read('app/app.js');
+const visitJs = read('app/visit.js');
+const conditionsJs = read('app/conditions.js');
+const nativeJs = read('app/native.js');
+const engineJs = read('app/accuracy-engine.js');
+const routerJs = read('app/evidence-router.js');
+const intelligenceJs = read('app/forecast-intelligence-25.js');
+const sw = read('app/sw.js');
+const labRedirect = read('app/lab/index.html');
 const appVersion = JSON.parse(read('app/version.json'));
 const workflow = read('.github/workflows/deploy-pages.yml');
 const mainActivity = read('android/app/src/main/java/ca/skymapontario/app/MainActivity.java');
@@ -33,139 +41,107 @@ const assert = (condition, message) => { if (!condition) throw new Error(message
 assert(/^\d+\.\d+\.\d+$/.test(version.version), 'Version must use semantic versioning');
 assert(Number.isInteger(version.versionCode), 'versionCode must be an integer');
 assert(appVersion.version === version.version && appVersion.versionCode === version.versionCode, 'Web app version is not aligned');
-assert(appJs.includes(`version: '${version.version}'`), 'Web app fallback version is not aligned');
-assert(site.includes('Will rain reach<br><em>your plans?</em>'), 'Destination-and-time hero is missing');
-assert(site.includes('class="preview-path"') && siteJs.includes('[data-preview-path]'), 'Landing preview no longer demonstrates the visit window');
-assert(site.includes('CHECK A VISIT') && site.includes('SHARE LARGE IMAGE') && siteJs.includes('data-preview-likelihood'), 'Landing page does not demonstrate the primary visit-and-share workflow');
+assert(app.includes(`id="version-label">${version.version}<`), 'In-app version label is not aligned');
+
+// --- Landing page -----------------------------------------------------------
+assert(site.includes('id="home-map"') && site.includes('app/vendor/leaflet.js'), 'Landing page live map is missing');
+assert((site.match(/data-weather-mode=/g) || []).length === 3, 'Landing map must expose rain, storm and cloud modes');
+assert(site.includes('id="timeline-frames"') && siteJs.includes('getCapabilitiesTimes') && siteJs.includes('showFrame'), 'Landing weather timeline is missing');
+assert(siteJs.includes('dark_nolabels') && siteJs.includes('dark_only_labels'), 'Landing basemap or label hierarchy is missing');
 assert(privacy.includes('Shared visit cards') && privacy.includes('does not upload the generated file'), 'Generated-share privacy behaviour is not disclosed');
 assert(!site.includes('<iframe'), 'Landing page must not embed the full app');
 assert((site.match(/ko-fi\.com\/rbt4dev/g) || []).length >= 3, 'Ko-fi support must remain visible');
 assert(site.includes('data-apk'), 'Public APK link is missing');
 assert(siteCss.length < 30000, 'Landing CSS has become bloated');
-assert(siteJs.length < 6000, 'Landing JavaScript has become bloated');
-assert(app.includes('id="snapshot-rail"') && app.includes('NOW · NEXT · USEFUL'), 'Meaningful snapshot briefing is missing');
-assert(app.includes('7-DAY FORECAST'), 'Seven-day forecast is missing');
-assert(app.includes('Keep radar first'), 'Layer sheet is missing its radar-first hierarchy');
-assert(app.includes('id="story-facts"'), 'Selected-time explanation facts are missing');
-assert(app.includes('id="frame-confidence"'), 'Selected-time confidence cue is missing');
-assert(!app.includes('id="zoom-in-button"') && !app.includes('id="zoom-out-button"'), 'Visible map zoom controls returned');
-assert(app.includes('ko-fi.com/rbt4dev'), 'Restrained in-app support link is missing');
-assert(appCss.includes('grid-template-columns: minmax(0, 1.62fr)'), 'Desktop map/forecast layout is missing');
-assert(appCss.includes('@media (max-width: 980px)'), 'Mobile layout is missing');
-assert(appCss.includes('grid-template-columns: repeat(2, minmax(0, 1fr));') && appCss.includes('.snapshot-card:first-child { min-height: 182px; grid-column: 1 / -1 }'), 'Desktop snapshot mosaic is missing or can overflow its briefing column');
-assert(appCss.includes('grid-auto-flow: column') && appCss.includes('grid-column: auto'), 'Mobile snapshot rail does not restore a swipeable, unclipped flow');
-assert(app.includes('class="map-mode-rail"') && (app.match(/data-map-mode=/g) || []).length === 5, 'Direct map-view rail is missing');
-assert(app.includes('id="focus-button"') && appJs.includes('setMapFocus'), 'Laptop map-focus mode is missing');
-assert(app.indexOf('id="snapshot-rail"') < app.indexOf('id="daily-list"'), 'Meaningful snapshots must appear before the full week');
-assert(appCss.includes('--paper: #edf1e9') && appCss.includes('--night: #06110f'), 'Instrument-and-briefing visual system is missing');
-assert(appJs.includes('NATIVE_GEOMET'), 'Native GeoMet relay is missing');
-assert(appJs.includes('Promise.allSettled'), 'Progressive source loading is missing');
-assert(appJs.includes('buildSnapshots'), 'Meaningful snapshots are missing');
-assert(appJs.includes('buildDaily'), 'Daily forecast generation is missing');
-assert(appJs.includes('citypageweather-realtime'), 'Official ECCC city forecast context is missing');
-assert(appJs.includes("timeformat: 'unixtime'"), 'Timezone-safe model timestamps are missing');
-assert(appJs.includes('modelDate(data, value)'), 'UNIX forecast timestamp parsing is missing');
-assert(appJs.includes('updateFrameExplanation'), 'Per-frame radar explanation is missing');
-assert(appJs.includes('function formatWmsTime'), 'Whole-second WMS timestamp formatting is missing');
-assert(appJs.includes("replace(/\\.\\d{3}Z$/, 'Z')"), 'WMS timestamps may still include unsupported milliseconds');
-assert(appJs.includes('Point value unavailable'), 'Failed point queries are not distinguished from zero rain');
-assert(appJs.includes('fetchCompleteJson'), 'Point queries are not protected through complete response parsing');
-assert(appJs.includes('pointValueRequests'), 'Duplicate point queries are not coalesced');
-assert(appJs.includes('!cached.error') && appJs.includes('function scheduleTimelineRecovery') && appJs.includes('metadataRecoveryAttempts >= 3'), 'Transient GeoMet metadata failures can still strand the timeline');
-assert(appJs.includes('Radar is visible. Timeline details are reconnecting.'), 'Latest-image fallback still presents transient metadata loss as a dead radar');
-assert(appJs.includes("formatWmsTime(frame.referenceTime)"), 'Point-query reference times may still include unsupported milliseconds');
-assert(appJs.includes('await updateFrameExplanation(frame)'), 'The selected point must resolve before arrival probing begins');
-assert(appJs.includes('function frameStamp'), 'Selected radar date-and-time label is missing');
-assert(appJs.includes('crossingSource ? 1750') && appJs.includes("current.kind === 'futurecast' ? 1250 : 1050"), 'Calm source-aware playback timing is missing');
-assert(appJs.includes('RAQDPS.Sfc_PM2.5-WildfireSmokePlume'), 'Wildfire-specific smoke guidance is missing');
-assert(appJs.includes('if (state.frameIndex >= state.frames.length - 1)'), 'Radar playback must stop instead of looping forever');
-assert(appJs.includes("const FUTURECAST_LAYER = 'HRDPS.CONTINENTAL.DIAG_PR_PT1H'"), '48-hour HRDPS precipitation futurecast is missing');
-assert(appJs.includes("const FUTURE_STORM_LAYER = 'HRDPS-WEonG_2.5km_Thunderstorm-Prob'"), 'Future thunderstorm guidance is missing');
-assert((app.match(/data-horizon=/g) || []).length === 4, 'Direct Now, 6h, 24h and 48h controls are missing');
-assert(appJs.includes('function applyTimelineHorizon') && appJs.includes('function framesForHorizon'), 'Predictive timeline ranges are not implemented');
-assert(appJs.includes('function scheduleRadarFrame') && appJs.includes('afterReframe'), 'Futurecast images may load before automatic map framing finishes');
-assert(appJs.includes("frame.kind === 'observed'") && appJs.includes("frame.kind === 'nowcast'") && appJs.includes("frame.kind === 'futurecast'"), 'Measured, nowcast and futurecast source boundaries are missing');
-assert(appJs.includes('model guidance, not observed radar'), 'Futurecast is not explained honestly');
-assert(appJs.includes("layer: 'REPS.DIAG.3_PRMM.ERGE1'") && appJs.includes("layer: 'REPS.DIAG.3_PRMM.ERGE5'"), 'Official REPS ensemble thresholds are missing');
-assert(appJs.includes('function loadEnsembleSignal') && appJs.includes('function ensembleSummary'), 'REPS point probabilities are not rendered');
-assert(appJs.includes('function forecastAlignment') && appJs.includes('forecast sources currently point the same way'), 'Cross-source alignment is not explained separately');
-assert(app.includes('id="detail-ensemble-title"') && app.includes('id="detail-ensemble-copy"'), 'Ensemble detail explanation is missing');
-assert(appJs.includes('function effectiveModelWeight') && appJs.includes('state.nativeSkills'), 'Bounded local model-skill weighting is missing');
-assert(appJs.includes("NativeBridge.call('getBootstrap'") && appJs.includes('function loadNativeIntelligence'), 'Android forecast intelligence is not connected to the web experience');
-assert(appJs.includes('const LIVE_REFRESH_MS = 6 * 60 * 1000') && appJs.includes('const GUIDANCE_REFRESH_MS = 30 * 60 * 1000'), 'Automatic refresh cadence is missing');
-assert(appJs.includes('function autoRefresh') && appJs.includes('function startAutoRefresh'), 'Live auto-refresh is not running');
-assert(appJs.includes('void prefetchFrameSignal(frame)'), 'Selected future evidence does not begin resolving alongside the map image');
-assert(appJs.includes('A timestamped forecast must never silently degrade'), 'Timestamp precision guard is missing');
-assert(appJs.includes('function openSnapshot') && appJs.includes('shown on the weather map'), 'Forecast moments do not connect back to the map');
-assert(appJs.includes('function weatherIconMarkup') && app.includes('class="svg-defs"'), 'Code-native weather graphics are missing');
-assert(app.includes('id="weather-path"') && app.includes('id="path-chart"') && app.indexOf('id="weather-path"') < app.indexOf('id="snapshot-rail"'), 'Connected 48-hour weather path is missing or misplaced');
-assert(appJs.includes('function buildWeatherPath') && appJs.includes('function renderWeatherPath') && appJs.includes('function openWeatherPathPoint'), 'Weather-path calculation or map connection is missing');
-assert(appJs.includes("scrubber.type = 'range'") && appJs.includes('markWeatherPathPoint'), 'Weather path is no longer one large tap, drag, and keyboard target');
-assert(appJs.includes('amount, not probability'), 'Weather-path model support can be mistaken for probability');
-assert(app.includes('id="location-search-input"') && app.includes('Search any Ontario city or town'), 'Ontario place search is missing');
-assert(appJs.includes('GEOCODE_API') && appJs.includes('searchOntarioLocations') && appJs.includes("result.admin1 || '').toLowerCase() === 'ontario'"), 'Ontario-only place search guard is missing');
-assert(appJs.includes("timeZone: String(result.timezone || '')") && appJs.includes('previousVisit') && appJs.includes('forecastZone() !== previousZone'), 'Cross-timezone Ontario visits do not preserve their local wall-clock window');
-assert(app.includes('https://geocoding-api.open-meteo.com'), 'Place-search endpoint is blocked by app CSP');
-assert(appCss.includes('.story-facts span:nth-child(3) { display: flex;'), 'Futurecast confidence disappears on phones');
-assert(app.includes('id="visit-sheet"') && app.includes('id="visit-start-time"') && app.includes('id="visit-end-time"'), 'Exact visit-window controls are missing');
-assert(app.includes('id="visit-share-image"') && app.includes('id="visit-share-motion"'), 'Large image or motion sharing controls are missing');
-assert(appJs.includes('function runVisitAnalysis') && appJs.includes('function buildVisitResult'), 'Visit-window decision analysis is missing');
-assert(appJs.includes('function analyzeVisitRainArea') && appJs.includes('VISIT_DIRECTIONS'), 'Surrounding rain-area analysis is missing');
-assert(appJs.includes('wetEntries.length >= 3 && longestCircularWetRun(entries) >= 2'), 'Rain-band classification is no longer conservative');
-assert(appJs.includes("value: peak >= 70 ? 'WET' : peak >= 45 ? 'MIXED' : 'LOW'"), 'Uncalibrated model support can be mistaken for a rain probability');
-assert(appJs.includes('function createVisitImage') && appJs.includes('1080') && appJs.includes('1350'), 'Large-format share image is missing');
-assert(appJs.includes("import('./vendor/gifenc.esm.js')") && appJs.includes('function createVisitGif'), 'Short GIF sharing is missing');
-assert(gifEncoder.includes('GIFEncoder') && thirdPartyNotices.includes('gifenc 1.0.3') && thirdPartyNotices.includes('MIT License'), 'GIF encoder or its license notice is missing');
-const shareCanvas = appJs.slice(appJs.indexOf('function drawVisitShareCard'), appJs.indexOf('function canvasBlob'));
+assert(siteJs.length < 16000, 'Landing JavaScript has become bloated');
+
+// --- One app: the forecast engine is the product ------------------------------
+assert(!fs.existsSync('lab') && !fs.existsSync('app/lab/lab.js') && !fs.existsSync('app/frontline.part-0.js'), 'A second app surface or patch layer returned');
+assert(labRedirect.includes('url=../') && labRedirect.includes('noindex'), 'Old Future Lab links do not redirect to the app');
+const scripts = [...app.matchAll(/<script src="([^"]+)"><\/script>/g)].map(match => match[1]);
+const order = ['vendor/leaflet.js', 'native.js', 'conditions.js', 'visit.js', 'accuracy-engine.js', 'evidence-router.js', 'app.js'].map(file => scripts.indexOf(file));
+assert(order.every(index => index >= 0) && order.every((value, index) => index === 0 || value > order[index - 1]), `App scripts are missing or out of order: ${scripts.join(', ')}`);
+assert(app.includes('src="forecast-intelligence-25.js" data-phase="capture"') && app.includes('src="forecast-intelligence-25.js" data-phase="augment"'), 'Forecast IQ capture/augment phases are missing');
+assert(appJs.includes('window.SkyMapEvidenceRouter?.route') && appJs.includes('personalShadowAt'), 'Evidence router or personal shadow is disconnected from the blend');
+assert(routerJs.includes('governed-single-pass') && engineJs.includes('model_rows_mutated: 0'), 'Governed single-pass evidence contract is missing');
+assert(engineJs.includes('truth_contract') && engineJs.includes('hasExplicitForecastEvidence'), 'Truth firewall is missing');
+assert(intelligenceJs.includes('google_weathernext2_ensemble') && intelligenceJs.includes('__skymap_missing__'), 'WeatherNext null-guarded ensemble is missing');
+assert(appJs.includes('const SNOW_CODES'), 'Snow weather codes are undefined in the point blend');
+assert(appJs.includes('SkyMap will not translate missing precipitation values into a dry forecast'), 'Missing evidence may be shown as dry');
+
+// --- Map, timeline and layers -------------------------------------------------
+assert(appJs.includes("'RADAR_1KM_RRAI'") && appJs.includes("'Radar_1km_RainPrecipRate-Extrapolation'") && appJs.includes("'HRDPS.CONTINENTAL.DIAG_PR_PT1H'"), 'Measured, nowcast and HRDPS timeline layers are missing');
+assert(appJs.includes("kind:'observed'") && appJs.includes("kind:'nowcast'") && appJs.includes("kind:'guidance'"), 'Source boundaries are not labelled');
+assert((app.match(/data-map-mode=/g) || []).length === 5 && ['rain', 'storm', 'smoke', 'air', 'temp'].every(mode => app.includes(`data-map-mode="${mode}"`)), 'Direct map-layer rail is missing');
+assert(appJs.includes('Lightning_2.5km_Density') && appJs.includes('RAQDPS.Sfc_PM2.5-WildfireSmokePlume') && appJs.includes('AQHI-OBS') && appJs.includes('HRDPS.CONTINENTAL_TT'), 'Storm, smoke, air or temperature layer is missing');
+assert(appJs.includes('Single official layer · no playback'), 'Static layers may be presented as a radar loop');
+assert(app.includes('id="map-legend"') && appJs.includes('function renderLegend'), 'The in-interface legend is missing');
+assert(appJs.includes('dark_only_labels') && appJs.includes("createPane('labels')"), 'Place labels are no longer drawn above the weather');
+assert(appJs.includes('attributionControl:true') && appJs.includes('OpenStreetMap contributors') && appJs.includes('CARTO'), 'Required base-map attribution is missing');
+assert(!/\.leaflet-control-attribution\s*\{[^}]*display:\s*none/s.test(appCss), 'Base-map attribution is hidden');
+assert(appJs.includes('NATIVE_GEOMET') && appJs.includes('function geometFetch'), 'Native GeoMet relay fallback is missing');
+assert(appJs.includes('window.SkyMapBack'), 'Android back navigation is not handled by the app');
+
+// --- Alerts and air quality -------------------------------------------------
+assert(app.includes('id="alert-banner"') && app.includes('id="alert-list"') && app.includes('id="alerts-dialog"'), 'Alert banner or detail dialog is missing');
+assert(conditionsJs.includes('weather-alerts') && conditionsJs.includes('expiration_datetime') && conditionsJs.includes('function renderAlerts'), 'Alerts are not fetched, filtered or rendered');
+assert(conditionsJs.includes('textContent = alert.text'), 'Remote alert text must be assigned as text');
+assert(app.includes('id="air-card"') && conditionsJs.includes('aqhi-observations-realtime'), 'Official AQHI point reading is missing');
+
+// --- Visit check and sharing -------------------------------------------------
+assert(app.includes('id="visit-dialog"') && app.includes('id="visit-start-time"') && app.includes('id="visit-end-time"'), 'Exact visit-window controls are missing');
+assert(app.includes('id="visit-share-image"') && app.includes('id="visit-share-motion"') && app.includes('id="visit-hero"'), 'Visit sharing controls are missing');
+assert(visitJs.includes('function buildVisitResult') && visitJs.includes('function analyzeRainArea') && visitJs.includes("'REPS.DIAG.3_PRMM.ERGE1'") && visitJs.includes("'REPS.DIAG.3_PRMM.ERGE5'"), 'Visit analysis or REPS ensemble is missing');
+assert(visitJs.includes('wetEntries.length >= 3 && longestCircularWetRun(entries) >= 2'), 'Rain-band classification is no longer conservative');
+assert(visitJs.includes("value: peak >= 70 ? 'WET' : peak >= 45 ? 'MIXED' : 'LOW'"), 'Uncalibrated model support can be mistaken for a rain probability');
+assert(visitJs.includes('function createVisitImage') && visitJs.includes('canvas.width = 1080') && visitJs.includes('canvas.height = 1350'), 'Large-format share image is missing');
+assert(visitJs.includes("import('./vendor/gifenc.esm.js')") && visitJs.includes('function createVisitGif'), 'Short GIF sharing is missing');
+const shareCanvas = visitJs.slice(visitJs.indexOf('function drawCard'), visitJs.indexOf('const canvasBlob'));
 assert(shareCanvas && !shareCanvas.includes('letterSpacing'), 'Share-card text depends on an inconsistently supported canvas font property');
+assert(gifEncoder.includes('GIFEncoder') && thirdPartyNotices.includes('gifenc 1.0.3') && thirdPartyNotices.includes('MIT License'), 'GIF encoder or its license notice is missing');
 assert(visitWindowTest.includes('Oakville') && visitWindowTest.includes('16 * 60') && visitWindowTest.includes('18 * 60'), 'Exact Oakville 4–6 PM release test is missing');
 assert(workflow.includes('node scripts/check-visit-window.mjs'), 'Visit-window test is not wired into CI');
+assert(nativeJs.includes('channel.postMessage') && nativeJs.includes("'rememberLocation'") && visitJs.includes("native.call('shareFile'"), 'Web app does not use the asynchronous native message channel');
+
+// --- Readability, security and offline shell ----------------------------------
+const tinyPx = [...appCss.matchAll(/font-size:\s*([\d.]+)px/g)].map(match => Number(match[1])).filter(size => size < 11);
+const tinyRem = [...appCss.matchAll(/font-size:\s*([\d.]+)rem/g)].map(match => Number(match[1])).filter(size => size > 0 && size * 16 < 11);
+assert(!tinyPx.length && !tinyRem.length, `Unreadable type returned to the app: ${[...tinyPx.map(v => `${v}px`), ...tinyRem.map(v => `${v}rem`)].join(', ')}`);
+const tinySite = [...siteCss.matchAll(/font-size:\s*([\d.]+)px/g)].map(match => Number(match[1])).filter(size => size < 11);
+assert(!tinySite.length, `Unreadable type returned to the site: ${[...new Set(tinySite)].join('px, ')}px`);
 assert((app.match(/\sid="([^"]+)"/g) || []).length === new Set([...app.matchAll(/\sid="([^"]+)"/g)].map(match => match[1])).size, 'Duplicate app element IDs detected');
-assert(!site.includes('v4.4') && !site.includes('Version 4.4'), 'Stale v4.4 copy remains');
-assert(!app.includes('SkyMap Ontario 13'), 'Stale v13 app copy remains');
-assert(!`${site}\n${siteJs}\n${app}\n${appJs}`.includes('wet signal'), 'Unexplained wet-signal copy remains');
+assert(appJs.includes('const esc =') && visitJs.includes('const esc ='), 'HTML escaping helper is missing');
+assert(app.includes('Content-Security-Policy') && site.includes('Content-Security-Policy'), 'Content-Security-Policy is missing');
+assert(/script-src 'self';/.test(app) && !app.includes("'unsafe-eval'"), 'App CSP allows non-self scripts');
+for (const host of ['https://geo.weather.gc.ca', 'https://api.weather.gc.ca', 'https://api.open-meteo.com', 'https://ensemble-api.open-meteo.com', 'https://geocoding-api.open-meteo.com', 'https://raw.githubusercontent.com']) {
+  assert(app.includes(host), `App CSP blocks ${host}`);
+}
+assert(sw.includes(`const VERSION = '${version.version}'`), 'Service worker version is not aligned');
+for (const file of scripts.filter(file => !file.startsWith('vendor/')).concat(['app.css', 'vendor/gifenc.esm.js'])) {
+  assert(sw.includes(`'${file}'`), `Offline shell is missing ${file}`);
+}
+assert(appJs.includes("navigator.serviceWorker.register('sw.js',{updateViaCache:'none'})"), 'Service worker is never registered without cache-safe update checks');
+assert(sw.includes('cacheFreshShell') && sw.includes("cache: 'reload'"), 'Service-worker install can reuse stale shell bytes');
+assert(sw.includes("client.navigate(client.url)") && sw.includes("key.startsWith('skymap-shell-')"), 'Stale shell clients are not upgraded immediately');
+assert(sw.includes('return network;') && sw.includes('if (cached) return cached'), 'App shell is not network-first with an offline fallback');
+
+// --- Android --------------------------------------------------------------------
 assert(mainActivity.includes(`SkyMapOntario/${version.version}`), 'Android WebView version is not aligned');
 assert(geoMetProxy.includes(`SkyMapOntario/${version.version}`), 'Native GeoMet relay version is not aligned');
 assert(refreshWorker.includes(`SkyMapOntario/${version.version}`), 'Background refresh version is not aligned');
 assert(updateWorker.includes(`SkyMapOntario/${version.version} updater`), 'Updater version is not aligned');
-assert(refreshWorker.includes('&timeformat=unixtime'), 'Android background forecast timestamps are not timezone-safe');
-assert(refreshWorker.includes('parseForecastTime'), 'Android background forecast timestamp parsing is missing');
+assert(mainActivity.includes("document.getElementById('locate-button')") && mainActivity.includes("document.getElementById('place-name')") && app.includes('id="locate-button"') && app.includes('id="place-name"'), 'Native auto-location no longer matches the app');
+assert(refreshWorker.includes('&timeformat=unixtime') && refreshWorker.includes('parseForecastTime'), 'Android background forecast timestamps are not timezone-safe');
+assert(geoMetProxy.includes('safeHeaders') && !geoMetProxy.includes('flattenHeaders'), 'Native relay still forwards upstream headers verbatim');
+assert(androidManifest.includes('android:allowBackup="false"'), 'Cached weather and saved location are still cloud-backed-up');
+assert(androidManifest.includes('@drawable/skymap_logo'), 'SkyMap logo is not applied to Android');
+assert(updateWorker.includes('notifyUpdateReady') && application.includes('ACTION_UPDATE_READY'), 'Downloaded APK updates do not prompt the foreground app');
 assert(workflow.includes('node scripts/check-live-sources.mjs'), 'Live source validation is not wired into deployment');
 assert(!workflow.includes('git push origin HEAD:main'), 'Deployment must not rewrite its own source branch');
 assert(!workflow.includes('git fetch origin') && !workflow.includes('git checkout origin/'), 'Deployment must build the checked-out readable source directly');
 
-// --- Current visual and product guarantees ---------------------------------
-const sw = read('app/sw.js');
-const tinyApp = [...appCss.matchAll(/font-size:\s*([\d.]+)px/g)].map(match => Number(match[1])).filter(size => size < 11);
-assert(!tinyApp.length, `Unreadable type returned to the app: ${[...new Set(tinyApp)].join('px, ')}px`);
-const tinySite = [...siteCss.matchAll(/font-size:\s*([\d.]+)px/g)].map(match => Number(match[1])).filter(size => size < 11);
-assert(!tinySite.length, `Unreadable type returned to the site: ${[...new Set(tinySite)].join('px, ')}px`);
-assert(app.includes('id="alert-banner"'), 'Break-through alert banner is missing');
-assert(app.includes('id="alert-list"'), 'Alert detail sheet is missing');
-assert(appJs.includes('function renderAlerts'), 'Alerts are fetched but never rendered');
-assert(appJs.includes('expiration_datetime'), 'Expired alerts are not filtered out');
-assert(app.includes('data-layer="air"'), 'Air quality view is missing');
-assert(appJs.includes('aqhi-observations-realtime'), 'Official AQHI point reading is missing');
-assert(app.includes('id="map-legend"'), 'The in-interface legend is missing');
-assert(appJs.includes('LEGENDS'), 'Per-view legend data is missing');
-assert(appJs.includes('dark_only_labels') && appJs.includes("createPane('labelPane')"), 'Place labels are no longer drawn above the weather');
-assert(appJs.includes('attributionControl: true') && appJs.includes('OpenStreetMap contributors') && appJs.includes('CARTO'), 'Required base-map attribution is missing');
-assert(!/\.leaflet-control-attribution\s*\{[^}]*display:\s*none/s.test(appCss), 'Base-map attribution is hidden');
-assert(appJs.includes('function esc('), 'HTML escaping helper is missing');
-assert(app.includes('Content-Security-Policy') && site.includes('Content-Security-Policy'), 'Content-Security-Policy is missing');
-assert(sw.includes(`const VERSION = '${version.version}'`), 'Service worker version is not aligned');
-assert(appJs.includes("navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })"), 'Service worker is never registered without cache-safe update checks');
-assert(appJs.includes("'controllerchange'") && appJs.includes('controlledAtLaunch') && appJs.includes('refreshingForUpdate'), 'A newly activated app shell does not refresh an existing install safely');
-assert(sw.includes('cacheFreshShell') && sw.includes("cache: 'reload'"), 'Service-worker install can reuse stale shell bytes');
-assert(sw.includes('vendor/gifenc.esm.js'), 'Offline shell does not include the on-demand GIF encoder');
-assert(sw.includes("client.navigate(client.url)") && sw.includes("key.startsWith('skymap-shell-')"), 'Stale shell clients are not upgraded immediately');
-assert(sw.includes('return network;') && sw.includes('if (cached) return cached'), 'App shell is not network-first with an offline fallback');
-assert(geoMetProxy.includes('safeHeaders') && !geoMetProxy.includes('flattenHeaders'), 'Native relay still forwards upstream headers verbatim');
-assert(androidManifest.includes('android:allowBackup="false"'), 'Cached weather and saved location are still cloud-backed-up');
-
 // --- Release continuity and security guarantees ----------------------------
-assert(version.version === '18.0.0' && version.versionCode === 18000, 'Release version is not 18.0.0 / 18000');
-assert(version.releaseName === 'Arrival', 'Release name is not Arrival');
+assert(version.versionCode >= 40000, 'versionCode must stay above every published 18.x APK');
 assert(buildGradle.includes("storeFile file('signing/skymap-public-release.jks')"), 'Public continuity keystore is not attached');
 assert(buildGradle.includes("storePassword 'skymap-public-release'"), 'Public keystore credentials are not explicit');
 assert(buildGradle.includes('signingConfig signingConfigs.release'), 'Release signing configuration is not attached');
@@ -187,14 +163,11 @@ assert(mainActivity.includes('Set.of(APP_ORIGIN)'), 'Native bridge origin allowl
 assert(mainActivity.includes('isMainFrame') && mainActivity.includes('isTrustedOrigin'), 'Native messages are not restricted to the trusted main frame');
 assert(mainActivity.includes('removeWebMessageListener'), 'Native message listener is not removed on teardown');
 assert(!bridge.includes('@JavascriptInterface') && !bridge.includes('android.webkit.JavascriptInterface'), 'Legacy JavascriptInterface annotations remain');
-assert(appJs.includes('channel.postMessage') && appJs.includes('NativeBridge.call'), 'Web app does not use the asynchronous native message channel');
-assert(appJs.includes("await NativeBridge.call('getCache'"), 'Native cache reads are not asynchronous');
-assert(appJs.includes('Promise.allSettled(MODELS.map(readCachedModel))'), 'Native cache hydration is not awaited safely');
 assert(mainActivity.includes('case "shareFile"') && bridge.includes('public void shareFile'), 'Android file-sharing bridge is missing');
 assert(bridge.includes('MAX_SHARE_BYTES') && bridge.includes('"image/png"') && bridge.includes('"image/gif"'), 'Android share payload is not bounded to approved image types');
 assert(bridge.includes('getCanonicalPath') && bridge.includes('filename.endsWith(extension)'), 'Android share filenames are not confined to the approved file type and directory');
 assert(!/\)\s*\.(?:setClipData|addFlags)\(/.test(bridge), 'Android share intents must call void mutators as separate statements');
-assert(workflow.includes("grep -q 'id=\"visit-sheet\"'") && workflow.includes("grep -q 'createVisitGif'") && workflow.includes("test -s /tmp/apk-inspect/assets/vendor/gifenc.esm.js"), 'CI does not inspect the packaged visit-and-share experience');
+assert(workflow.includes("grep -q 'id=\"visit-dialog\"'") && workflow.includes("grep -q 'createVisitGif' /tmp/apk-inspect/assets/visit.js") && workflow.includes("test -s /tmp/apk-inspect/assets/vendor/gifenc.esm.js"), 'CI does not inspect the packaged visit-and-share experience');
 
 // Automatic public APK update flow.
 assert(androidManifest.includes('android.permission.REQUEST_INSTALL_PACKAGES'), 'APK installer permission is missing');

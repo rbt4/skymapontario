@@ -1,6 +1,6 @@
 # Data attribution
 
-SkyMap Future Lab combines public Canadian weather data from Environment and Climate Change Canada (ECCC) with model guidance retrieved through Open-Meteo. The interface is independent; Forecast IQ is SkyMap's own interpretation and calibration layer.
+SkyMap Ontario combines public Canadian weather data from Environment and Climate Change Canada (ECCC) with model guidance retrieved through Open-Meteo. The interface is independent; Forecast IQ is SkyMap's own interpretation and calibration layer.
 
 Forecast IQ uses different evidence by forecast horizon instead of treating every model as an equal vote:
 
@@ -20,3 +20,10 @@ Forecast IQ uses different evidence by forecast horizon instead of treating ever
 Forecast IQ may store bounded forecast-verification statistics locally in the browser so recent model performance can adjust influence by forecast lead time. The repository also maintains bounded, machine-generated Ontario forecast research on a separate data branch. Regime-conditioned model weights remain shadow-only until they pass an out-of-sample champion-versus-challenger gate; historical correlation alone cannot activate them.
 
 SkyMap Ontario is independent and is not affiliated with the Government of Canada, Government of Ontario, ECMWF, NOAA, Google DeepMind, Open-Meteo, Apple, Google, Microsoft, The Weather Network, or their weather products.
+
+Additional official context in the app:
+
+- **ECCC weather alerts** (`api.weather.gc.ca/collections/weather-alerts`): active warnings, watches and statements near the selected point, shown as published.
+- **ECCC AQHI observations** (`aqhi-observations-realtime`): the nearest observed Air Quality Health Index station.
+- **ECCC lightning density, RAQDPS wildfire smoke and HRDPS temperature:** optional map layers. They are single official images and are never presented as a radar loop.
+- **GIF export:** `gifenc` 1.0.3 under the MIT License. See `docs/THIRD_PARTY_NOTICES.md`.

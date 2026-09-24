@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import vm from 'node:vm';
 
-const source = await fs.readFile('app/lab/accuracy-engine.js', 'utf8');
+const source = await fs.readFile('app/accuracy-engine.js', 'utf8');
 const memory = new Map();
 const localStorage = {
   getItem: key => memory.has(key) ? memory.get(key) : null,

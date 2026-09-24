@@ -2,14 +2,19 @@
    Shell only. Weather never comes from cache — a stale radar frame is worse
    than no radar frame, so every live source goes straight to the network. */
 
-const VERSION = '18.1.0';
+const VERSION = '40.0.0';
 const SHELL = `skymap-shell-${VERSION}`;
 
 const SHELL_FILES = [
   './',
   'index.html',
   'app.css',
-  'stability.js',
+  'native.js',
+  'conditions.js',
+  'visit.js',
+  'forecast-intelligence-25.js',
+  'accuracy-engine.js',
+  'evidence-router.js',
   'app.js',
   'icon.svg',
   'manifest.webmanifest',
@@ -59,6 +64,8 @@ self.addEventListener('fetch', event => {
   if (url.origin !== self.location.origin) return;
   // The release marker must always be truthful.
   if (url.pathname.endsWith('version.json')) return;
+  // Published verification data is always read live.
+  if (url.hostname === 'raw.githubusercontent.com') return;
   // The native GeoMet relay shares this origin inside the Android app.
   if (url.pathname.includes('geomet-proxy')) return;
 

@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 
 const [accuracy, weatherNext, lab] = await Promise.all([
-  fs.readFile('app/lab/accuracy-engine.js', 'utf8'),
-  fs.readFile('app/lab/forecast-intelligence-25.js', 'utf8'),
-  fs.readFile('app/lab/lab.js', 'utf8')
+  fs.readFile('app/accuracy-engine.js', 'utf8'),
+  fs.readFile('app/forecast-intelligence-25.js', 'utf8'),
+  fs.readFile('app/app.js', 'utf8')
 ]);
 
 assert.doesNotMatch(accuracy, /const \[response, context\]\s*=\s*await Promise\.all/, 'model response still waits for the shared ECCC bundle');
