@@ -3,8 +3,8 @@ import fs from 'node:fs/promises';
 import vm from 'node:vm';
 
 const [source,lab,historyCourt,sealedCourt] = await Promise.all([
-  fs.readFile('app/lab/accuracy-engine.js','utf8'),
-  fs.readFile('app/lab/lab.js','utf8'),
+  fs.readFile('app/accuracy-engine.js','utf8'),
+  fs.readFile('app/app.js','utf8'),
   fs.readFile('scripts/forecast-regime-skill.mjs','utf8'),
   fs.readFile('scripts/forecast-court.mjs','utf8')
 ]);

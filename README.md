@@ -2,67 +2,59 @@
 
 **Will rain reach your plans?**
 
-SkyMap Ontario is a radar-first Ontario weather experience built around one practical decision: choose a destination and exact visit window, see whether rain reaches it, then share a clear answer. It joins measured radar, official short-range radar extrapolation and high-resolution 48-hour guidance in one honest timeline, checks deterministic precipitation against the official REPS ensemble, inspects the nearby rain area, and produces large-format WhatsApp-ready PNG or GIF summaries.
+SkyMap Ontario is one Ontario weather app built around one exact point. The map joins measured ECCC radar, the official radar extrapolation and HRDPS 2.5 km guidance in a single timeline. The forecast deck turns four independent forecast families into a seven-day RainLine through a governed evidence router. The visit check answers the practical question: choose a place and exact arrival and departure times, see whether rain reaches it, then share a large, readable PNG or GIF.
+
+Version 40 merges what used to be two products, the 18.x app and the Future Lab (Forecast Lab 19–34), into one. The Lab's forecast engine is now the app. The old app's visit check, sharing, alerts, air quality, map layers and Android bridge are rebuilt on top of it.
 
 ## Current release
 
-The single source of truth is [`version.json`](version.json). The website, web app, Android package metadata, download filenames, build artifact and deployment receipt are generated from that file.
+The single source of truth is [`version.json`](version.json). `scripts/prepare-release.mjs` copies it into the web app, service worker, in-app label, Android package metadata and user agents. The build artifact, download filenames and deployment receipt use the same file.
 
 - Website: `https://rbt4.github.io/skymapontario/`
-- Web app: `https://rbt4.github.io/skymapontario/app/`
+- Web app: `https://rbt4.github.io/skymapontario/app/` (visit check: `app/#visit`)
 - Latest Android APK: `https://rbt4.github.io/skymapontario/download/SkyMap-Ontario-latest.apk`
 - APK checksum: `https://rbt4.github.io/skymapontario/download/SkyMap-Ontario-latest.apk.sha256`
 - Optional support: `https://ko-fi.com/rbt4dev`
 
+Old `/app/lab/` links redirect to `/app/`.
+
 ## Product structure
 
-- `index.html`, `assets/site.css`, `assets/site.js` — lean public product page
-- `app/index.html`, `app/app.css`, `app/app.js` — canonical current weather experience
-- `app/sw.js` — offline app shell; weather itself is never served from cache
-- `android/app/src/main/java/ca/skymapontario/app/` — native bridge, restricted GeoMet relay, local store, background refresh and APK updater
-- `android/app/signing/skymap-public-release.jks` — deliberately public continuity signing key
-- `version.json` — release identity used everywhere
-- `.github/workflows/deploy-pages.yml` — one release APK and one Pages deployment
+| Path | Role |
+|---|---|
+| `index.html`, `assets/` | Lean public landing page with a live radar map |
+| `app/index.html`, `app/app.css` | The app shell |
+| `app/app.js` | Core: map, measured → nowcast → HRDPS timeline, layer modes, point blend, RainLine, evidence drawer, place search. Exposes a small read-only `window.SkyMap` API |
+| `app/forecast-intelligence-25.js` | Forecast IQ: Open-Meteo best-match, ensembles and WeatherNext 2, null-guarded |
+| `app/accuracy-engine.js` | Truth firewall, CaPA/ECCC verification, personal shadow calibration, sealed Forecast Court status |
+| `app/evidence-router.js` | Governed single-pass evidence router; never mutates model rows |
+| `app/visit.js` | Visit check, rain-area ring analysis, 1080 × 1350 PNG and GIF share |
+| `app/conditions.js` | Environment Canada alerts and nearest AQHI observation |
+| `app/native.js` | Android message-channel bridge (sharing, remembered location); inert on the web |
+| `app/sw.js` | Network-first offline shell. Weather is never served from cache |
+| `android/` | Native bridge, restricted GeoMet relay, local store, background refresh and APK updater |
+| `scripts/`, `verification/` | Release validation, engine contracts and the scheduled Ontario verification pipelines |
 
-The website, app and Android bridge are all committed as readable source. The release workflow validates that source directly, builds one matching release APK and deploys the same experience to Pages. It never rewrites its own workflow or reconstructs the product from encoded chunks.
+Script load order matters. `native.js`, `conditions.js` and `visit.js` load before the engine and `app.js`, so they are listening when the core announces `skymap:ready`, `skymap:place` and `skymap:forecast`.
 
 ## Core behaviour
 
-- Radar and forecasts load independently; one slow source cannot freeze the whole app.
-- The rain timeline moves from measured ECCC radar to the official short-range nowcast and then to hourly 2.5 km HRDPS precipitation guidance through 48 hours.
-- Source boundaries and confidence are always visible. HRDPS frames are called futurecast or model guidance, never observed radar.
-- Futurecast frames query the official 20-member, 10 km REPS ensemble for the probability of at least 1 mm and 5 mm over a three-hour window. SkyMap reports those probabilities directly and labels cross-source alignment separately; alignment is never presented as probability.
-- Android forecast memory makes small, bounded adjustments to the point-model blend after archived forecasts can be compared with nearby ECCC observations. The Canadian-first base weighting always remains dominant.
-- Direct Now, 6h, 24h and 48h controls change both the timeline and the useful map framing without hiding the current location.
-- A connected 48-hour weather path groups blended hourly guidance into tappable three-hour windows, identifies the first wet window, peak and easing time, and opens the matching HRDPS map hour. Model support is labelled separately and is never presented as probability.
-- The visit checker accepts an Ontario destination, arrival time and departure time, then evaluates only that window instead of repeating a generic daily forecast.
-- A bounded eight-direction spatial check distinguishes a broader organized rain area from isolated cells. Directional “approaching” wording is used only when an earlier surrounding layer and later destination layer support it.
-- Visit results show arrival, peak, rain-area position and confidence in large type. They can open the matching map frame directly.
-- The web app creates a 1080 × 1350 PNG designed to remain legible after messaging-app compression. It can also encode a short GIF from the official weather frames; a failed motion export falls back to the static image.
-- Android shares PNG and GIF files through its origin-scoped native message channel and restricted `FileProvider`; the browser uses Web Share when available and a file download otherwise.
-- Rain, storms, smoke, AQHI and temperature are exposed in a direct map-view rail instead of being buried in a dropdown.
-- Radar playback runs once and stops rather than looping endlessly.
-- Every selected time explains whether it is measured, extrapolated or model guidance and reports the value beneath the map centre when available.
-- The full-bleed dark map and warm forecast briefing are deliberately different surfaces: one is an instrument, the other is an explanation.
-- Laptop users can focus the map with one control and restore the forecast briefing without losing state.
-- Nearby official ECCC conditions and hourly guidance are combined with timezone-safe model guidance without presenting model agreement as a probability.
-- Place search accepts any Ontario city or town through Open-Meteo geocoding; quick locations and device location remain direct alternatives.
-- The Android app tries a restricted native ECCC GeoMet relay first and the public direct route second.
-- A failed refresh keeps the last successful weather image visible.
-- Transient GeoMet metadata failures are retried and recovered on a short bounded schedule instead of leaving the timeline disabled for the cache window.
-- Forecast cards render when the first dependable model responds and refine progressively as more guidance arrives.
-- Meaningful snapshots—now, tonight, tomorrow morning, tomorrow afternoon and the most useful weekly window—appear before the full daily table and open their corresponding map hour when available.
-- Active alerts appear on the map as a calm banner and in full in their own sheet. Expired bulletins are filtered out.
-- Air quality uses the official AQHI observation nearest the selected place, reported as a number and a plain-language health sentence.
-- Place labels are drawn above the weather layer, so a heavy radar cell can never hide which town it is over.
-- Every colour scale on the map has a legend visible in the interface at all times.
-- No type below 11px ships. The release validator fails the build if it reappears.
-- The Android app checks for a newer public APK every 12 hours, downloads it, verifies its SHA-256 and opens Android's installer when the app resumes.
-- The visible app refreshes live observations and the current radar timeline automatically while it is open, without jumping a user away from a selected future horizon.
-- The shell is network-first with a complete offline fallback, preventing an old cached interface from being mixed with a newer version receipt during an update.
-- Ko-fi support remains optional and the map remains free.
+- **One pinpoint.** Search any Ontario place, use your location, or tap the map. Everything (timeline, RainLine, visit check, alerts, AQHI) follows that point.
+- **One timeline, honest boundaries.** Measured radar, official extrapolation and HRDPS guidance are coloured and labelled separately. Guidance is never called radar.
+- **Rain, Storms, Smoke, Air, Temp.** Rain and Storms (radar plus lightning density) play the timeline. Smoke, AQHI and temperature are single official images and say so. Every layer has an on-screen legend.
+- **Seven-day RainLine.** GEM leads locally; IFS, GFS and AIFS are independent checks, not duplicate votes. Events show a first-possible time, main window, likely end, event and timing confidence, and whether the forecast shifted since the last visit.
+- **Truth firewall.** Missing precipitation values are never turned into a dry forecast.
+- **Evidence you can inspect.** The Trust drawer shows every source's state, personal verification progress and the sealed Forecast Court status. Shadow calibration never changes live weights without an explicit release.
+- **Visit check.** Pick a day and an arrival and departure time up to 48 hours out. SkyMap samples the window every 30 minutes against radar, nowcast, HRDPS, REPS (≥1 mm and ≥5 mm per 3 h) and the blend. An eight-direction ring separates an organized band from an isolated cell. "Approaching" is used only when an earlier frame supports it. Model agreement is labelled as agreement, never as probability.
+- **Sharing.** A 1080 × 1350 PNG designed to survive messaging-app compression, or a short GIF from the official frames. A failed GIF falls back to the PNG. Android shares through its origin-scoped message channel and restricted `FileProvider`. Browsers use Web Share or a download.
+- **Alerts and air.** Active Environment Canada bulletins appear as a calm map banner and in full in their own dialog. Expired bulletins are dropped. The nearest AQHI station is reported as a number and a plain health sentence.
+- **Fast first paint.** GEM and IFS load first, with adaptive hedging to GFS/AIFS. Map tiles and enrichment start after the first forecast paints.
+- **Readable.** No type below 11px ships. The release validator fails the build if it returns.
+- **Android.** Native GeoMet relay first, direct GeoMet second. Hardware back closes dialogs and drawers first. Background refresh follows the watched point. The app checks for a newer signed APK every 12 hours and verifies its SHA-256 before opening the installer.
 
-The GIF exporter uses `gifenc` 1.0.3 under the MIT License. See [`docs/THIRD_PARTY_NOTICES.md`](docs/THIRD_PARTY_NOTICES.md).
+Every change to `app/` runs `scripts/validate-release.mjs`, the visit-window tests and the four forecast-engine contract checks, and inspects the packaged APK. See [`BUILD_RECOVERY.md`](BUILD_RECOVERY.md).
+
+The GIF exporter uses `gifenc` 1.0.3 under the MIT License. See [`docs/THIRD_PARTY_NOTICES.md`](docs/THIRD_PARTY_NOTICES.md). Data sources and attribution are listed in [`app/ATTRIBUTION.md`](app/ATTRIBUTION.md).
 
 ## Android build
 

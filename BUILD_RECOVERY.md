@@ -10,13 +10,13 @@ Open **Actions → Build and deploy SkyMap Ontario → the newest run → build*
 
 | First red step | Meaning | Repair |
 |---|---|---|
-| Align and validate the readable release source | Version drift, public-key hash mismatch, mutable action tag, stale copy, duplicate IDs, syntax error or a required security/experience guarantee disappeared | Fix the directly committed source or `version.json`. Do not patch the APK. |
+| Align and validate the readable release source (also runs the visit-window tests and the four forecast-engine contract checks) | Version drift, public-key hash mismatch, mutable action tag, stale copy, duplicate IDs, syntax error or a required security/experience guarantee disappeared | Fix the directly committed source or `version.json`. Do not patch the APK. |
 | Verify every live source used by the product | A radar, forecast, air-quality, lightning or alert contract did not return usable data | Re-run once. If it fails again, inspect the named source response before changing an endpoint or layer. |
 | Verify public continuity signing key | The committed keystore bytes or certificate fingerprint changed | Stop and inspect the diff. Restoring the exact existing key preserves in-place updates; replacing it breaks them. |
 | Build Android release APK | Java/Gradle/R8 compilation failed | Download `SkyMap-Gradle-Diagnostic` and read the first compiler or R8 error. |
 | Verify release APK, signer and packaged experience | Version, public certificate fingerprint, non-debuggable state, alignment, updater, native relay or packaged app source mismatch | Fix the source or build step. Never unzip, edit and repack the APK manually. |
-| Unreadable type returned to the app/site | A font size below 11px was reintroduced | Raise it. The floor is deliberate and enforced for both `app/app.css` and `assets/site.css`. |
-| A named 14.2 guarantee is missing | The alert banner, legend, air-quality view, label pane, CSP or service worker was removed | Restore the element or function named in the error rather than deleting the assertion. |
+| Unreadable type returned to the app/site | A font size below 11px (or 0.6875rem) was reintroduced | Raise it. The floor is deliberate and enforced for both `app/app.css` and `assets/site.css`. |
+| A named product guarantee is missing | The alert banner, legend, air-quality card, layer rail, visit check, label pane, CSP, service-worker shell entry or evidence-router contract was removed | Restore the element or function named in the error rather than deleting the assertion. |
 | Upload public release artifact | The APK may already be valid | Re-run the failed job. Do not rebuild with another signing key. |
 | Configure or deploy GitHub Pages | The APK artifact may already be valid | Re-run the failed deployment. Do not rewrite app code for a temporary Pages problem. |
 

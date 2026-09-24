@@ -30,10 +30,12 @@ jobs:
       - name: Align and validate the readable release source
         run: |
           node scripts/prepare-release.mjs
-          node --check assets/site.js
-          node --check app/app.js
           node scripts/validate-release.mjs
           node scripts/check-visit-window.mjs
+          node scripts/check-forecast-contract.mjs
+          node scripts/check-evidence-router.mjs
+          node scripts/check-progressive-fast-path.mjs
+          node scripts/check-forecast-court.mjs
           grep -q "android.useAndroidX=true" gradle.properties
 
       - name: Verify every live source used by the product
@@ -45,6 +47,9 @@ jobs:
           java-version: '17'
 
       - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          # cmdline-tools 16+ no longer ships the legacy 'tools' package (the action's default).
+          packages: platform-tools
 
       - name: Install Android SDK
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools" >/dev/null
@@ -105,50 +110,42 @@ jobs:
 
           rm -rf /tmp/apk-inspect && mkdir /tmp/apk-inspect
           unzip -q "$APK" -d /tmp/apk-inspect
-          grep -q 'id="snapshot-rail"' /tmp/apk-inspect/assets/index.html
-          grep -q 'id="weather-path"' /tmp/apk-inspect/assets/index.html
-          grep -q 'id="visit-sheet"' /tmp/apk-inspect/assets/index.html
-          grep -q 'id="visit-start-time"' /tmp/apk-inspect/assets/index.html
-          grep -q 'id="visit-end-time"' /tmp/apk-inspect/assets/index.html
-          grep -q 'id="visit-share-image"' /tmp/apk-inspect/assets/index.html
-          grep -q 'id="visit-share-motion"' /tmp/apk-inspect/assets/index.html
-          grep -q 'id="location-search-input"' /tmp/apk-inspect/assets/index.html
-          grep -q 'data-map-mode="rain"' /tmp/apk-inspect/assets/index.html
-          grep -q 'id="focus-button"' /tmp/apk-inspect/assets/index.html
-          grep -q '7-DAY FORECAST' /tmp/apk-inspect/assets/index.html
-          grep -q 'id="alert-banner"' /tmp/apk-inspect/assets/index.html
-          grep -q 'id="map-legend"' /tmp/apk-inspect/assets/index.html
-          grep -q 'data-horizon="48"' /tmp/apk-inspect/assets/index.html
-          grep -q 'id="detail-ensemble-title"' /tmp/apk-inspect/assets/index.html
-          grep -q 'Content-Security-Policy' /tmp/apk-inspect/assets/index.html
-          ! grep -q 'id="zoom-in-button"' /tmp/apk-inspect/assets/index.html
-          ! grep -q 'id="zoom-out-button"' /tmp/apk-inspect/assets/index.html
-          grep -q 'renderAlerts' /tmp/apk-inspect/assets/app.js
-          grep -q 'aqhi-observations-realtime' /tmp/apk-inspect/assets/app.js
-          grep -q 'dark_only_labels' /tmp/apk-inspect/assets/app.js
-          grep -q 'Promise.allSettled' /tmp/apk-inspect/assets/app.js
-          grep -q 'NATIVE_GEOMET' /tmp/apk-inspect/assets/app.js
-          grep -q 'HRDPS.CONTINENTAL.DIAG_PR_PT1H' /tmp/apk-inspect/assets/app.js
-          grep -q 'HRDPS-WEonG_2.5km_Thunderstorm-Prob' /tmp/apk-inspect/assets/app.js
-          grep -q 'REPS.DIAG.3_PRMM.ERGE1' /tmp/apk-inspect/assets/app.js
-          grep -q 'REPS.DIAG.3_PRMM.ERGE5' /tmp/apk-inspect/assets/app.js
-          grep -q 'loadEnsembleSignal' /tmp/apk-inspect/assets/app.js
-          grep -q 'loadNativeIntelligence' /tmp/apk-inspect/assets/app.js
-          grep -q 'renderWeatherPath' /tmp/apk-inspect/assets/app.js
-          grep -q 'runVisitAnalysis' /tmp/apk-inspect/assets/app.js
-          grep -q 'analyzeVisitRainArea' /tmp/apk-inspect/assets/app.js
-          grep -q 'createVisitImage' /tmp/apk-inspect/assets/app.js
-          grep -q 'createVisitGif' /tmp/apk-inspect/assets/app.js
-          grep -q "vendor/gifenc.esm.js" /tmp/apk-inspect/assets/app.js
-          grep -q 'searchOntarioLocations' /tmp/apk-inspect/assets/app.js
-          grep -q 'geocoding-api.open-meteo.com' /tmp/apk-inspect/assets/app.js
-          grep -q 'scheduleTimelineRecovery' /tmp/apk-inspect/assets/app.js
-          grep -q 'startAutoRefresh' /tmp/apk-inspect/assets/app.js
-          grep -q 'OpenStreetMap contributors' /tmp/apk-inspect/assets/app.js
-          grep -q 'applyTimelineHorizon' /tmp/apk-inspect/assets/app.js
-          grep -q 'NativeBridge' /tmp/apk-inspect/assets/app.js
+          A=/tmp/apk-inspect/assets
+          grep -q 'Content-Security-Policy' $A/index.html
+          grep -q 'id="place-name"' $A/index.html
+          grep -q 'id="locate-button"' $A/index.html
+          grep -q 'id="time-slider"' $A/index.html
+          grep -q 'id="rainline"' $A/index.html
+          grep -q 'id="evidence-drawer"' $A/index.html
+          grep -q 'data-map-mode="rain"' $A/index.html
+          grep -q 'id="map-legend"' $A/index.html
+          grep -q 'id="alert-banner"' $A/index.html
+          grep -q 'id="air-card"' $A/index.html
+          grep -q 'id="visit-dialog"' $A/index.html
+          grep -q 'id="visit-start-time"' $A/index.html
+          grep -q 'id="visit-share-image"' $A/index.html
+          grep -q 'id="visit-share-motion"' $A/index.html
+          ! test -e $A/lab/lab.js
+          ! test -e $A/frontline.js
+          grep -q 'NATIVE_GEOMET' $A/app.js
+          grep -q 'Radar_1km_RainPrecipRate-Extrapolation' $A/app.js
+          grep -q 'HRDPS.CONTINENTAL.DIAG_PR_PT1H' $A/app.js
+          grep -q 'SkyMapEvidenceRouter' $A/app.js
+          grep -q 'dark_only_labels' $A/app.js
+          grep -q 'OpenStreetMap contributors' $A/app.js
+          grep -q 'SkyMapBack' $A/app.js
+          grep -q 'governed-single-pass' $A/evidence-router.js
+          grep -q 'truth_contract' $A/accuracy-engine.js
+          grep -q 'google_weathernext2_ensemble' $A/forecast-intelligence-25.js
+          grep -q 'weather-alerts' $A/conditions.js
+          grep -q 'aqhi-observations-realtime' $A/conditions.js
+          grep -q 'REPS.DIAG.3_PRMM.ERGE1' $A/visit.js
+          grep -q 'createVisitImage' $A/visit.js
+          grep -q 'createVisitGif' /tmp/apk-inspect/assets/visit.js
+          grep -q "vendor/gifenc.esm.js" $A/visit.js
+          grep -q 'rememberLocation' $A/native.js
           test -s /tmp/apk-inspect/assets/vendor/gifenc.esm.js
-          grep -q "${SKYMAP_VERSION}" /tmp/apk-inspect/assets/version.json
+          grep -q "${SKYMAP_VERSION}" $A/version.json
           strings /tmp/apk-inspect/classes*.dex > /tmp/classes.txt
           grep -q 'geomet-proxy' /tmp/classes.txt
           grep -q 'SkyMapNative' /tmp/classes.txt
@@ -177,6 +174,7 @@ jobs:
           touch _site/.nojekyll
           test -f _site/index.html
           test -f _site/app/app.js
+          test -f _site/app/lab/index.html
           test -f "_site/download/${SKYMAP_APK}"
           test -f _site/download/SkyMap-Ontario-latest.apk.sha256
           test ! -f _site/.build/skymap13/chunk-00

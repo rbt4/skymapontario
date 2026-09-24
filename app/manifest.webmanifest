@@ -2,16 +2,29 @@
   "id": "/skymapontario/app/",
   "name": "SkyMap Ontario",
   "short_name": "SkyMap",
-  "description": "Follow your exact Ontario location, compare radar with surface drizzle and live cloud fronts, and see what weather is approaching.",
+  "description": "Rain timing for your exact Ontario point: measured radar, official nowcast and HRDPS guidance in one timeline, seven-day RainLine, shareable visit checks, alerts and air quality.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#020810",
-  "theme_color": "#06111d",
-  "categories": ["weather", "utilities"],
+  "background_color": "#041019",
+  "theme_color": "#041019",
+  "categories": [
+    "weather",
+    "utilities"
+  ],
   "icons": [
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
   ]
 }
