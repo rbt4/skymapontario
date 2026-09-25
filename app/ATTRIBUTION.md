@@ -15,7 +15,7 @@ Forecast IQ uses different evidence by forecast horizon instead of treating ever
 - **Historical forecast verification:** archived fixed-lead forecasts are compared with ECCC hourly climate observations. Missing archive values remain missing; they are never interpreted as dry weather.
 - **Large-scale context research:** NOAA/CPC PNA, NAO, AO, ENSO/Niño 3.4 and MJO histories, together with NOAA/GLERL Great Lakes water-temperature and ice-cover histories, are collected for shadow research into whether model skill changes under different atmospheric regimes. These context variables do not directly override the live forecast.
 - **ECMWF:** forecast data is used under its applicable open-data attribution requirements.
-- **Basemap:** OpenStreetMap contributors and CARTO.
+- **Basemap:** Esri World Dark Gray Canvas (Esri, HERE, Garmin, OpenStreetMap contributors), with OpenStreetMap standard tiles as an automatic fallback. No API key is used.
 
 Forecast IQ may store bounded forecast-verification statistics locally in the browser so recent model performance can adjust influence by forecast lead time. The repository also maintains bounded, machine-generated Ontario forecast research on a separate data branch. Regime-conditioned model weights remain shadow-only until they pass an out-of-sample champion-versus-challenger gate; historical correlation alone cannot activate them.
 

@@ -190,6 +190,28 @@ async function checkModel([name, endpoint, model]) {
   console.log(`✓ ${name}: ${data.hourly.time.length} hours · ${data.timezone}`);
 }
 
+// Map tiles are part of the product: a provider that starts demanding an API key
+// serves a placeholder image instead of a map, which a status code alone can hide.
+async function checkTile(name, url, { minBytes, required = true, headers = {} }) {
+  try {
+    const response = await fetch(url, { cache: 'no-store', headers, signal: AbortSignal.timeout(timeout) });
+    const type = response.headers.get('content-type') || '';
+    const bytes = (await response.arrayBuffer()).byteLength;
+    assert(response.ok, `${name}: HTTP ${response.status}`);
+    assert(/^image\//.test(type), `${name}: returned ${type || 'no content type'} instead of an image`);
+    assert(bytes >= minBytes, `${name}: tile is only ${bytes} bytes`);
+    console.log(`✓ ${name}: ${type} · ${bytes} bytes`);
+  } catch (error) {
+    if (required) throw error;
+    console.log(`⚠ ${name} (fallback) unavailable: ${error.message}`);
+  }
+}
+
+// Ontario at zoom 6 (x=17, y=23).
+await checkTile('Esri dark basemap', 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/6/23/17', { minBytes: 1500 });
+await checkTile('Esri dark place labels', 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/6/23/17', { minBytes: 100 });
+await checkTile('OpenStreetMap basemap', 'https://tile.openstreetmap.org/6/17/23.png', { minBytes: 1500, required: false, headers: { 'User-Agent': 'SkyMapOntario-release-check (+https://github.com/rbt4/skymapontario)' } });
+
 const observed = await checkWms('Observed rain radar', 'RADAR_1KM_RRAI', 'RADARURPPRECIPR14-LINEAR');
 await checkRadarPoint(observed.time);
 await checkWms('Short-range rain nowcast', 'Radar_1km_RainPrecipRate-Extrapolation');

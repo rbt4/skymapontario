@@ -159,18 +159,19 @@
       setText('#console-basemap', 'Mapbox Dark');
       return mapbox;
     }
-    setText('#console-basemap', 'CARTO Dark');
-    return L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
-      subdomains: 'abcd',
+    // CARTO's public tiles now require an API key; Esri's dark canvas does not.
+    setText('#console-basemap', 'Esri Dark Gray');
+    return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
-      attribution: '© OpenStreetMap contributors © CARTO'
+      maxNativeZoom: 16,
+      attribution: 'Tiles © Esri — Esri, HERE, Garmin, © OpenStreetMap contributors'
     });
   }
 
   function createLabelLayer() {
-    return L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
-      subdomains: 'abcd',
+    return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
+      maxNativeZoom: 16,
       pane: 'label-pane',
       opacity: .94
     });

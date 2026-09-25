@@ -47,7 +47,9 @@ assert(app.includes(`id="version-label">${version.version}<`), 'In-app version l
 assert(site.includes('id="home-map"') && site.includes('app/vendor/leaflet.js'), 'Landing page live map is missing');
 assert((site.match(/data-weather-mode=/g) || []).length === 3, 'Landing map must expose rain, storm and cloud modes');
 assert(site.includes('id="timeline-frames"') && siteJs.includes('getCapabilitiesTimes') && siteJs.includes('showFrame'), 'Landing weather timeline is missing');
-assert(siteJs.includes('dark_nolabels') && siteJs.includes('dark_only_labels'), 'Landing basemap or label hierarchy is missing');
+assert(siteJs.includes('World_Dark_Gray_Base') && siteJs.includes('World_Dark_Gray_Reference'), 'Landing basemap or label hierarchy is missing');
+assert(!`${site}${siteJs}${app}${appJs}`.includes('basemaps.cartocdn.com'), 'CARTO tiles now require an API key and must not return');
+assert(site.includes('https://server.arcgisonline.com') && app.includes('https://server.arcgisonline.com') && app.includes('https://tile.openstreetmap.org'), 'CSP blocks the keyless basemaps');
 assert(privacy.includes('Shared visit cards') && privacy.includes('does not upload the generated file'), 'Generated-share privacy behaviour is not disclosed');
 assert(!site.includes('<iframe'), 'Landing page must not embed the full app');
 assert((site.match(/ko-fi\.com\/rbt4dev/g) || []).length >= 3, 'Ko-fi support must remain visible');
@@ -76,8 +78,9 @@ assert((app.match(/data-map-mode=/g) || []).length === 5 && ['rain', 'storm', 's
 assert(appJs.includes('Lightning_2.5km_Density') && appJs.includes('RAQDPS.Sfc_PM2.5-WildfireSmokePlume') && appJs.includes('AQHI-OBS') && appJs.includes('HRDPS.CONTINENTAL_TT'), 'Storm, smoke, air or temperature layer is missing');
 assert(appJs.includes('Single official layer · no playback'), 'Static layers may be presented as a radar loop');
 assert(app.includes('id="map-legend"') && appJs.includes('function renderLegend'), 'The in-interface legend is missing');
-assert(appJs.includes('dark_only_labels') && appJs.includes("createPane('labels')"), 'Place labels are no longer drawn above the weather');
-assert(appJs.includes('attributionControl:true') && appJs.includes('OpenStreetMap contributors') && appJs.includes('CARTO'), 'Required base-map attribution is missing');
+assert(appJs.includes('World_Dark_Gray_Reference') && appJs.includes("pane:'labels'") && appJs.includes("createPane('labels')"), 'Place labels are no longer drawn above the weather');
+assert(appJs.includes('function useBasemap') && appJs.includes('tile.openstreetmap.org'), 'Basemap fallback is missing');
+assert(appJs.includes('attributionControl:true') && appJs.includes('OpenStreetMap contributors') && appJs.includes('&copy; Esri'), 'Required base-map attribution is missing');
 assert(!/\.leaflet-control-attribution\s*\{[^}]*display:\s*none/s.test(appCss), 'Base-map attribution is hidden');
 assert(appJs.includes('NATIVE_GEOMET') && appJs.includes('function geometFetch'), 'Native GeoMet relay fallback is missing');
 assert(appJs.includes('window.SkyMapBack'), 'Android back navigation is not handled by the app');

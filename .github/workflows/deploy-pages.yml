@@ -131,7 +131,8 @@ jobs:
           grep -q 'Radar_1km_RainPrecipRate-Extrapolation' $A/app.js
           grep -q 'HRDPS.CONTINENTAL.DIAG_PR_PT1H' $A/app.js
           grep -q 'SkyMapEvidenceRouter' $A/app.js
-          grep -q 'dark_only_labels' $A/app.js
+          grep -q 'World_Dark_Gray_Reference' $A/app.js
+          ! grep -q 'basemaps.cartocdn.com' $A/app.js $A/index.html
           grep -q 'OpenStreetMap contributors' $A/app.js
           grep -q 'SkyMapBack' $A/app.js
           grep -q 'governed-single-pass' $A/evidence-router.js
