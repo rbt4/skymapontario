@@ -37,7 +37,8 @@ assert.match(lab, /performanceHistory\(\).*slice\(-8\)/s, 'adaptive loading does
 assert.match(lab, /refreshAll\(\{forceLive:true\}\)/, 'scheduled refresh can silently reuse the fresh cache');
 assert.match(lab, /state\.modelStale\.set\(model\.id,Date\.now\(\)-cached\.savedAt\)/, 'cached guidance is not visibly labelled');
 const initMap = lab.match(/function initMap\(\)[\s\S]*?(?=\n  function startMapLayers)/)?.[0] || '';
-assert.doesNotMatch(initMap, /dark_nolabels/, 'map tiles are still attached during map initialization');
-assert.match(lab, /function startMapLayers\(\)[\s\S]*dark_nolabels/, 'deferred map tiles are missing');
+assert.doesNotMatch(initMap, /useBasemap|L\.tileLayer\(/, 'map tiles are still attached during map initialization');
+assert.match(lab, /function startMapLayers\(\)[\s\S]*?useBasemap\(0\)/, 'deferred map tiles are missing');
+assert.match(lab, /function useBasemap\(index\)[\s\S]*?World_Dark_Gray|World_Dark_Gray[\s\S]*?function useBasemap\(index\)/, 'deferred keyless basemap is missing');
 
 console.log('✓ Forecast Lab 33.2 adaptive first-paint contract passed');

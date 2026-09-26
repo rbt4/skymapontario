@@ -12,6 +12,13 @@
   const SPEEDS = [1, 2, 4];
   const PRECIP_CODES = new Set([51,53,55,56,57,61,63,65,66,67,71,73,75,77,80,81,82,85,86,95,96,99]);
   const SNOW_CODES = new Set([71,73,75,77,85,86]);
+  // Keyless basemaps, in order. CARTO's public tiles began returning an
+  // "API key required" image, so SkyMap no longer depends on them. If the first
+  // provider cannot load a single tile, the next one takes over automatically.
+  const BASEMAPS = [
+    {name:'Esri Dark Gray',base:'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',labels:'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',nativeZoom:16,attribution:'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors'},
+    {name:'OpenStreetMap',base:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',labels:null,nativeZoom:19,className:'basemap-osm-dark',attribution:'&copy; OpenStreetMap contributors'}
+  ];
   // Rain and Storms play the measured → extrapolated → HRDPS timeline. The other
   // layers are single official images and never pretend to be a playable radar loop.
   const MODES = {
@@ -49,7 +56,7 @@
     models:new Map(), modelErrors:new Map(), modelStale:new Map(), evidenceReady:new Set(), enrichmentStarted:false, timezone:'America/Toronto', consensus:[], events:[], personalDecision:null, publicCourt:null, publicCourtFetchedAt:0,
     modelControllers:new Map(), mapLayersStarted:false, transport:null,
     searchTimer:null, requestId:0, metadataErrors:[], frameReading:null, liveRadarReading:null,
-    pointReadoutFrame:0, mode:'rain', staticOverlay:null, contextOverlay:null, modeToken:0
+    pointReadoutFrame:0, basemapLayers:[], mode:'rain', staticOverlay:null, contextOverlay:null, modeToken:0
   };
 
   function loadPlace() {
@@ -156,8 +163,17 @@
   function startMapLayers() {
     if(state.mapLayersStarted||!state.map)return;
     state.mapLayersStarted=true;
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:20,opacity:.98,attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}).addTo(state.map);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:20,opacity:.92,pane:'labels'}).addTo(state.map);
+    useBasemap(0);
+  }
+  function useBasemap(index) {
+    const spec=BASEMAPS[index]; if(!spec||!state.map)return;
+    state.basemapLayers.forEach(layer=>{try{state.map.removeLayer(layer)}catch(_){}}); state.basemapLayers=[];
+    let loaded=0,errors=0;
+    const base=L.tileLayer(spec.base,{maxZoom:20,maxNativeZoom:spec.nativeZoom,opacity:.98,className:spec.className||'',attribution:spec.attribution});
+    base.on('tileload',()=>{loaded++;});
+    base.on('tileerror',()=>{errors++;if(!loaded&&errors>=4&&BASEMAPS[index+1])useBasemap(index+1);});
+    state.basemapLayers.push(base.addTo(state.map));
+    if(spec.labels)state.basemapLayers.push(L.tileLayer(spec.labels,{maxZoom:20,maxNativeZoom:spec.nativeZoom,opacity:.92,pane:'labels'}).addTo(state.map));
   }
 
   function pointIcon(stateName='loading') {
