@@ -1,0 +1,5638 @@
+{
+  "schema": 1,
+  "generatedAt": "2026-09-26T16:32:02.835Z",
+  "runs": 168,
+  "pending": 1168,
+  "sources": [
+    "best_match",
+    "weathernext2",
+    "model_consensus",
+    "eccc_official"
+  ],
+  "leads": [
+    6,
+    12,
+    24,
+    48,
+    72
+  ],
+  "note": "Prospective reliability verification. ECE/Brier and observed frequency are calculated only after the forecast valid time passes. Calibration maps use beta-style shrinkage toward the original probability plus monotonic PAVA and are shadow-only.",
+  "metrics": [
+    {
+      "source": "best_match",
+      "lead": 6,
+      "bucket": "all",
+      "samples": 1304,
+      "wet": 91,
+      "brier": 0.05979363496932536,
+      "ece": 0.03700153374233128,
+      "reliabilityComponent": 0.003053955076490029,
+      "resolution": 0.006805479658484486,
+      "uncertainty": 0.06491529131694833,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 1099,
+          "wet": 40,
+          "probSum": 1165,
+          "meanProbability": 1.0600545950864422,
+          "observedFrequency": 0.036396724294813464
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 89,
+          "wet": 21,
+          "probSum": 1243,
+          "meanProbability": 13.96629213483146,
+          "observedFrequency": 0.23595505617977527
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 47,
+          "wet": 9,
+          "probSum": 1113,
+          "meanProbability": 23.680851063829788,
+          "observedFrequency": 0.19148936170212766
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 35,
+          "wet": 10,
+          "probSum": 1200,
+          "meanProbability": 34.285714285714285,
+          "observedFrequency": 0.2857142857142857
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 15,
+          "wet": 5,
+          "probSum": 671,
+          "meanProbability": 44.733333333333334,
+          "observedFrequency": 0.3333333333333333
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 10,
+          "wet": 3,
+          "probSum": 522,
+          "meanProbability": 52.2,
+          "observedFrequency": 0.3
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 6,
+          "wet": 2,
+          "probSum": 367,
+          "meanProbability": 61.166666666666664,
+          "observedFrequency": 0.3333333333333333
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 2,
+          "wet": 0,
+          "probSum": 144,
+          "meanProbability": 72,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 1,
+          "wet": 1,
+          "probSum": 84,
+          "meanProbability": 84,
+          "observedFrequency": 1
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        }
+      ]
+    },
+    {
+      "source": "best_match",
+      "lead": 6,
+      "bucket": "season:summer",
+      "samples": 536,
+      "wet": 48,
+      "brier": 0.06871305970149255,
+      "ece": 0.03257462686567164,
+      "reliabilityComponent": 0.0023859032180173568,
+      "resolution": 0.01317798018413764,
+      "uncertainty": 0.08153263533080864,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 421,
+          "wet": 15,
+          "probSum": 550,
+          "meanProbability": 1.3064133016627077,
+          "observedFrequency": 0.035629453681710214
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 44,
+          "wet": 9,
+          "probSum": 606,
+          "meanProbability": 13.772727272727273,
+          "observedFrequency": 0.20454545454545456
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 27,
+          "wet": 7,
+          "probSum": 627,
+          "meanProbability": 23.22222222222222,
+          "observedFrequency": 0.25925925925925924
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 23,
+          "wet": 9,
+          "probSum": 796,
+          "meanProbability": 34.608695652173914,
+          "observedFrequency": 0.391304347826087
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 10,
+          "wet": 3,
+          "probSum": 453,
+          "meanProbability": 45.3,
+          "observedFrequency": 0.3
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 6,
+          "wet": 3,
+          "probSum": 309,
+          "meanProbability": 51.5,
+          "observedFrequency": 0.5
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 4,
+          "wet": 1,
+          "probSum": 247,
+          "meanProbability": 61.75,
+          "observedFrequency": 0.25
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 1,
+          "wet": 1,
+          "probSum": 84,
+          "meanProbability": 84,
+          "observedFrequency": 1
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        }
+      ]
+    },
+    {
+      "source": "weathernext2",
+      "lead": 6,
+      "bucket": "all",
+      "samples": 1304,
+      "wet": 91,
+      "brier": 0.13400133536042969,
+      "ece": 0.15443259202453996,
+      "reliabilityComponent": 0.07973438563100302,
+      "resolution": 0.01002424742302541,
+      "uncertainty": 0.06491529131694833,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 809,
+          "wet": 9,
+          "probSum": 884.5399999999984,
+          "meanProbability": 1.0933745364647693,
+          "observedFrequency": 0.011124845488257108
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 85,
+          "wet": 1,
+          "probSum": 1218.8300000000006,
+          "meanProbability": 14.339176470588242,
+          "observedFrequency": 0.011764705882352941
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 48,
+          "wet": 3,
+          "probSum": 1175.0700000000002,
+          "meanProbability": 24.480625000000003,
+          "observedFrequency": 0.0625
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 45,
+          "wet": 3,
+          "probSum": 1576.6100000000004,
+          "meanProbability": 35.03577777777779,
+          "observedFrequency": 0.06666666666666667
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 43,
+          "wet": 10,
+          "probSum": 1931.340000000001,
+          "meanProbability": 44.914883720930256,
+          "observedFrequency": 0.23255813953488372
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 30,
+          "wet": 5,
+          "probSum": 1656.2900000000006,
+          "meanProbability": 55.209666666666685,
+          "observedFrequency": 0.16666666666666666
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 45,
+          "wet": 9,
+          "probSum": 2915.720000000001,
+          "meanProbability": 64.7937777777778,
+          "observedFrequency": 0.2
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 43,
+          "wet": 6,
+          "probSum": 3254.7700000000013,
+          "meanProbability": 75.69232558139538,
+          "observedFrequency": 0.13953488372093023
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 42,
+          "wet": 10,
+          "probSum": 3562.4999999999995,
+          "meanProbability": 84.82142857142856,
+          "observedFrequency": 0.23809523809523808
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 114,
+          "wet": 35,
+          "probSum": 11031.420000000002,
+          "meanProbability": 96.76684210526318,
+          "observedFrequency": 0.30701754385964913
+        }
+      ]
+    },
+    {
+      "source": "weathernext2",
+      "lead": 6,
+      "bucket": "season:summer",
+      "samples": 536,
+      "wet": 48,
+      "brier": 0.17009474175373135,
+      "ece": 0.21566679104477607,
+      "reliabilityComponent": 0.10710459866686017,
+      "resolution": 0.017502671622673296,
+      "uncertainty": 0.08153263533080864,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 275,
+          "wet": 1,
+          "probSum": 400.05,
+          "meanProbability": 1.4547272727272729,
+          "observedFrequency": 0.0036363636363636364
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 46,
+          "wet": 0,
+          "probSum": 660.98,
+          "meanProbability": 14.369130434782608,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 18,
+          "wet": 0,
+          "probSum": 453.14,
+          "meanProbability": 25.174444444444443,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 20,
+          "wet": 0,
+          "probSum": 703.1399999999999,
+          "meanProbability": 35.157,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 16,
+          "wet": 3,
+          "probSum": 709.4000000000001,
+          "meanProbability": 44.337500000000006,
+          "observedFrequency": 0.1875
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 15,
+          "wet": 3,
+          "probSum": 828.1400000000001,
+          "meanProbability": 55.20933333333334,
+          "observedFrequency": 0.2
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 24,
+          "wet": 3,
+          "probSum": 1550.0500000000002,
+          "meanProbability": 64.58541666666667,
+          "observedFrequency": 0.125
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 20,
+          "wet": 4,
+          "probSum": 1520.3600000000006,
+          "meanProbability": 76.01800000000003,
+          "observedFrequency": 0.2
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 28,
+          "wet": 9,
+          "probSum": 2370.3099999999995,
+          "meanProbability": 84.65392857142855,
+          "observedFrequency": 0.32142857142857145
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 74,
+          "wet": 25,
+          "probSum": 7164.169999999997,
+          "meanProbability": 96.81310810810807,
+          "observedFrequency": 0.33783783783783783
+        }
+      ]
+    },
+    {
+      "source": "model_consensus",
+      "lead": 6,
+      "bucket": "all",
+      "samples": 1304,
+      "wet": 91,
+      "brier": 0.08316564417177891,
+      "ece": 0.07633435582822086,
+      "reliabilityComponent": 0.026472830168453802,
+      "resolution": 0.008268964155579855,
+      "uncertainty": 0.06491529131694833,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 864,
+          "wet": 11,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0.01273148148148148
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 192,
+          "wet": 24,
+          "probSum": 3075,
+          "meanProbability": 16.015625,
+          "observedFrequency": 0.125
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 20,
+          "wet": 1,
+          "probSum": 540,
+          "meanProbability": 27,
+          "observedFrequency": 0.05
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 12,
+          "wet": 1,
+          "probSum": 432,
+          "meanProbability": 36,
+          "observedFrequency": 0.08333333333333333
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 109,
+          "wet": 26,
+          "probSum": 4687,
+          "meanProbability": 43,
+          "observedFrequency": 0.23853211009174313
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 22,
+          "wet": 5,
+          "probSum": 1188,
+          "meanProbability": 54,
+          "observedFrequency": 0.22727272727272727
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 17,
+          "wet": 4,
+          "probSum": 1060,
+          "meanProbability": 62.35294117647059,
+          "observedFrequency": 0.23529411764705882
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 2,
+          "wet": 1,
+          "probSum": 146,
+          "meanProbability": 73,
+          "observedFrequency": 0.5
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 46,
+          "wet": 11,
+          "probSum": 3726,
+          "meanProbability": 81,
+          "observedFrequency": 0.2391304347826087
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 20,
+          "wet": 7,
+          "probSum": 2000,
+          "meanProbability": 100,
+          "observedFrequency": 0.35
+        }
+      ]
+    },
+    {
+      "source": "model_consensus",
+      "lead": 6,
+      "bucket": "season:summer",
+      "samples": 536,
+      "wet": 48,
+      "brier": 0.10307033582089534,
+      "ece": 0.09460820895522389,
+      "reliabilityComponent": 0.03560347707960582,
+      "resolution": 0.014200851216384617,
+      "uncertainty": 0.08153263533080864,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 296,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 93,
+          "wet": 13,
+          "probSum": 1488,
+          "meanProbability": 16,
+          "observedFrequency": 0.13978494623655913
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 12,
+          "wet": 0,
+          "probSum": 324,
+          "meanProbability": 27,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 4,
+          "wet": 1,
+          "probSum": 146,
+          "meanProbability": 36.5,
+          "observedFrequency": 0.25
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 62,
+          "wet": 13,
+          "probSum": 2666,
+          "meanProbability": 43,
+          "observedFrequency": 0.20967741935483872
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 13,
+          "wet": 2,
+          "probSum": 702,
+          "meanProbability": 54,
+          "observedFrequency": 0.15384615384615385
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 12,
+          "wet": 4,
+          "probSum": 750,
+          "meanProbability": 62.5,
+          "observedFrequency": 0.3333333333333333
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 2,
+          "wet": 1,
+          "probSum": 146,
+          "meanProbability": 73,
+          "observedFrequency": 0.5
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 29,
+          "wet": 8,
+          "probSum": 2349,
+          "meanProbability": 81,
+          "observedFrequency": 0.27586206896551724
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 13,
+          "wet": 6,
+          "probSum": 1300,
+          "meanProbability": 100,
+          "observedFrequency": 0.46153846153846156
+        }
+      ]
+    },
+    {
+      "source": "eccc_official",
+      "lead": 6,
+      "bucket": "all",
+      "samples": 1288,
+      "wet": 91,
+      "brier": 0.10031832298136747,
+      "ece": 0.14122670807453416,
+      "reliabilityComponent": 0.04385066558050339,
+      "resolution": 0.009192786833541465,
+      "uncertainty": 0.06566044423440454,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 486,
+          "wet": 4,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0.00823045267489712
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 150,
+          "wet": 0,
+          "probSum": 1500,
+          "meanProbability": 10,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 251,
+          "wet": 21,
+          "probSum": 5020,
+          "meanProbability": 20,
+          "observedFrequency": 0.08366533864541832
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 134,
+          "wet": 4,
+          "probSum": 4020,
+          "meanProbability": 30,
+          "observedFrequency": 0.029850746268656716
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 111,
+          "wet": 22,
+          "probSum": 4440,
+          "meanProbability": 40,
+          "observedFrequency": 0.1981981981981982
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 49,
+          "wet": 7,
+          "probSum": 2940,
+          "meanProbability": 60,
+          "observedFrequency": 0.14285714285714285
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 5,
+          "wet": 0,
+          "probSum": 350,
+          "meanProbability": 70,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 99,
+          "wet": 33,
+          "probSum": 7920,
+          "meanProbability": 80,
+          "observedFrequency": 0.3333333333333333
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 3,
+          "wet": 0,
+          "probSum": 300,
+          "meanProbability": 100,
+          "observedFrequency": 0
+        }
+      ]
+    },
+    {
+      "source": "eccc_official",
+      "lead": 6,
+      "bucket": "season:summer",
+      "samples": 536,
+      "wet": 48,
+      "brier": 0.12242537313432823,
+      "ece": 0.16492537313432837,
+      "reliabilityComponent": 0.055644362428390354,
+      "resolution": 0.014751624624870634,
+      "uncertainty": 0.08153263533080864,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 173,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 56,
+          "wet": 0,
+          "probSum": 560,
+          "meanProbability": 10,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 97,
+          "wet": 7,
+          "probSum": 1940,
+          "meanProbability": 20,
+          "observedFrequency": 0.07216494845360824
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 63,
+          "wet": 3,
+          "probSum": 1890,
+          "meanProbability": 30,
+          "observedFrequency": 0.047619047619047616
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 47,
+          "wet": 10,
+          "probSum": 1880,
+          "meanProbability": 40,
+          "observedFrequency": 0.2127659574468085
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 33,
+          "wet": 5,
+          "probSum": 1980,
+          "meanProbability": 60,
+          "observedFrequency": 0.15151515151515152
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 3,
+          "wet": 0,
+          "probSum": 210,
+          "meanProbability": 70,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 61,
+          "wet": 23,
+          "probSum": 4880,
+          "meanProbability": 80,
+          "observedFrequency": 0.3770491803278688
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 3,
+          "wet": 0,
+          "probSum": 300,
+          "meanProbability": 100,
+          "observedFrequency": 0
+        }
+      ]
+    },
+    {
+      "source": "best_match",
+      "lead": 12,
+      "bucket": "all",
+      "samples": 1288,
+      "wet": 85,
+      "brier": 0.055383385093167835,
+      "ece": 0.027142857142857146,
+      "reliabilityComponent": 0.003059323101958854,
+      "resolution": 0.007992839592591545,
+      "uncertainty": 0.061638608657073414,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 1082,
+          "wet": 37,
+          "probSum": 1237,
+          "meanProbability": 1.143253234750462,
+          "observedFrequency": 0.034195933456561925
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 87,
+          "wet": 12,
+          "probSum": 1192,
+          "meanProbability": 13.701149425287356,
+          "observedFrequency": 0.13793103448275862
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 53,
+          "wet": 14,
+          "probSum": 1306,
+          "meanProbability": 24.641509433962263,
+          "observedFrequency": 0.2641509433962264
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 28,
+          "wet": 6,
+          "probSum": 954,
+          "meanProbability": 34.07142857142857,
+          "observedFrequency": 0.21428571428571427
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 22,
+          "wet": 11,
+          "probSum": 977,
+          "meanProbability": 44.40909090909091,
+          "observedFrequency": 0.5
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 10,
+          "wet": 5,
+          "probSum": 545,
+          "meanProbability": 54.5,
+          "observedFrequency": 0.5
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 4,
+          "wet": 0,
+          "probSum": 251,
+          "meanProbability": 62.75,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 1,
+          "wet": 0,
+          "probSum": 75,
+          "meanProbability": 75,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 1,
+          "wet": 0,
+          "probSum": 83,
+          "meanProbability": 83,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        }
+      ]
+    },
+    {
+      "source": "best_match",
+      "lead": 12,
+      "bucket": "season:summer",
+      "samples": 528,
+      "wet": 51,
+      "brier": 0.07731912878787878,
+      "ece": 0.04384469696969698,
+      "reliabilityComponent": 0.005211419107120614,
+      "resolution": 0.013126684523538532,
+      "uncertainty": 0.08726110537190082,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 409,
+          "wet": 20,
+          "probSum": 541,
+          "meanProbability": 1.3227383863080684,
+          "observedFrequency": 0.0488997555012225
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 43,
+          "wet": 7,
+          "probSum": 612,
+          "meanProbability": 14.232558139534884,
+          "observedFrequency": 0.16279069767441862
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 34,
+          "wet": 9,
+          "probSum": 848,
+          "meanProbability": 24.941176470588236,
+          "observedFrequency": 0.2647058823529412
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 18,
+          "wet": 3,
+          "probSum": 606,
+          "meanProbability": 33.666666666666664,
+          "observedFrequency": 0.16666666666666666
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 14,
+          "wet": 8,
+          "probSum": 620,
+          "meanProbability": 44.285714285714285,
+          "observedFrequency": 0.5714285714285714
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 7,
+          "wet": 4,
+          "probSum": 376,
+          "meanProbability": 53.714285714285715,
+          "observedFrequency": 0.5714285714285714
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 2,
+          "wet": 0,
+          "probSum": 123,
+          "meanProbability": 61.5,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 1,
+          "wet": 0,
+          "probSum": 83,
+          "meanProbability": 83,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        }
+      ]
+    },
+    {
+      "source": "weathernext2",
+      "lead": 12,
+      "bucket": "all",
+      "samples": 1288,
+      "wet": 85,
+      "brier": 0.12591572681677043,
+      "ece": 0.1549695652173913,
+      "reliabilityComponent": 0.07582207363157856,
+      "resolution": 0.011461184373135917,
+      "uncertainty": 0.061638608657073414,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 795,
+          "wet": 2,
+          "probSum": 1009.4799999999976,
+          "meanProbability": 1.2697861635220096,
+          "observedFrequency": 0.0025157232704402514
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 82,
+          "wet": 3,
+          "probSum": 1206.3500000000006,
+          "meanProbability": 14.711585365853665,
+          "observedFrequency": 0.036585365853658534
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 58,
+          "wet": 3,
+          "probSum": 1421.9500000000003,
+          "meanProbability": 24.51637931034483,
+          "observedFrequency": 0.05172413793103448
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 47,
+          "wet": 7,
+          "probSum": 1643.77,
+          "meanProbability": 34.973829787234045,
+          "observedFrequency": 0.14893617021276595
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 44,
+          "wet": 7,
+          "probSum": 1965.690000000001,
+          "meanProbability": 44.674772727272746,
+          "observedFrequency": 0.1590909090909091
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 34,
+          "wet": 9,
+          "probSum": 1846.8899999999996,
+          "meanProbability": 54.32029411764705,
+          "observedFrequency": 0.2647058823529412
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 37,
+          "wet": 4,
+          "probSum": 2382.870000000001,
+          "meanProbability": 64.4018918918919,
+          "observedFrequency": 0.10810810810810811
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 48,
+          "wet": 8,
+          "probSum": 3629.780000000001,
+          "meanProbability": 75.62041666666669,
+          "observedFrequency": 0.16666666666666666
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 43,
+          "wet": 6,
+          "probSum": 3668.75,
+          "meanProbability": 85.31976744186046,
+          "observedFrequency": 0.13953488372093023
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 100,
+          "wet": 36,
+          "probSum": 9684.55,
+          "meanProbability": 96.84549999999999,
+          "observedFrequency": 0.36
+        }
+      ]
+    },
+    {
+      "source": "weathernext2",
+      "lead": 12,
+      "bucket": "season:summer",
+      "samples": 528,
+      "wet": 51,
+      "brier": 0.16265434409090904,
+      "ece": 0.1957628787878788,
+      "reliabilityComponent": 0.09474922710112277,
+      "resolution": 0.020312337517492125,
+      "uncertainty": 0.08726110537190082,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 280,
+          "wet": 0,
+          "probSum": 462.53999999999996,
+          "meanProbability": 1.6519285714285712,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 37,
+          "wet": 0,
+          "probSum": 540.6799999999998,
+          "meanProbability": 14.612972972972969,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 26,
+          "wet": 2,
+          "probSum": 646.9,
+          "meanProbability": 24.88076923076923,
+          "observedFrequency": 0.07692307692307693
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 18,
+          "wet": 4,
+          "probSum": 629.7,
+          "meanProbability": 34.983333333333334,
+          "observedFrequency": 0.2222222222222222
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 15,
+          "wet": 2,
+          "probSum": 668.7499999999999,
+          "meanProbability": 44.58333333333333,
+          "observedFrequency": 0.13333333333333333
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 17,
+          "wet": 6,
+          "probSum": 926.5799999999999,
+          "meanProbability": 54.50470588235294,
+          "observedFrequency": 0.35294117647058826
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 22,
+          "wet": 2,
+          "probSum": 1403.1600000000003,
+          "meanProbability": 63.780000000000015,
+          "observedFrequency": 0.09090909090909091
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 25,
+          "wet": 5,
+          "probSum": 1923.4900000000002,
+          "meanProbability": 76.93960000000001,
+          "observedFrequency": 0.2
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 26,
+          "wet": 5,
+          "probSum": 2231.24,
+          "meanProbability": 85.81692307692308,
+          "observedFrequency": 0.19230769230769232
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 62,
+          "wet": 25,
+          "probSum": 6003.24,
+          "meanProbability": 96.82645161290323,
+          "observedFrequency": 0.4032258064516129
+        }
+      ]
+    },
+    {
+      "source": "model_consensus",
+      "lead": 12,
+      "bucket": "all",
+      "samples": 1288,
+      "wet": 85,
+      "brier": 0.0805158385093165,
+      "ece": 0.07622670807453416,
+      "reliabilityComponent": 0.02729821869550649,
+      "resolution": 0.008512042890862208,
+      "uncertainty": 0.061638608657073414,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 844,
+          "wet": 6,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0.0071090047393364926
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 183,
+          "wet": 26,
+          "probSum": 2931,
+          "meanProbability": 16.016393442622952,
+          "observedFrequency": 0.14207650273224043
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 21,
+          "wet": 0,
+          "probSum": 567,
+          "meanProbability": 27,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 10,
+          "wet": 1,
+          "probSum": 365,
+          "meanProbability": 36.5,
+          "observedFrequency": 0.1
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 124,
+          "wet": 23,
+          "probSum": 5332,
+          "meanProbability": 43,
+          "observedFrequency": 0.18548387096774194
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 20,
+          "wet": 3,
+          "probSum": 1083,
+          "meanProbability": 54.15,
+          "observedFrequency": 0.15
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 17,
+          "wet": 6,
+          "probSum": 1063,
+          "meanProbability": 62.529411764705884,
+          "observedFrequency": 0.35294117647058826
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 5,
+          "wet": 2,
+          "probSum": 365,
+          "meanProbability": 73,
+          "observedFrequency": 0.4
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 52,
+          "wet": 14,
+          "probSum": 4212,
+          "meanProbability": 81,
+          "observedFrequency": 0.2692307692307692
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 12,
+          "wet": 4,
+          "probSum": 1200,
+          "meanProbability": 100,
+          "observedFrequency": 0.3333333333333333
+        }
+      ]
+    },
+    {
+      "source": "model_consensus",
+      "lead": 12,
+      "bucket": "season:summer",
+      "samples": 528,
+      "wet": 51,
+      "brier": 0.11284412878787854,
+      "ece": 0.09839015151515151,
+      "reliabilityComponent": 0.03941815111317606,
+      "resolution": 0.013982971520041921,
+      "uncertainty": 0.08726110537190082,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 287,
+          "wet": 1,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0.003484320557491289
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 88,
+          "wet": 14,
+          "probSum": 1408,
+          "meanProbability": 16,
+          "observedFrequency": 0.1590909090909091
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 13,
+          "wet": 0,
+          "probSum": 351,
+          "meanProbability": 27,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 3,
+          "wet": 1,
+          "probSum": 108,
+          "meanProbability": 36,
+          "observedFrequency": 0.3333333333333333
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 66,
+          "wet": 15,
+          "probSum": 2838,
+          "meanProbability": 43,
+          "observedFrequency": 0.22727272727272727
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 11,
+          "wet": 1,
+          "probSum": 594,
+          "meanProbability": 54,
+          "observedFrequency": 0.09090909090909091
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 13,
+          "wet": 4,
+          "probSum": 815,
+          "meanProbability": 62.69230769230769,
+          "observedFrequency": 0.3076923076923077
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 2,
+          "wet": 0,
+          "probSum": 146,
+          "meanProbability": 73,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 35,
+          "wet": 12,
+          "probSum": 2835,
+          "meanProbability": 81,
+          "observedFrequency": 0.34285714285714286
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 10,
+          "wet": 3,
+          "probSum": 1000,
+          "meanProbability": 100,
+          "observedFrequency": 0.3
+        }
+      ]
+    },
+    {
+      "source": "eccc_official",
+      "lead": 12,
+      "bucket": "all",
+      "samples": 1272,
+      "wet": 85,
+      "brier": 0.10209905660377441,
+      "ece": 0.14693396226415092,
+      "reliabilityComponent": 0.04879770044851256,
+      "resolution": 0.009057109688653371,
+      "uncertainty": 0.062358465843914405,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 483,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 155,
+          "wet": 2,
+          "probSum": 1550,
+          "meanProbability": 10,
+          "observedFrequency": 0.012903225806451613
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 231,
+          "wet": 15,
+          "probSum": 4620,
+          "meanProbability": 20,
+          "observedFrequency": 0.06493506493506493
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 112,
+          "wet": 4,
+          "probSum": 3360,
+          "meanProbability": 30,
+          "observedFrequency": 0.03571428571428571
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 113,
+          "wet": 20,
+          "probSum": 4520,
+          "meanProbability": 40,
+          "observedFrequency": 0.17699115044247787
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 52,
+          "wet": 6,
+          "probSum": 3120,
+          "meanProbability": 60,
+          "observedFrequency": 0.11538461538461539
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 8,
+          "wet": 1,
+          "probSum": 560,
+          "meanProbability": 70,
+          "observedFrequency": 0.125
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 117,
+          "wet": 37,
+          "probSum": 9360,
+          "meanProbability": 80,
+          "observedFrequency": 0.3162393162393162
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 1,
+          "wet": 0,
+          "probSum": 100,
+          "meanProbability": 100,
+          "observedFrequency": 0
+        }
+      ]
+    },
+    {
+      "source": "eccc_official",
+      "lead": 12,
+      "bucket": "season:summer",
+      "samples": 528,
+      "wet": 51,
+      "brier": 0.12856060606060601,
+      "ece": 0.15909090909090912,
+      "reliabilityComponent": 0.055094034800159904,
+      "resolution": 0.013794534111454664,
+      "uncertainty": 0.08726110537190082,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 171,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 58,
+          "wet": 2,
+          "probSum": 580,
+          "meanProbability": 10,
+          "observedFrequency": 0.034482758620689655
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 89,
+          "wet": 8,
+          "probSum": 1780,
+          "meanProbability": 20,
+          "observedFrequency": 0.0898876404494382
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 59,
+          "wet": 1,
+          "probSum": 1770,
+          "meanProbability": 30,
+          "observedFrequency": 0.01694915254237288
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 51,
+          "wet": 13,
+          "probSum": 2040,
+          "meanProbability": 40,
+          "observedFrequency": 0.2549019607843137
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 33,
+          "wet": 6,
+          "probSum": 1980,
+          "meanProbability": 60,
+          "observedFrequency": 0.18181818181818182
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 3,
+          "wet": 0,
+          "probSum": 210,
+          "meanProbability": 70,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 63,
+          "wet": 21,
+          "probSum": 5040,
+          "meanProbability": 80,
+          "observedFrequency": 0.3333333333333333
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 1,
+          "wet": 0,
+          "probSum": 100,
+          "meanProbability": 100,
+          "observedFrequency": 0
+        }
+      ]
+    },
+    {
+      "source": "best_match",
+      "lead": 24,
+      "bucket": "all",
+      "samples": 1280,
+      "wet": 98,
+      "brier": 0.06175507812500012,
+      "ece": 0.0285078125,
+      "reliabilityComponent": 0.0019386446878814087,
+      "resolution": 0.00993938927116038,
+      "uncertainty": 0.07070068359375001,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 1066,
+          "wet": 37,
+          "probSum": 1380,
+          "meanProbability": 1.2945590994371483,
+          "observedFrequency": 0.03470919324577861
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 94,
+          "wet": 22,
+          "probSum": 1306,
+          "meanProbability": 13.893617021276595,
+          "observedFrequency": 0.23404255319148937
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 56,
+          "wet": 15,
+          "probSum": 1355,
+          "meanProbability": 24.196428571428573,
+          "observedFrequency": 0.26785714285714285
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 34,
+          "wet": 11,
+          "probSum": 1165,
+          "meanProbability": 34.26470588235294,
+          "observedFrequency": 0.3235294117647059
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 17,
+          "wet": 7,
+          "probSum": 738,
+          "meanProbability": 43.411764705882355,
+          "observedFrequency": 0.4117647058823529
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 8,
+          "wet": 4,
+          "probSum": 434,
+          "meanProbability": 54.25,
+          "observedFrequency": 0.5
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 3,
+          "wet": 2,
+          "probSum": 192,
+          "meanProbability": 64,
+          "observedFrequency": 0.6666666666666666
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 2,
+          "wet": 0,
+          "probSum": 145,
+          "meanProbability": 72.5,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        }
+      ]
+    },
+    {
+      "source": "best_match",
+      "lead": 24,
+      "bucket": "season:summer",
+      "samples": 520,
+      "wet": 55,
+      "brier": 0.0807613461538461,
+      "ece": 0.040865384615384616,
+      "reliabilityComponent": 0.003005231331533963,
+      "resolution": 0.016245277640231367,
+      "uncertainty": 0.09458210059171598,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 396,
+          "wet": 15,
+          "probSum": 620,
+          "meanProbability": 1.5656565656565657,
+          "observedFrequency": 0.03787878787878788
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 49,
+          "wet": 12,
+          "probSum": 668,
+          "meanProbability": 13.63265306122449,
+          "observedFrequency": 0.24489795918367346
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 38,
+          "wet": 14,
+          "probSum": 931,
+          "meanProbability": 24.5,
+          "observedFrequency": 0.3684210526315789
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 20,
+          "wet": 6,
+          "probSum": 680,
+          "meanProbability": 34,
+          "observedFrequency": 0.3
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 10,
+          "wet": 5,
+          "probSum": 432,
+          "meanProbability": 43.2,
+          "observedFrequency": 0.5
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 5,
+          "wet": 2,
+          "probSum": 272,
+          "meanProbability": 54.4,
+          "observedFrequency": 0.4
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 2,
+          "wet": 1,
+          "probSum": 124,
+          "meanProbability": 62,
+          "observedFrequency": 0.5
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        }
+      ]
+    },
+    {
+      "source": "weathernext2",
+      "lead": 24,
+      "bucket": "all",
+      "samples": 1280,
+      "wet": 98,
+      "brier": 0.11934190303125018,
+      "ece": 0.13706640625,
+      "reliabilityComponent": 0.06106747308336951,
+      "resolution": 0.012749870681620376,
+      "uncertainty": 0.07070068359375001,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 784,
+          "wet": 8,
+          "probSum": 1061.0899999999972,
+          "meanProbability": 1.353431122448976,
+          "observedFrequency": 0.01020408163265306
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 90,
+          "wet": 4,
+          "probSum": 1272.010000000001,
+          "meanProbability": 14.133444444444454,
+          "observedFrequency": 0.044444444444444446
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 71,
+          "wet": 5,
+          "probSum": 1714.1700000000008,
+          "meanProbability": 24.14323943661973,
+          "observedFrequency": 0.07042253521126761
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 39,
+          "wet": 2,
+          "probSum": 1389.0799999999997,
+          "meanProbability": 35.61743589743589,
+          "observedFrequency": 0.05128205128205128
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 43,
+          "wet": 5,
+          "probSum": 1906.3200000000004,
+          "meanProbability": 44.33302325581396,
+          "observedFrequency": 0.11627906976744186
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 52,
+          "wet": 14,
+          "probSum": 2815.6800000000003,
+          "meanProbability": 54.14769230769231,
+          "observedFrequency": 0.2692307692307692
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 23,
+          "wet": 6,
+          "probSum": 1484.4000000000003,
+          "meanProbability": 64.53913043478262,
+          "observedFrequency": 0.2608695652173913
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 45,
+          "wet": 10,
+          "probSum": 3392.270000000001,
+          "meanProbability": 75.3837777777778,
+          "observedFrequency": 0.2222222222222222
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 47,
+          "wet": 12,
+          "probSum": 4017.18,
+          "meanProbability": 85.47191489361701,
+          "observedFrequency": 0.2553191489361702
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 86,
+          "wet": 32,
+          "probSum": 8292.299999999997,
+          "meanProbability": 96.42209302325578,
+          "observedFrequency": 0.37209302325581395
+        }
+      ]
+    },
+    {
+      "source": "weathernext2",
+      "lead": 24,
+      "bucket": "season:summer",
+      "samples": 520,
+      "wet": 55,
+      "brier": 0.1571193374038461,
+      "ece": 0.19378903846153844,
+      "reliabilityComponent": 0.0869314244905156,
+      "resolution": 0.024206994928148772,
+      "uncertainty": 0.09458210059171598,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 260,
+          "wet": 1,
+          "probSum": 470.44999999999993,
+          "meanProbability": 1.8094230769230766,
+          "observedFrequency": 0.0038461538461538464
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 52,
+          "wet": 1,
+          "probSum": 737.5799999999999,
+          "meanProbability": 14.184230769230767,
+          "observedFrequency": 0.019230769230769232
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 28,
+          "wet": 3,
+          "probSum": 700.0400000000001,
+          "meanProbability": 25.001428571428573,
+          "observedFrequency": 0.10714285714285714
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 11,
+          "wet": 0,
+          "probSum": 390.64,
+          "meanProbability": 35.51272727272727,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 16,
+          "wet": 0,
+          "probSum": 693.79,
+          "meanProbability": 43.361875,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 20,
+          "wet": 4,
+          "probSum": 1078.1499999999999,
+          "meanProbability": 53.90749999999999,
+          "observedFrequency": 0.2
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 14,
+          "wet": 3,
+          "probSum": 909.3900000000001,
+          "meanProbability": 64.95642857142857,
+          "observedFrequency": 0.21428571428571427
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 26,
+          "wet": 10,
+          "probSum": 1960.9699999999998,
+          "meanProbability": 75.42192307692306,
+          "observedFrequency": 0.38461538461538464
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 30,
+          "wet": 6,
+          "probSum": 2560.94,
+          "meanProbability": 85.36466666666666,
+          "observedFrequency": 0.2
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 63,
+          "wet": 27,
+          "probSum": 6075.08,
+          "meanProbability": 96.42984126984126,
+          "observedFrequency": 0.42857142857142855
+        }
+      ]
+    },
+    {
+      "source": "model_consensus",
+      "lead": 24,
+      "bucket": "all",
+      "samples": 1280,
+      "wet": 98,
+      "brier": 0.08874468749999971,
+      "ece": 0.0775625,
+      "reliabilityComponent": 0.027371854558495733,
+      "resolution": 0.009357452214745736,
+      "uncertainty": 0.07070068359375001,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 821,
+          "wet": 10,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0.012180267965895249
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 171,
+          "wet": 23,
+          "probSum": 2736,
+          "meanProbability": 16,
+          "observedFrequency": 0.13450292397660818
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 34,
+          "wet": 2,
+          "probSum": 918,
+          "meanProbability": 27,
+          "observedFrequency": 0.058823529411764705
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 10,
+          "wet": 2,
+          "probSum": 359,
+          "meanProbability": 35.9,
+          "observedFrequency": 0.2
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 139,
+          "wet": 37,
+          "probSum": 5977,
+          "meanProbability": 43,
+          "observedFrequency": 0.26618705035971224
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 24,
+          "wet": 5,
+          "probSum": 1296,
+          "meanProbability": 54,
+          "observedFrequency": 0.20833333333333334
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 19,
+          "wet": 5,
+          "probSum": 1178,
+          "meanProbability": 62,
+          "observedFrequency": 0.2631578947368421
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 3,
+          "wet": 1,
+          "probSum": 219,
+          "meanProbability": 73,
+          "observedFrequency": 0.3333333333333333
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 45,
+          "wet": 8,
+          "probSum": 3645,
+          "meanProbability": 81,
+          "observedFrequency": 0.17777777777777778
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 14,
+          "wet": 5,
+          "probSum": 1400,
+          "meanProbability": 100,
+          "observedFrequency": 0.35714285714285715
+        }
+      ]
+    },
+    {
+      "source": "model_consensus",
+      "lead": 24,
+      "bucket": "season:summer",
+      "samples": 520,
+      "wet": 55,
+      "brier": 0.10666096153846126,
+      "ece": 0.08482692307692308,
+      "reliabilityComponent": 0.02981315223479986,
+      "resolution": 0.017828675903438916,
+      "uncertainty": 0.09458210059171598,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 272,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 84,
+          "wet": 11,
+          "probSum": 1344,
+          "meanProbability": 16,
+          "observedFrequency": 0.13095238095238096
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 19,
+          "wet": 1,
+          "probSum": 513,
+          "meanProbability": 27,
+          "observedFrequency": 0.05263157894736842
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 5,
+          "wet": 2,
+          "probSum": 181,
+          "meanProbability": 36.2,
+          "observedFrequency": 0.4
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 82,
+          "wet": 25,
+          "probSum": 3526,
+          "meanProbability": 43,
+          "observedFrequency": 0.3048780487804878
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 14,
+          "wet": 3,
+          "probSum": 756,
+          "meanProbability": 54,
+          "observedFrequency": 0.21428571428571427
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 11,
+          "wet": 2,
+          "probSum": 682,
+          "meanProbability": 62,
+          "observedFrequency": 0.18181818181818182
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 1,
+          "wet": 1,
+          "probSum": 73,
+          "meanProbability": 73,
+          "observedFrequency": 1
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 24,
+          "wet": 7,
+          "probSum": 1944,
+          "meanProbability": 81,
+          "observedFrequency": 0.2916666666666667
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 8,
+          "wet": 3,
+          "probSum": 800,
+          "meanProbability": 100,
+          "observedFrequency": 0.375
+        }
+      ]
+    },
+    {
+      "source": "eccc_official",
+      "lead": 24,
+      "bucket": "all",
+      "samples": 1256,
+      "wet": 97,
+      "brier": 0.10127388535031952,
+      "ece": 0.13678343949044586,
+      "reliabilityComponent": 0.03996996368745172,
+      "resolution": 0.009961013020081838,
+      "uncertainty": 0.07126493468294859,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 449,
+          "wet": 1,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0.0022271714922048997
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 181,
+          "wet": 2,
+          "probSum": 1810,
+          "meanProbability": 10,
+          "observedFrequency": 0.011049723756906077
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 240,
+          "wet": 19,
+          "probSum": 4800,
+          "meanProbability": 20,
+          "observedFrequency": 0.07916666666666666
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 69,
+          "wet": 3,
+          "probSum": 2070,
+          "meanProbability": 30,
+          "observedFrequency": 0.043478260869565216
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 149,
+          "wet": 23,
+          "probSum": 5960,
+          "meanProbability": 40,
+          "observedFrequency": 0.15436241610738255
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 68,
+          "wet": 17,
+          "probSum": 4080,
+          "meanProbability": 60,
+          "observedFrequency": 0.25
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 6,
+          "wet": 3,
+          "probSum": 420,
+          "meanProbability": 70,
+          "observedFrequency": 0.5
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 93,
+          "wet": 29,
+          "probSum": 7440,
+          "meanProbability": 80,
+          "observedFrequency": 0.3118279569892473
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 1,
+          "wet": 0,
+          "probSum": 100,
+          "meanProbability": 100,
+          "observedFrequency": 0
+        }
+      ]
+    },
+    {
+      "source": "eccc_official",
+      "lead": 24,
+      "bucket": "season:summer",
+      "samples": 520,
+      "wet": 55,
+      "brier": 0.12244230769230745,
+      "ece": 0.15134615384615385,
+      "reliabilityComponent": 0.04283649872782348,
+      "resolution": 0.014976291627231766,
+      "uncertainty": 0.09458210059171598,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 165,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 60,
+          "wet": 1,
+          "probSum": 600,
+          "meanProbability": 10,
+          "observedFrequency": 0.016666666666666666
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 88,
+          "wet": 5,
+          "probSum": 1760,
+          "meanProbability": 20,
+          "observedFrequency": 0.056818181818181816
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 34,
+          "wet": 3,
+          "probSum": 1020,
+          "meanProbability": 30,
+          "observedFrequency": 0.08823529411764706
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 69,
+          "wet": 14,
+          "probSum": 2760,
+          "meanProbability": 40,
+          "observedFrequency": 0.2028985507246377
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 52,
+          "wet": 13,
+          "probSum": 3120,
+          "meanProbability": 60,
+          "observedFrequency": 0.25
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 5,
+          "wet": 2,
+          "probSum": 350,
+          "meanProbability": 70,
+          "observedFrequency": 0.4
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 47,
+          "wet": 17,
+          "probSum": 3760,
+          "meanProbability": 80,
+          "observedFrequency": 0.3617021276595745
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        }
+      ]
+    },
+    {
+      "source": "best_match",
+      "lead": 48,
+      "bucket": "all",
+      "samples": 1248,
+      "wet": 82,
+      "brier": 0.07311418269230789,
+      "ece": 0.05862980769230769,
+      "reliabilityComponent": 0.01841383889889002,
+      "resolution": 0.006146882694844732,
+      "uncertainty": 0.061387964332675876,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 895,
+          "wet": 19,
+          "probSum": 1196,
+          "meanProbability": 1.336312849162011,
+          "observedFrequency": 0.021229050279329607
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 108,
+          "wet": 14,
+          "probSum": 1497,
+          "meanProbability": 13.86111111111111,
+          "observedFrequency": 0.12962962962962962
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 64,
+          "wet": 7,
+          "probSum": 1543,
+          "meanProbability": 24.109375,
+          "observedFrequency": 0.109375
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 42,
+          "wet": 9,
+          "probSum": 1420,
+          "meanProbability": 33.80952380952381,
+          "observedFrequency": 0.21428571428571427
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 38,
+          "wet": 9,
+          "probSum": 1693,
+          "meanProbability": 44.55263157894737,
+          "observedFrequency": 0.23684210526315788
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 38,
+          "wet": 7,
+          "probSum": 2059,
+          "meanProbability": 54.18421052631579,
+          "observedFrequency": 0.18421052631578946
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 20,
+          "wet": 5,
+          "probSum": 1286,
+          "meanProbability": 64.3,
+          "observedFrequency": 0.25
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 25,
+          "wet": 6,
+          "probSum": 1853,
+          "meanProbability": 74.12,
+          "observedFrequency": 0.24
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 14,
+          "wet": 5,
+          "probSum": 1183,
+          "meanProbability": 84.5,
+          "observedFrequency": 0.35714285714285715
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 4,
+          "wet": 1,
+          "probSum": 379,
+          "meanProbability": 94.75,
+          "observedFrequency": 0.25
+        }
+      ]
+    },
+    {
+      "source": "best_match",
+      "lead": 48,
+      "bucket": "season:summer",
+      "samples": 488,
+      "wet": 47,
+      "brier": 0.09452418032786887,
+      "ece": 0.07368852459016394,
+      "reliabilityComponent": 0.019810527957906283,
+      "resolution": 0.011598007362850922,
+      "uncertainty": 0.0870355751142166,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 301,
+          "wet": 8,
+          "probSum": 479,
+          "meanProbability": 1.5913621262458473,
+          "observedFrequency": 0.026578073089700997
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 53,
+          "wet": 6,
+          "probSum": 707,
+          "meanProbability": 13.339622641509434,
+          "observedFrequency": 0.11320754716981132
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 28,
+          "wet": 3,
+          "probSum": 684,
+          "meanProbability": 24.428571428571427,
+          "observedFrequency": 0.10714285714285714
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 21,
+          "wet": 5,
+          "probSum": 724,
+          "meanProbability": 34.476190476190474,
+          "observedFrequency": 0.23809523809523808
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 24,
+          "wet": 7,
+          "probSum": 1077,
+          "meanProbability": 44.875,
+          "observedFrequency": 0.2916666666666667
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 26,
+          "wet": 7,
+          "probSum": 1409,
+          "meanProbability": 54.19230769230769,
+          "observedFrequency": 0.2692307692307692
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 12,
+          "wet": 2,
+          "probSum": 777,
+          "meanProbability": 64.75,
+          "observedFrequency": 0.16666666666666666
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 13,
+          "wet": 5,
+          "probSum": 955,
+          "meanProbability": 73.46153846153847,
+          "observedFrequency": 0.38461538461538464
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 10,
+          "wet": 4,
+          "probSum": 842,
+          "meanProbability": 84.2,
+          "observedFrequency": 0.4
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        }
+      ]
+    },
+    {
+      "source": "weathernext2",
+      "lead": 48,
+      "bucket": "all",
+      "samples": 1248,
+      "wet": 82,
+      "brier": 0.11639167600961556,
+      "ece": 0.1412323717948718,
+      "reliabilityComponent": 0.06289083190049191,
+      "resolution": 0.00866282219272525,
+      "uncertainty": 0.061387964332675876,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 730,
+          "wet": 4,
+          "probSum": 1050.239999999998,
+          "meanProbability": 1.4386849315068466,
+          "observedFrequency": 0.005479452054794521
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 120,
+          "wet": 6,
+          "probSum": 1707.9300000000012,
+          "meanProbability": 14.23275000000001,
+          "observedFrequency": 0.05
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 76,
+          "wet": 8,
+          "probSum": 1898.5200000000011,
+          "meanProbability": 24.98052631578949,
+          "observedFrequency": 0.10526315789473684
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 56,
+          "wet": 5,
+          "probSum": 1989.0800000000004,
+          "meanProbability": 35.51928571428572,
+          "observedFrequency": 0.08928571428571429
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 44,
+          "wet": 5,
+          "probSum": 1954.7800000000013,
+          "meanProbability": 44.42681818181821,
+          "observedFrequency": 0.11363636363636363
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 41,
+          "wet": 11,
+          "probSum": 2253.1700000000005,
+          "meanProbability": 54.95536585365855,
+          "observedFrequency": 0.2682926829268293
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 43,
+          "wet": 8,
+          "probSum": 2818.8000000000006,
+          "meanProbability": 65.55348837209304,
+          "observedFrequency": 0.18604651162790697
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 31,
+          "wet": 5,
+          "probSum": 2321.9300000000003,
+          "meanProbability": 74.90096774193549,
+          "observedFrequency": 0.16129032258064516
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 43,
+          "wet": 9,
+          "probSum": 3684.37,
+          "meanProbability": 85.68302325581395,
+          "observedFrequency": 0.20930232558139536
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 64,
+          "wet": 21,
+          "probSum": 6146.98,
+          "meanProbability": 96.0465625,
+          "observedFrequency": 0.328125
+        }
+      ]
+    },
+    {
+      "source": "weathernext2",
+      "lead": 48,
+      "bucket": "season:summer",
+      "samples": 488,
+      "wet": 47,
+      "brier": 0.1542323585655737,
+      "ece": 0.19090286885245905,
+      "reliabilityComponent": 0.08288628236318174,
+      "resolution": 0.016553915061647884,
+      "uncertainty": 0.0870355751142166,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 226,
+          "wet": 1,
+          "probSum": 423.5999999999999,
+          "meanProbability": 1.8743362831858403,
+          "observedFrequency": 0.004424778761061947
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 59,
+          "wet": 4,
+          "probSum": 831.3000000000003,
+          "meanProbability": 14.08983050847458,
+          "observedFrequency": 0.06779661016949153
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 28,
+          "wet": 2,
+          "probSum": 693.77,
+          "meanProbability": 24.7775,
+          "observedFrequency": 0.07142857142857142
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 24,
+          "wet": 0,
+          "probSum": 875,
+          "meanProbability": 36.458333333333336,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 22,
+          "wet": 3,
+          "probSum": 982.8500000000001,
+          "meanProbability": 44.675000000000004,
+          "observedFrequency": 0.13636363636363635
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 19,
+          "wet": 4,
+          "probSum": 1029.71,
+          "meanProbability": 54.195263157894736,
+          "observedFrequency": 0.21052631578947367
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 25,
+          "wet": 4,
+          "probSum": 1646.9100000000003,
+          "meanProbability": 65.87640000000002,
+          "observedFrequency": 0.16
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 15,
+          "wet": 5,
+          "probSum": 1126.6,
+          "meanProbability": 75.10666666666665,
+          "observedFrequency": 0.3333333333333333
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 31,
+          "wet": 8,
+          "probSum": 2670.31,
+          "meanProbability": 86.13903225806452,
+          "observedFrequency": 0.25806451612903225
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 39,
+          "wet": 16,
+          "probSum": 3736.010000000001,
+          "meanProbability": 95.79512820512824,
+          "observedFrequency": 0.41025641025641024
+        }
+      ]
+    },
+    {
+      "source": "model_consensus",
+      "lead": 48,
+      "bucket": "all",
+      "samples": 1248,
+      "wet": 82,
+      "brier": 0.10962660256410246,
+      "ece": 0.11894230769230771,
+      "reliabilityComponent": 0.053820832318936765,
+      "resolution": 0.005629952653936203,
+      "uncertainty": 0.061387964332675876,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 786,
+          "wet": 12,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0.015267175572519083
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 147,
+          "wet": 19,
+          "probSum": 2370,
+          "meanProbability": 16.122448979591837,
+          "observedFrequency": 0.1292517006802721
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 36,
+          "wet": 0,
+          "probSum": 972,
+          "meanProbability": 27,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 42,
+          "wet": 5,
+          "probSum": 1506,
+          "meanProbability": 35.857142857142854,
+          "observedFrequency": 0.11904761904761904
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 68,
+          "wet": 10,
+          "probSum": 2936,
+          "meanProbability": 43.1764705882353,
+          "observedFrequency": 0.14705882352941177
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 29,
+          "wet": 6,
+          "probSum": 1569,
+          "meanProbability": 54.10344827586207,
+          "observedFrequency": 0.20689655172413793
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 44,
+          "wet": 10,
+          "probSum": 2734,
+          "meanProbability": 62.13636363636363,
+          "observedFrequency": 0.22727272727272727
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 12,
+          "wet": 3,
+          "probSum": 876,
+          "meanProbability": 73,
+          "observedFrequency": 0.25
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 38,
+          "wet": 8,
+          "probSum": 3081,
+          "meanProbability": 81.07894736842105,
+          "observedFrequency": 0.21052631578947367
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 46,
+          "wet": 9,
+          "probSum": 4600,
+          "meanProbability": 100,
+          "observedFrequency": 0.1956521739130435
+        }
+      ]
+    },
+    {
+      "source": "model_consensus",
+      "lead": 48,
+      "bucket": "season:summer",
+      "samples": 488,
+      "wet": 47,
+      "brier": 0.16249323770491786,
+      "ece": 0.16674180327868854,
+      "reliabilityComponent": 0.08455104694367213,
+      "resolution": 0.009263956547169949,
+      "uncertainty": 0.0870355751142166,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 241,
+          "wet": 3,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0.012448132780082987
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 69,
+          "wet": 11,
+          "probSum": 1119,
+          "meanProbability": 16.217391304347824,
+          "observedFrequency": 0.15942028985507245
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 15,
+          "wet": 0,
+          "probSum": 405,
+          "meanProbability": 27,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 20,
+          "wet": 2,
+          "probSum": 721,
+          "meanProbability": 36.05,
+          "observedFrequency": 0.1
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 28,
+          "wet": 4,
+          "probSum": 1213,
+          "meanProbability": 43.32142857142857,
+          "observedFrequency": 0.14285714285714285
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 19,
+          "wet": 4,
+          "probSum": 1026,
+          "meanProbability": 54,
+          "observedFrequency": 0.21052631578947367
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 30,
+          "wet": 8,
+          "probSum": 1860,
+          "meanProbability": 62,
+          "observedFrequency": 0.26666666666666666
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 8,
+          "wet": 2,
+          "probSum": 584,
+          "meanProbability": 73,
+          "observedFrequency": 0.25
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 26,
+          "wet": 7,
+          "probSum": 2109,
+          "meanProbability": 81.11538461538461,
+          "observedFrequency": 0.2692307692307692
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 32,
+          "wet": 6,
+          "probSum": 3200,
+          "meanProbability": 100,
+          "observedFrequency": 0.1875
+        }
+      ]
+    },
+    {
+      "source": "best_match",
+      "lead": 72,
+      "bucket": "all",
+      "samples": 1216,
+      "wet": 93,
+      "brier": 0.06870863486842137,
+      "ece": 0.03821546052631579,
+      "reliabilityComponent": 0.009035660372719027,
+      "resolution": 0.01152374998497934,
+      "uncertainty": 0.07063103250519391,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 848,
+          "wet": 17,
+          "probSum": 1512,
+          "meanProbability": 1.7830188679245282,
+          "observedFrequency": 0.020047169811320754
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 132,
+          "wet": 13,
+          "probSum": 1818,
+          "meanProbability": 13.772727272727273,
+          "observedFrequency": 0.09848484848484848
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 54,
+          "wet": 10,
+          "probSum": 1303,
+          "meanProbability": 24.12962962962963,
+          "observedFrequency": 0.18518518518518517
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 59,
+          "wet": 18,
+          "probSum": 2021,
+          "meanProbability": 34.25423728813559,
+          "observedFrequency": 0.3050847457627119
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 49,
+          "wet": 13,
+          "probSum": 2185,
+          "meanProbability": 44.59183673469388,
+          "observedFrequency": 0.2653061224489796
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 37,
+          "wet": 8,
+          "probSum": 1984,
+          "meanProbability": 53.62162162162162,
+          "observedFrequency": 0.21621621621621623
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 15,
+          "wet": 3,
+          "probSum": 950,
+          "meanProbability": 63.333333333333336,
+          "observedFrequency": 0.2
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 17,
+          "wet": 7,
+          "probSum": 1264,
+          "meanProbability": 74.3529411764706,
+          "observedFrequency": 0.4117647058823529
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 3,
+          "wet": 3,
+          "probSum": 253,
+          "meanProbability": 84.33333333333333,
+          "observedFrequency": 1
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 2,
+          "wet": 1,
+          "probSum": 187,
+          "meanProbability": 93.5,
+          "observedFrequency": 0.5
+        }
+      ]
+    },
+    {
+      "source": "best_match",
+      "lead": 72,
+      "bucket": "season:summer",
+      "samples": 464,
+      "wet": 50,
+      "brier": 0.08701271551724143,
+      "ece": 0.032737068965517244,
+      "reliabilityComponent": 0.006680328467636544,
+      "resolution": 0.017168450033827692,
+      "uncertainty": 0.09614670035671818,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 300,
+          "wet": 7,
+          "probSum": 570,
+          "meanProbability": 1.9,
+          "observedFrequency": 0.023333333333333334
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 49,
+          "wet": 7,
+          "probSum": 677,
+          "meanProbability": 13.816326530612244,
+          "observedFrequency": 0.14285714285714285
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 24,
+          "wet": 6,
+          "probSum": 595,
+          "meanProbability": 24.791666666666668,
+          "observedFrequency": 0.25
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 33,
+          "wet": 12,
+          "probSum": 1141,
+          "meanProbability": 34.57575757575758,
+          "observedFrequency": 0.36363636363636365
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 23,
+          "wet": 6,
+          "probSum": 1029,
+          "meanProbability": 44.73913043478261,
+          "observedFrequency": 0.2608695652173913
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 21,
+          "wet": 5,
+          "probSum": 1115,
+          "meanProbability": 53.095238095238095,
+          "observedFrequency": 0.23809523809523808
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 7,
+          "wet": 3,
+          "probSum": 443,
+          "meanProbability": 63.285714285714285,
+          "observedFrequency": 0.42857142857142855
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 7,
+          "wet": 4,
+          "probSum": 515,
+          "meanProbability": 73.57142857142857,
+          "observedFrequency": 0.5714285714285714
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        }
+      ]
+    },
+    {
+      "source": "weathernext2",
+      "lead": 72,
+      "bucket": "all",
+      "samples": 1216,
+      "wet": 93,
+      "brier": 0.10706576157072388,
+      "ece": 0.12532985197368426,
+      "reliabilityComponent": 0.04734838794971345,
+      "resolution": 0.011371774761841084,
+      "uncertainty": 0.07063103250519391,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 689,
+          "wet": 6,
+          "probSum": 1308.1800000000003,
+          "meanProbability": 1.8986647314949205,
+          "observedFrequency": 0.008708272859216255
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 121,
+          "wet": 10,
+          "probSum": 1729.8700000000017,
+          "meanProbability": 14.29644628099175,
+          "observedFrequency": 0.08264462809917356
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 95,
+          "wet": 12,
+          "probSum": 2342.3100000000013,
+          "meanProbability": 24.655894736842118,
+          "observedFrequency": 0.12631578947368421
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 63,
+          "wet": 7,
+          "probSum": 2171.8599999999997,
+          "meanProbability": 34.47396825396825,
+          "observedFrequency": 0.1111111111111111
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 42,
+          "wet": 6,
+          "probSum": 1840.7500000000016,
+          "meanProbability": 43.82738095238099,
+          "observedFrequency": 0.14285714285714285
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 48,
+          "wet": 7,
+          "probSum": 2628.1800000000007,
+          "meanProbability": 54.75375000000002,
+          "observedFrequency": 0.14583333333333334
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 41,
+          "wet": 5,
+          "probSum": 2689.150000000001,
+          "meanProbability": 65.58902439024392,
+          "observedFrequency": 0.12195121951219512
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 48,
+          "wet": 10,
+          "probSum": 3561.0000000000005,
+          "meanProbability": 74.18750000000001,
+          "observedFrequency": 0.20833333333333334
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 29,
+          "wet": 11,
+          "probSum": 2460.95,
+          "meanProbability": 84.8603448275862,
+          "observedFrequency": 0.3793103448275862
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 40,
+          "wet": 19,
+          "probSum": 3807.8600000000006,
+          "meanProbability": 95.19650000000001,
+          "observedFrequency": 0.475
+        }
+      ]
+    },
+    {
+      "source": "weathernext2",
+      "lead": 72,
+      "bucket": "season:summer",
+      "samples": 464,
+      "wet": 50,
+      "brier": 0.14214335592672414,
+      "ece": 0.16504892241379313,
+      "reliabilityComponent": 0.06329666718390375,
+      "resolution": 0.01827795842683928,
+      "uncertainty": 0.09614670035671818,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 218,
+          "wet": 1,
+          "probSum": 482.9599999999999,
+          "meanProbability": 2.2154128440366967,
+          "observedFrequency": 0.0045871559633027525
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 45,
+          "wet": 5,
+          "probSum": 628.2100000000002,
+          "meanProbability": 13.960222222222226,
+          "observedFrequency": 0.1111111111111111
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 35,
+          "wet": 5,
+          "probSum": 864.0899999999998,
+          "meanProbability": 24.68828571428571,
+          "observedFrequency": 0.14285714285714285
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 30,
+          "wet": 2,
+          "probSum": 1023.4299999999998,
+          "meanProbability": 34.11433333333333,
+          "observedFrequency": 0.06666666666666667
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 20,
+          "wet": 2,
+          "probSum": 898.49,
+          "meanProbability": 44.9245,
+          "observedFrequency": 0.1
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 21,
+          "wet": 4,
+          "probSum": 1153.16,
+          "meanProbability": 54.91238095238096,
+          "observedFrequency": 0.19047619047619047
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 23,
+          "wet": 5,
+          "probSum": 1514.1000000000001,
+          "meanProbability": 65.8304347826087,
+          "observedFrequency": 0.21739130434782608
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 27,
+          "wet": 6,
+          "probSum": 2003.17,
+          "meanProbability": 74.19148148148149,
+          "observedFrequency": 0.2222222222222222
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 19,
+          "wet": 7,
+          "probSum": 1615.6199999999994,
+          "meanProbability": 85.03263157894735,
+          "observedFrequency": 0.3684210526315789
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 26,
+          "wet": 13,
+          "probSum": 2475.0400000000004,
+          "meanProbability": 95.19384615384617,
+          "observedFrequency": 0.5
+        }
+      ]
+    },
+    {
+      "source": "model_consensus",
+      "lead": 72,
+      "bucket": "all",
+      "samples": 1216,
+      "wet": 93,
+      "brier": 0.09969679276315782,
+      "ece": 0.11208059210526315,
+      "reliabilityComponent": 0.040009845919753984,
+      "resolution": 0.011105818001980504,
+      "uncertainty": 0.07063103250519391,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 750,
+          "wet": 14,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0.018666666666666668
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 148,
+          "wet": 15,
+          "probSum": 2404,
+          "meanProbability": 16.243243243243242,
+          "observedFrequency": 0.10135135135135136
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 31,
+          "wet": 1,
+          "probSum": 837,
+          "meanProbability": 27,
+          "observedFrequency": 0.03225806451612903
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 48,
+          "wet": 7,
+          "probSum": 1728,
+          "meanProbability": 36,
+          "observedFrequency": 0.14583333333333334
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 73,
+          "wet": 17,
+          "probSum": 3157,
+          "meanProbability": 43.24657534246575,
+          "observedFrequency": 0.2328767123287671
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 39,
+          "wet": 2,
+          "probSum": 2112,
+          "meanProbability": 54.15384615384615,
+          "observedFrequency": 0.05128205128205128
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 44,
+          "wet": 11,
+          "probSum": 2737,
+          "meanProbability": 62.20454545454545,
+          "observedFrequency": 0.25
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 15,
+          "wet": 1,
+          "probSum": 1095,
+          "meanProbability": 73,
+          "observedFrequency": 0.06666666666666667
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 39,
+          "wet": 9,
+          "probSum": 3159,
+          "meanProbability": 81,
+          "observedFrequency": 0.23076923076923078
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 29,
+          "wet": 16,
+          "probSum": 2900,
+          "meanProbability": 100,
+          "observedFrequency": 0.5517241379310345
+        }
+      ]
+    },
+    {
+      "source": "model_consensus",
+      "lead": 72,
+      "bucket": "season:summer",
+      "samples": 464,
+      "wet": 50,
+      "brier": 0.13194116379310325,
+      "ece": 0.1404094827586207,
+      "reliabilityComponent": 0.053841959893580635,
+      "resolution": 0.018173184411927043,
+      "uncertainty": 0.09614670035671818,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 237,
+          "wet": 4,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0.016877637130801686
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 61,
+          "wet": 6,
+          "probSum": 982,
+          "meanProbability": 16.098360655737704,
+          "observedFrequency": 0.09836065573770492
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 13,
+          "wet": 1,
+          "probSum": 351,
+          "meanProbability": 27,
+          "observedFrequency": 0.07692307692307693
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 17,
+          "wet": 1,
+          "probSum": 613,
+          "meanProbability": 36.05882352941177,
+          "observedFrequency": 0.058823529411764705
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 43,
+          "wet": 12,
+          "probSum": 1861,
+          "meanProbability": 43.27906976744186,
+          "observedFrequency": 0.27906976744186046
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 18,
+          "wet": 1,
+          "probSum": 972,
+          "meanProbability": 54,
+          "observedFrequency": 0.05555555555555555
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 24,
+          "wet": 9,
+          "probSum": 1497,
+          "meanProbability": 62.375,
+          "observedFrequency": 0.375
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 9,
+          "wet": 1,
+          "probSum": 657,
+          "meanProbability": 73,
+          "observedFrequency": 0.1111111111111111
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 22,
+          "wet": 5,
+          "probSum": 1782,
+          "meanProbability": 81,
+          "observedFrequency": 0.22727272727272727
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 20,
+          "wet": 10,
+          "probSum": 2000,
+          "meanProbability": 100,
+          "observedFrequency": 0.5
+        }
+      ]
+    },
+    {
+      "source": "best_match",
+      "lead": 72,
+      "bucket": "season:autumn",
+      "samples": 752,
+      "wet": 43,
+      "brier": 0.05741462765957461,
+      "ece": 0.043909574468085105,
+      "reliabilityComponent": 0.012600344818903573,
+      "resolution": 0.009205457710642654,
+      "uncertainty": 0.053911201335445906,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 548,
+          "wet": 10,
+          "probSum": 942,
+          "meanProbability": 1.718978102189781,
+          "observedFrequency": 0.01824817518248175
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 83,
+          "wet": 6,
+          "probSum": 1141,
+          "meanProbability": 13.74698795180723,
+          "observedFrequency": 0.07228915662650602
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 30,
+          "wet": 4,
+          "probSum": 708,
+          "meanProbability": 23.6,
+          "observedFrequency": 0.13333333333333333
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 26,
+          "wet": 6,
+          "probSum": 880,
+          "meanProbability": 33.84615384615385,
+          "observedFrequency": 0.23076923076923078
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 26,
+          "wet": 7,
+          "probSum": 1156,
+          "meanProbability": 44.46153846153846,
+          "observedFrequency": 0.2692307692307692
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 16,
+          "wet": 3,
+          "probSum": 869,
+          "meanProbability": 54.3125,
+          "observedFrequency": 0.1875
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 8,
+          "wet": 0,
+          "probSum": 507,
+          "meanProbability": 63.375,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 10,
+          "wet": 3,
+          "probSum": 749,
+          "meanProbability": 74.9,
+          "observedFrequency": 0.3
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 3,
+          "wet": 3,
+          "probSum": 253,
+          "meanProbability": 84.33333333333333,
+          "observedFrequency": 1
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 2,
+          "wet": 1,
+          "probSum": 187,
+          "meanProbability": 93.5,
+          "observedFrequency": 0.5
+        }
+      ]
+    },
+    {
+      "source": "weathernext2",
+      "lead": 72,
+      "bucket": "season:autumn",
+      "samples": 752,
+      "wet": 43,
+      "brier": 0.0854221395212765,
+      "ece": 0.10082234042553193,
+      "reliabilityComponent": 0.03870476335598495,
+      "resolution": 0.0073024350360657705,
+      "uncertainty": 0.053911201335445906,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 471,
+          "wet": 5,
+          "probSum": 825.2199999999993,
+          "meanProbability": 1.7520594479830134,
+          "observedFrequency": 0.010615711252653927
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 76,
+          "wet": 5,
+          "probSum": 1101.6600000000008,
+          "meanProbability": 14.495526315789483,
+          "observedFrequency": 0.06578947368421052
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 60,
+          "wet": 7,
+          "probSum": 1478.22,
+          "meanProbability": 24.637,
+          "observedFrequency": 0.11666666666666667
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 33,
+          "wet": 5,
+          "probSum": 1148.4299999999996,
+          "meanProbability": 34.80090909090908,
+          "observedFrequency": 0.15151515151515152
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 22,
+          "wet": 4,
+          "probSum": 942.26,
+          "meanProbability": 42.83,
+          "observedFrequency": 0.18181818181818182
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 27,
+          "wet": 3,
+          "probSum": 1475.0200000000002,
+          "meanProbability": 54.63037037037038,
+          "observedFrequency": 0.1111111111111111
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 18,
+          "wet": 0,
+          "probSum": 1175.0500000000002,
+          "meanProbability": 65.28055555555557,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 21,
+          "wet": 4,
+          "probSum": 1557.83,
+          "meanProbability": 74.18238095238095,
+          "observedFrequency": 0.19047619047619047
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 10,
+          "wet": 4,
+          "probSum": 845.3299999999999,
+          "meanProbability": 84.53299999999999,
+          "observedFrequency": 0.4
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 14,
+          "wet": 6,
+          "probSum": 1332.8200000000002,
+          "meanProbability": 95.20142857142858,
+          "observedFrequency": 0.42857142857142855
+        }
+      ]
+    },
+    {
+      "source": "model_consensus",
+      "lead": 72,
+      "bucket": "season:autumn",
+      "samples": 752,
+      "wet": 43,
+      "brier": 0.07980132978723384,
+      "ece": 0.09460106382978722,
+      "reliabilityComponent": 0.033455721122880235,
+      "resolution": 0.007780064940178648,
+      "uncertainty": 0.053911201335445906,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 513,
+          "wet": 10,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0.01949317738791423
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 87,
+          "wet": 9,
+          "probSum": 1422,
+          "meanProbability": 16.344827586206897,
+          "observedFrequency": 0.10344827586206896
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 18,
+          "wet": 0,
+          "probSum": 486,
+          "meanProbability": 27,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 31,
+          "wet": 6,
+          "probSum": 1115,
+          "meanProbability": 35.96774193548387,
+          "observedFrequency": 0.1935483870967742
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 30,
+          "wet": 5,
+          "probSum": 1296,
+          "meanProbability": 43.2,
+          "observedFrequency": 0.16666666666666666
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 21,
+          "wet": 1,
+          "probSum": 1140,
+          "meanProbability": 54.285714285714285,
+          "observedFrequency": 0.047619047619047616
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 20,
+          "wet": 2,
+          "probSum": 1240,
+          "meanProbability": 62,
+          "observedFrequency": 0.1
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 6,
+          "wet": 0,
+          "probSum": 438,
+          "meanProbability": 73,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 17,
+          "wet": 4,
+          "probSum": 1377,
+          "meanProbability": 81,
+          "observedFrequency": 0.23529411764705882
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 9,
+          "wet": 6,
+          "probSum": 900,
+          "meanProbability": 100,
+          "observedFrequency": 0.6666666666666666
+        }
+      ]
+    },
+    {
+      "source": "best_match",
+      "lead": 48,
+      "bucket": "season:autumn",
+      "samples": 760,
+      "wet": 35,
+      "brier": 0.0593667105263159,
+      "ece": 0.04922368421052632,
+      "reliabilityComponent": 0.01978293566143895,
+      "resolution": 0.003889335246675967,
+      "uncertainty": 0.04393178670360111,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 594,
+          "wet": 11,
+          "probSum": 717,
+          "meanProbability": 1.207070707070707,
+          "observedFrequency": 0.018518518518518517
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 55,
+          "wet": 8,
+          "probSum": 790,
+          "meanProbability": 14.363636363636363,
+          "observedFrequency": 0.14545454545454545
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 36,
+          "wet": 4,
+          "probSum": 859,
+          "meanProbability": 23.86111111111111,
+          "observedFrequency": 0.1111111111111111
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 21,
+          "wet": 4,
+          "probSum": 696,
+          "meanProbability": 33.142857142857146,
+          "observedFrequency": 0.19047619047619047
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 14,
+          "wet": 2,
+          "probSum": 616,
+          "meanProbability": 44,
+          "observedFrequency": 0.14285714285714285
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 12,
+          "wet": 0,
+          "probSum": 650,
+          "meanProbability": 54.166666666666664,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 8,
+          "wet": 3,
+          "probSum": 509,
+          "meanProbability": 63.625,
+          "observedFrequency": 0.375
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 12,
+          "wet": 1,
+          "probSum": 898,
+          "meanProbability": 74.83333333333333,
+          "observedFrequency": 0.08333333333333333
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 4,
+          "wet": 1,
+          "probSum": 341,
+          "meanProbability": 85.25,
+          "observedFrequency": 0.25
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 4,
+          "wet": 1,
+          "probSum": 379,
+          "meanProbability": 94.75,
+          "observedFrequency": 0.25
+        }
+      ]
+    },
+    {
+      "source": "weathernext2",
+      "lead": 48,
+      "bucket": "season:autumn",
+      "samples": 760,
+      "wet": 35,
+      "brier": 0.0920939745789473,
+      "ece": 0.10933868421052632,
+      "reliabilityComponent": 0.05325791481197158,
+      "resolution": 0.005768620972893316,
+      "uncertainty": 0.04393178670360111,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 504,
+          "wet": 3,
+          "probSum": 626.6399999999996,
+          "meanProbability": 1.2433333333333327,
+          "observedFrequency": 0.005952380952380952
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 61,
+          "wet": 2,
+          "probSum": 876.6300000000001,
+          "meanProbability": 14.37098360655738,
+          "observedFrequency": 0.03278688524590164
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 48,
+          "wet": 6,
+          "probSum": 1204.7500000000002,
+          "meanProbability": 25.09895833333334,
+          "observedFrequency": 0.125
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 32,
+          "wet": 5,
+          "probSum": 1114.0800000000004,
+          "meanProbability": 34.81500000000001,
+          "observedFrequency": 0.15625
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 22,
+          "wet": 2,
+          "probSum": 971.9300000000002,
+          "meanProbability": 44.17863636363637,
+          "observedFrequency": 0.09090909090909091
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 22,
+          "wet": 7,
+          "probSum": 1223.46,
+          "meanProbability": 55.61181818181819,
+          "observedFrequency": 0.3181818181818182
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 18,
+          "wet": 4,
+          "probSum": 1171.8899999999999,
+          "meanProbability": 65.10499999999999,
+          "observedFrequency": 0.2222222222222222
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 16,
+          "wet": 0,
+          "probSum": 1195.3300000000002,
+          "meanProbability": 74.70812500000001,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 12,
+          "wet": 1,
+          "probSum": 1014.0600000000002,
+          "meanProbability": 84.50500000000001,
+          "observedFrequency": 0.08333333333333333
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 25,
+          "wet": 5,
+          "probSum": 2410.9700000000003,
+          "meanProbability": 96.43880000000001,
+          "observedFrequency": 0.2
+        }
+      ]
+    },
+    {
+      "source": "model_consensus",
+      "lead": 48,
+      "bucket": "season:autumn",
+      "samples": 760,
+      "wet": 35,
+      "brier": 0.07568065789473663,
+      "ece": 0.08825000000000001,
+      "reliabilityComponent": 0.03484819797250673,
+      "resolution": 0.003063539788758345,
+      "uncertainty": 0.04393178670360111,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 545,
+          "wet": 9,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0.01651376146788991
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 78,
+          "wet": 8,
+          "probSum": 1251,
+          "meanProbability": 16.03846153846154,
+          "observedFrequency": 0.10256410256410256
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 21,
+          "wet": 0,
+          "probSum": 567,
+          "meanProbability": 27,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 22,
+          "wet": 3,
+          "probSum": 785,
+          "meanProbability": 35.68181818181818,
+          "observedFrequency": 0.13636363636363635
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 40,
+          "wet": 6,
+          "probSum": 1723,
+          "meanProbability": 43.075,
+          "observedFrequency": 0.15
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 10,
+          "wet": 2,
+          "probSum": 543,
+          "meanProbability": 54.3,
+          "observedFrequency": 0.2
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 14,
+          "wet": 2,
+          "probSum": 874,
+          "meanProbability": 62.42857142857143,
+          "observedFrequency": 0.14285714285714285
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 4,
+          "wet": 1,
+          "probSum": 292,
+          "meanProbability": 73,
+          "observedFrequency": 0.25
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 12,
+          "wet": 1,
+          "probSum": 972,
+          "meanProbability": 81,
+          "observedFrequency": 0.08333333333333333
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 14,
+          "wet": 3,
+          "probSum": 1400,
+          "meanProbability": 100,
+          "observedFrequency": 0.21428571428571427
+        }
+      ]
+    },
+    {
+      "source": "best_match",
+      "lead": 24,
+      "bucket": "season:autumn",
+      "samples": 760,
+      "wet": 43,
+      "brier": 0.04875078947368429,
+      "ece": 0.03239473684210526,
+      "reliabilityComponent": 0.0033523765632987946,
+      "resolution": 0.006918088540938625,
+      "uncertainty": 0.053377770083102495,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 670,
+          "wet": 22,
+          "probSum": 760,
+          "meanProbability": 1.1343283582089552,
+          "observedFrequency": 0.03283582089552239
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 45,
+          "wet": 10,
+          "probSum": 638,
+          "meanProbability": 14.177777777777777,
+          "observedFrequency": 0.2222222222222222
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 18,
+          "wet": 1,
+          "probSum": 424,
+          "meanProbability": 23.555555555555557,
+          "observedFrequency": 0.05555555555555555
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 14,
+          "wet": 5,
+          "probSum": 485,
+          "meanProbability": 34.642857142857146,
+          "observedFrequency": 0.35714285714285715
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 7,
+          "wet": 2,
+          "probSum": 306,
+          "meanProbability": 43.714285714285715,
+          "observedFrequency": 0.2857142857142857
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 3,
+          "wet": 2,
+          "probSum": 162,
+          "meanProbability": 54,
+          "observedFrequency": 0.6666666666666666
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 1,
+          "wet": 1,
+          "probSum": 68,
+          "meanProbability": 68,
+          "observedFrequency": 1
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 2,
+          "wet": 0,
+          "probSum": 145,
+          "meanProbability": 72.5,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        }
+      ]
+    },
+    {
+      "source": "weathernext2",
+      "lead": 24,
+      "bucket": "season:autumn",
+      "samples": 760,
+      "wet": 43,
+      "brier": 0.0934941847763157,
+      "ece": 0.10113407894736845,
+      "reliabilityComponent": 0.04776523815701897,
+      "resolution": 0.008406406215740018,
+      "uncertainty": 0.053377770083102495,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 524,
+          "wet": 7,
+          "probSum": 590.6399999999996,
+          "meanProbability": 1.1271755725190833,
+          "observedFrequency": 0.013358778625954198
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 38,
+          "wet": 3,
+          "probSum": 534.4300000000001,
+          "meanProbability": 14.063947368421054,
+          "observedFrequency": 0.07894736842105263
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 43,
+          "wet": 2,
+          "probSum": 1014.1299999999998,
+          "meanProbability": 23.58441860465116,
+          "observedFrequency": 0.046511627906976744
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 28,
+          "wet": 2,
+          "probSum": 998.4399999999997,
+          "meanProbability": 35.65857142857142,
+          "observedFrequency": 0.07142857142857142
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 27,
+          "wet": 5,
+          "probSum": 1212.5300000000002,
+          "meanProbability": 44.90851851851853,
+          "observedFrequency": 0.18518518518518517
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 32,
+          "wet": 10,
+          "probSum": 1737.5300000000007,
+          "meanProbability": 54.29781250000002,
+          "observedFrequency": 0.3125
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 9,
+          "wet": 3,
+          "probSum": 575.01,
+          "meanProbability": 63.89,
+          "observedFrequency": 0.3333333333333333
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 19,
+          "wet": 0,
+          "probSum": 1431.3000000000002,
+          "meanProbability": 75.33157894736843,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 17,
+          "wet": 6,
+          "probSum": 1456.2399999999998,
+          "meanProbability": 85.66117647058822,
+          "observedFrequency": 0.35294117647058826
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 23,
+          "wet": 5,
+          "probSum": 2217.2200000000007,
+          "meanProbability": 96.40086956521742,
+          "observedFrequency": 0.21739130434782608
+        }
+      ]
+    },
+    {
+      "source": "model_consensus",
+      "lead": 24,
+      "bucket": "season:autumn",
+      "samples": 760,
+      "wet": 43,
+      "brier": 0.0764861842105261,
+      "ece": 0.07380263157894738,
+      "reliabilityComponent": 0.028682065719337367,
+      "resolution": 0.005574598960334597,
+      "uncertainty": 0.053377770083102495,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 549,
+          "wet": 10,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0.018214936247723135
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 87,
+          "wet": 12,
+          "probSum": 1392,
+          "meanProbability": 16,
+          "observedFrequency": 0.13793103448275862
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 15,
+          "wet": 1,
+          "probSum": 405,
+          "meanProbability": 27,
+          "observedFrequency": 0.06666666666666667
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 5,
+          "wet": 0,
+          "probSum": 178,
+          "meanProbability": 35.6,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 57,
+          "wet": 12,
+          "probSum": 2451,
+          "meanProbability": 43,
+          "observedFrequency": 0.21052631578947367
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 10,
+          "wet": 2,
+          "probSum": 540,
+          "meanProbability": 54,
+          "observedFrequency": 0.2
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 8,
+          "wet": 3,
+          "probSum": 496,
+          "meanProbability": 62,
+          "observedFrequency": 0.375
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 2,
+          "wet": 0,
+          "probSum": 146,
+          "meanProbability": 73,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 21,
+          "wet": 1,
+          "probSum": 1701,
+          "meanProbability": 81,
+          "observedFrequency": 0.047619047619047616
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 6,
+          "wet": 2,
+          "probSum": 600,
+          "meanProbability": 100,
+          "observedFrequency": 0.3333333333333333
+        }
+      ]
+    },
+    {
+      "source": "eccc_official",
+      "lead": 24,
+      "bucket": "season:autumn",
+      "samples": 736,
+      "wet": 42,
+      "brier": 0.08631793478260828,
+      "ece": 0.12730978260869566,
+      "reliabilityComponent": 0.03936711148965992,
+      "resolution": 0.006857955062438749,
+      "uncertainty": 0.05380877835538752,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 284,
+          "wet": 1,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0.0035211267605633804
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 121,
+          "wet": 1,
+          "probSum": 1210,
+          "meanProbability": 10,
+          "observedFrequency": 0.008264462809917356
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 152,
+          "wet": 14,
+          "probSum": 3040,
+          "meanProbability": 20,
+          "observedFrequency": 0.09210526315789473
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 35,
+          "wet": 0,
+          "probSum": 1050,
+          "meanProbability": 30,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 80,
+          "wet": 9,
+          "probSum": 3200,
+          "meanProbability": 40,
+          "observedFrequency": 0.1125
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 16,
+          "wet": 4,
+          "probSum": 960,
+          "meanProbability": 60,
+          "observedFrequency": 0.25
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 1,
+          "wet": 1,
+          "probSum": 70,
+          "meanProbability": 70,
+          "observedFrequency": 1
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 46,
+          "wet": 12,
+          "probSum": 3680,
+          "meanProbability": 80,
+          "observedFrequency": 0.2608695652173913
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 1,
+          "wet": 0,
+          "probSum": 100,
+          "meanProbability": 100,
+          "observedFrequency": 0
+        }
+      ]
+    },
+    {
+      "source": "best_match",
+      "lead": 12,
+      "bucket": "season:autumn",
+      "samples": 760,
+      "wet": 34,
+      "brier": 0.04014381578947362,
+      "ece": 0.01977631578947368,
+      "reliabilityComponent": 0.0023390284998304946,
+      "resolution": 0.004145621708975012,
+      "uncertainty": 0.04273545706371191,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 673,
+          "wet": 17,
+          "probSum": 696,
+          "meanProbability": 1.0341753343239228,
+          "observedFrequency": 0.02526002971768202
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 44,
+          "wet": 5,
+          "probSum": 580,
+          "meanProbability": 13.181818181818182,
+          "observedFrequency": 0.11363636363636363
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 19,
+          "wet": 5,
+          "probSum": 458,
+          "meanProbability": 24.105263157894736,
+          "observedFrequency": 0.2631578947368421
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 10,
+          "wet": 3,
+          "probSum": 348,
+          "meanProbability": 34.8,
+          "observedFrequency": 0.3
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 8,
+          "wet": 3,
+          "probSum": 357,
+          "meanProbability": 44.625,
+          "observedFrequency": 0.375
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 3,
+          "wet": 1,
+          "probSum": 169,
+          "meanProbability": 56.333333333333336,
+          "observedFrequency": 0.3333333333333333
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 2,
+          "wet": 0,
+          "probSum": 128,
+          "meanProbability": 64,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 1,
+          "wet": 0,
+          "probSum": 75,
+          "meanProbability": 75,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        }
+      ]
+    },
+    {
+      "source": "weathernext2",
+      "lead": 12,
+      "bucket": "season:autumn",
+      "samples": 760,
+      "wet": 34,
+      "brier": 0.1003920558684211,
+      "ece": 0.12662894736842106,
+      "reliabilityComponent": 0.06403360660083257,
+      "resolution": 0.0056852565615025715,
+      "uncertainty": 0.04273545706371191,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 515,
+          "wet": 2,
+          "probSum": 546.9399999999998,
+          "meanProbability": 1.0620194174757278,
+          "observedFrequency": 0.003883495145631068
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 45,
+          "wet": 3,
+          "probSum": 665.6700000000002,
+          "meanProbability": 14.79266666666667,
+          "observedFrequency": 0.06666666666666667
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 32,
+          "wet": 1,
+          "probSum": 775.05,
+          "meanProbability": 24.2203125,
+          "observedFrequency": 0.03125
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 29,
+          "wet": 3,
+          "probSum": 1014.0699999999997,
+          "meanProbability": 34.967931034482746,
+          "observedFrequency": 0.10344827586206896
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 29,
+          "wet": 5,
+          "probSum": 1296.9400000000005,
+          "meanProbability": 44.72206896551726,
+          "observedFrequency": 0.1724137931034483
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 17,
+          "wet": 3,
+          "probSum": 920.3099999999998,
+          "meanProbability": 54.13588235294117,
+          "observedFrequency": 0.17647058823529413
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 15,
+          "wet": 2,
+          "probSum": 979.71,
+          "meanProbability": 65.31400000000001,
+          "observedFrequency": 0.13333333333333333
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 23,
+          "wet": 3,
+          "probSum": 1706.29,
+          "meanProbability": 74.18652173913043,
+          "observedFrequency": 0.13043478260869565
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 17,
+          "wet": 1,
+          "probSum": 1437.5099999999998,
+          "meanProbability": 84.55941176470587,
+          "observedFrequency": 0.058823529411764705
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 38,
+          "wet": 11,
+          "probSum": 3681.3100000000004,
+          "meanProbability": 96.87657894736843,
+          "observedFrequency": 0.2894736842105263
+        }
+      ]
+    },
+    {
+      "source": "model_consensus",
+      "lead": 12,
+      "bucket": "season:autumn",
+      "samples": 760,
+      "wet": 34,
+      "brier": 0.058056184210526114,
+      "ece": 0.060828947368421045,
+      "reliabilityComponent": 0.021415456952923483,
+      "resolution": 0.006126500416846446,
+      "uncertainty": 0.04273545706371191,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 557,
+          "wet": 5,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0.008976660682226212
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 95,
+          "wet": 12,
+          "probSum": 1523,
+          "meanProbability": 16.03157894736842,
+          "observedFrequency": 0.12631578947368421
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 8,
+          "wet": 0,
+          "probSum": 216,
+          "meanProbability": 27,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 7,
+          "wet": 0,
+          "probSum": 257,
+          "meanProbability": 36.714285714285715,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 58,
+          "wet": 8,
+          "probSum": 2494,
+          "meanProbability": 43,
+          "observedFrequency": 0.13793103448275862
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 9,
+          "wet": 2,
+          "probSum": 489,
+          "meanProbability": 54.333333333333336,
+          "observedFrequency": 0.2222222222222222
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 4,
+          "wet": 2,
+          "probSum": 248,
+          "meanProbability": 62,
+          "observedFrequency": 0.5
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 3,
+          "wet": 2,
+          "probSum": 219,
+          "meanProbability": 73,
+          "observedFrequency": 0.6666666666666666
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 17,
+          "wet": 2,
+          "probSum": 1377,
+          "meanProbability": 81,
+          "observedFrequency": 0.11764705882352941
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 2,
+          "wet": 1,
+          "probSum": 200,
+          "meanProbability": 100,
+          "observedFrequency": 0.5
+        }
+      ]
+    },
+    {
+      "source": "eccc_official",
+      "lead": 12,
+      "bucket": "season:autumn",
+      "samples": 744,
+      "wet": 34,
+      "brier": 0.083319892473118,
+      "ece": 0.13830645161290323,
+      "reliabilityComponent": 0.04601605519445676,
+      "resolution": 0.006306695730934966,
+      "uncertainty": 0.04361053300959649,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 312,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 97,
+          "wet": 0,
+          "probSum": 970,
+          "meanProbability": 10,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 142,
+          "wet": 7,
+          "probSum": 2840,
+          "meanProbability": 20,
+          "observedFrequency": 0.04929577464788732
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 53,
+          "wet": 3,
+          "probSum": 1590,
+          "meanProbability": 30,
+          "observedFrequency": 0.05660377358490566
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 62,
+          "wet": 7,
+          "probSum": 2480,
+          "meanProbability": 40,
+          "observedFrequency": 0.11290322580645161
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 19,
+          "wet": 0,
+          "probSum": 1140,
+          "meanProbability": 60,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 5,
+          "wet": 1,
+          "probSum": 350,
+          "meanProbability": 70,
+          "observedFrequency": 0.2
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 54,
+          "wet": 16,
+          "probSum": 4320,
+          "meanProbability": 80,
+          "observedFrequency": 0.2962962962962963
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        }
+      ]
+    },
+    {
+      "source": "best_match",
+      "lead": 6,
+      "bucket": "season:autumn",
+      "samples": 768,
+      "wet": 43,
+      "brier": 0.05356861979166675,
+      "ece": 0.04470052083333334,
+      "reliabilityComponent": 0.005996182776907161,
+      "resolution": 0.004293763227284599,
+      "uncertainty": 0.05285474989149305,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 678,
+          "wet": 25,
+          "probSum": 615,
+          "meanProbability": 0.9070796460176991,
+          "observedFrequency": 0.03687315634218289
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 45,
+          "wet": 12,
+          "probSum": 637,
+          "meanProbability": 14.155555555555555,
+          "observedFrequency": 0.26666666666666666
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 20,
+          "wet": 2,
+          "probSum": 486,
+          "meanProbability": 24.3,
+          "observedFrequency": 0.1
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 12,
+          "wet": 1,
+          "probSum": 404,
+          "meanProbability": 33.666666666666664,
+          "observedFrequency": 0.08333333333333333
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 5,
+          "wet": 2,
+          "probSum": 218,
+          "meanProbability": 43.6,
+          "observedFrequency": 0.4
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 4,
+          "wet": 0,
+          "probSum": 213,
+          "meanProbability": 53.25,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 2,
+          "wet": 1,
+          "probSum": 120,
+          "meanProbability": 60,
+          "observedFrequency": 0.5
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 2,
+          "wet": 0,
+          "probSum": 144,
+          "meanProbability": 72,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        }
+      ]
+    },
+    {
+      "source": "weathernext2",
+      "lead": 6,
+      "bucket": "season:autumn",
+      "samples": 768,
+      "wet": 43,
+      "brier": 0.10881114548177086,
+      "ece": 0.11951002604166668,
+      "reliabilityComponent": 0.06276836876369861,
+      "resolution": 0.006431052005530778,
+      "uncertainty": 0.05285474989149305,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 534,
+          "wet": 8,
+          "probSum": 484.4899999999999,
+          "meanProbability": 0.9072846441947564,
+          "observedFrequency": 0.0149812734082397
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 39,
+          "wet": 1,
+          "probSum": 557.8499999999999,
+          "meanProbability": 14.303846153846152,
+          "observedFrequency": 0.02564102564102564
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 30,
+          "wet": 3,
+          "probSum": 721.9299999999998,
+          "meanProbability": 24.064333333333327,
+          "observedFrequency": 0.1
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 25,
+          "wet": 3,
+          "probSum": 873.47,
+          "meanProbability": 34.9388,
+          "observedFrequency": 0.12
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 27,
+          "wet": 7,
+          "probSum": 1221.9400000000003,
+          "meanProbability": 45.257037037037044,
+          "observedFrequency": 0.25925925925925924
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 15,
+          "wet": 2,
+          "probSum": 828.15,
+          "meanProbability": 55.21,
+          "observedFrequency": 0.13333333333333333
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 21,
+          "wet": 6,
+          "probSum": 1365.6700000000005,
+          "meanProbability": 65.03190476190478,
+          "observedFrequency": 0.2857142857142857
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 23,
+          "wet": 2,
+          "probSum": 1734.4100000000003,
+          "meanProbability": 75.40913043478263,
+          "observedFrequency": 0.08695652173913043
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 14,
+          "wet": 1,
+          "probSum": 1192.19,
+          "meanProbability": 85.15642857142858,
+          "observedFrequency": 0.07142857142857142
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 40,
+          "wet": 10,
+          "probSum": 3867.2500000000005,
+          "meanProbability": 96.68125,
+          "observedFrequency": 0.25
+        }
+      ]
+    },
+    {
+      "source": "model_consensus",
+      "lead": 6,
+      "bucket": "season:autumn",
+      "samples": 768,
+      "wet": 43,
+      "brier": 0.06927382812499978,
+      "ece": 0.06358072916666667,
+      "reliabilityComponent": 0.022163615109235445,
+      "resolution": 0.0057561352816628405,
+      "uncertainty": 0.05285474989149305,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 568,
+          "wet": 11,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0.01936619718309859
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 99,
+          "wet": 11,
+          "probSum": 1587,
+          "meanProbability": 16.03030303030303,
+          "observedFrequency": 0.1111111111111111
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 8,
+          "wet": 1,
+          "probSum": 216,
+          "meanProbability": 27,
+          "observedFrequency": 0.125
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 8,
+          "wet": 0,
+          "probSum": 286,
+          "meanProbability": 35.75,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 47,
+          "wet": 13,
+          "probSum": 2021,
+          "meanProbability": 43,
+          "observedFrequency": 0.2765957446808511
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 9,
+          "wet": 3,
+          "probSum": 486,
+          "meanProbability": 54,
+          "observedFrequency": 0.3333333333333333
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 5,
+          "wet": 0,
+          "probSum": 310,
+          "meanProbability": 62,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 17,
+          "wet": 3,
+          "probSum": 1377,
+          "meanProbability": 81,
+          "observedFrequency": 0.17647058823529413
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 7,
+          "wet": 1,
+          "probSum": 700,
+          "meanProbability": 100,
+          "observedFrequency": 0.14285714285714285
+        }
+      ]
+    },
+    {
+      "source": "eccc_official",
+      "lead": 6,
+      "bucket": "season:autumn",
+      "samples": 752,
+      "wet": 43,
+      "brier": 0.08456117021276577,
+      "ece": 0.12433510638297873,
+      "reliabilityComponent": 0.035983389545213525,
+      "resolution": 0.0053334206678934655,
+      "uncertainty": 0.053911201335445906,
+      "bins": [
+        {
+          "lo": 0,
+          "hi": 10,
+          "n": 313,
+          "wet": 4,
+          "probSum": 0,
+          "meanProbability": 0,
+          "observedFrequency": 0.012779552715654952
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "n": 94,
+          "wet": 0,
+          "probSum": 940,
+          "meanProbability": 10,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "n": 154,
+          "wet": 14,
+          "probSum": 3080,
+          "meanProbability": 20,
+          "observedFrequency": 0.09090909090909091
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "n": 71,
+          "wet": 1,
+          "probSum": 2130,
+          "meanProbability": 30,
+          "observedFrequency": 0.014084507042253521
+        },
+        {
+          "lo": 40,
+          "hi": 50,
+          "n": 64,
+          "wet": 12,
+          "probSum": 2560,
+          "meanProbability": 40,
+          "observedFrequency": 0.1875
+        },
+        {
+          "lo": 50,
+          "hi": 60,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        },
+        {
+          "lo": 60,
+          "hi": 70,
+          "n": 16,
+          "wet": 2,
+          "probSum": 960,
+          "meanProbability": 60,
+          "observedFrequency": 0.125
+        },
+        {
+          "lo": 70,
+          "hi": 80,
+          "n": 2,
+          "wet": 0,
+          "probSum": 140,
+          "meanProbability": 70,
+          "observedFrequency": 0
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "n": 38,
+          "wet": 10,
+          "probSum": 3040,
+          "meanProbability": 80,
+          "observedFrequency": 0.2631578947368421
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "n": 0,
+          "wet": 0,
+          "probSum": 0,
+          "meanProbability": null,
+          "observedFrequency": null
+        }
+      ]
+    }
+  ]
+}
