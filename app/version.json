@@ -1,7 +1,7 @@
 {
   "product": "SkyMap Ontario",
-  "version": "40.0.1",
-  "versionCode": 40001,
+  "version": "40.0.2",
+  "versionCode": 40002,
   "releaseName": "Convergence",
   "channel": "stable",
   "apkBaseName": "SkyMap-Ontario"

@@ -53,3 +53,9 @@ node scripts/forecast-court.mjs --self-test
 ```
 
 The first check proves that unsupported sources remain exactly at champion influence. The second proves that three supported models can enter the Court, while any movement of an unsupported model rejects the challenger.
+
+## Evidence policy
+
+The Court's aggregate metrics cannot be split by era after the fact, so the rules that produce challenger forecasts are versioned. `state.json` records a `policy`; a state file from a different policy is discarded and the Court starts clean instead of mixing eras. The published verdict includes `evidencePolicy` (current policy, effective date, and how many hours of evidence predate it).
+
+Policy 2 is "models without historical support stay frozen at champion weight" (Forecast Lab 34, effective 2026-08-13T21:22Z). The state file already running when policy 2 shipped was kept and stamped, not deleted: it began about 22 hours before the policy, which is roughly 2% of its scored samples. Bump `POLICY` in `scripts/forecast-court.mjs` whenever the challenger rules change again.
