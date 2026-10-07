@@ -48,6 +48,7 @@ assert.match(lab, /else renderForecastUnavailable\(\);/, 'the all-sources-failed
 assert.doesNotMatch(lab.match(/function renderForecastUnavailable\(\)[\s\S]*?\n  \}/)?.[0] || '', /renderAnswer\(\)/, 'the terminal state overwrites the saved forecast memory through renderAnswer');
 assert.match(lab, /window\.addEventListener\('online'/, 'a failed load does not retry when connectivity returns');
 assert.match(lab, /buildFrames\(\)\.then\(\(\)=>\{[^}]*scheduleForecastRender\(80,\{allowPartial:true\}\)/, 'evidence cards are not refreshed after radar metadata arrives');
+assert.match(lab, /buildFrames\(\)\.then\(\(\)=>\{[\s\S]*?else if\(state\.modelErrors\.size>=MODELS\.length\)renderForecastUnavailable\(\)/, 'evidence cards stay unavailable when radar loads after every forecast source failed');
 assert.match(lab, /snow:snowWeight==null\?\(rows\.some\(row=>row\.snow!=null\|\|row\.code!=null\)\?0:null\)/, 'a missing precipitation phase is no longer distinguished from known rain');
 assert.match(lab, /event\.snow==null\?'precipitation'/, 'an event of unknown phase is announced as rain');
 

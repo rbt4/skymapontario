@@ -771,7 +771,7 @@
       if(requestId!==state.requestId)return;
       warmEvidence();
       void warmPublicCourt();
-      void buildFrames().then(()=>{if(requestId!==state.requestId)return;setFeedHealth();if(state.models.size)scheduleForecastRender(80,{allowPartial:true});}).catch(error=>{state.metadataErrors.push(String(error));showToast('Radar metadata is delayed; forecast guidance can still load.');});
+      void buildFrames().then(()=>{if(requestId!==state.requestId)return;setFeedHealth();if(state.models.size)scheduleForecastRender(80,{allowPartial:true});else if(state.modelErrors.size>=MODELS.length)renderForecastUnavailable();}).catch(error=>{state.metadataErrors.push(String(error));showToast('Radar metadata is delayed; forecast guidance can still load.');});
     },delay);
   }
 
