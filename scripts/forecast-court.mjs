@@ -6,6 +6,12 @@ const STATE_PATH='verification-court/state.json';
 const PUBLIC_PATH='verification-court/public.json';
 const CHALLENGER_PATH='verification-court/challenger.json';
 const VERSION=1;
+// Evidence policy: bump whenever the rules that produce challenger forecasts change
+// (e.g. which models may move off champion weight). A state file from another policy
+// is discarded, because aggregate metrics cannot be partitioned afterwards.
+// 2 = models without historical support stay frozen at champion weight (Forecast Lab 34).
+const POLICY=2;
+const POLICY_EFFECTIVE_AT='2026-08-13T21:22:00Z';
 const VERIFY_DELAY_HOURS=8;
 const MAX_PENDING_AGE_DAYS=10;
 const WET_MM=.2;
@@ -60,8 +66,21 @@ function blend(inputs,weights){const ids=Object.keys(BASE).filter(id=>inputs[id]
 function weightsDifferent(a,b=BASE){return Object.keys(BASE).some(id=>Math.abs((a[id]||0)-b[id])>.003);}
 
 async function loadChallenger(){try{return JSON.parse(await fs.readFile(CHALLENGER_PATH,'utf8'));}catch{return{generatedAt:null,approved:false,proposedByLead:{},reason:'challenger unavailable'};}}
-function fresh(){return{schema:VERSION,createdAt:iso(Date.now()),updatedAt:null,runs:0,pending:[],metrics:{champion:{},challenger:{}},lastRun:null};}
-async function loadState(){try{const x=JSON.parse(await fs.readFile(STATE_PATH,'utf8'));return x.schema===VERSION?x:fresh();}catch{return fresh();}}
+function fresh(){return{schema:VERSION,policy:POLICY,createdAt:iso(Date.now()),updatedAt:null,runs:0,pending:[],metrics:{champion:{},challenger:{}},lastRun:null};}
+// State written before policy stamping is kept (never silently deleted) and stamped
+// with how much of it predates the policy, so the verdict can disclose it.
+function migrateState(x,now=Date.now()){
+  if(!x||x.schema!==VERSION)return null;
+  if(x.policy==null){
+    const created=Date.parse(x.createdAt);
+    const hours=Number.isFinite(created)?Math.max(0,(Date.parse(POLICY_EFFECTIVE_AT)-created)/3600000):null;
+    x.policy=POLICY;
+    x.policyGrandfathered={at:iso(now),runsAtStamp:x.runs||0,hoursBeforePolicy:hours==null?null:+hours.toFixed(1)};
+    return x;
+  }
+  return x.policy===POLICY?x:null;
+}
+async function loadState(){try{return migrateState(JSON.parse(await fs.readFile(STATE_PATH,'utf8')))||fresh();}catch{return fresh();}}
 function emptyMetric(lead){return{lead,samples:0,truthWet:0,hits:0,misses:0,falseAlarms:0,correctDry:0,brierSum:0,brierN:0,amountAbsSum:0,amountN:0};}
 function addMetric(m,p,t){m.samples++;if(t.wet)m.truthWet++;if(p.wet&&t.wet)m.hits++;else if(p.wet&&!t.wet)m.falseAlarms++;else if(!p.wet&&t.wet)m.misses++;else m.correctDry++;const prob=finite(p.probability);if(prob!=null){const q=clamp(prob,0,100)/100;m.brierSum+=(q-(t.wet?1:0))**2;m.brierN++;}if(p.amount!=null&&t.amount!=null){m.amountAbsSum+=Math.abs(p.amount-t.amount);m.amountN++;}}
 function summary(m){const csiD=m.hits+m.misses+m.falseAlarms,wetD=m.hits+m.misses,alarmD=m.hits+m.falseAlarms;return{...m,accuracy:m.samples?(m.hits+m.correctDry)/m.samples:null,pod:wetD?m.hits/wetD:null,missRate:wetD?m.misses/wetD:null,far:alarmD?m.falseAlarms/alarmD:null,csi:csiD?m.hits/csiD:null,brier:m.brierN?m.brierSum/m.brierN:null,amountMAE:m.amountN?m.amountAbsSum/m.amountN:null};}
@@ -83,7 +102,7 @@ function courtVerdict(state,challenger){
   else if(!enough)reason=`Court is accumulating prospective outcomes (${champ.samples} scored, ${champ.truthWet} wet truths).`;
   else if(!passed)reason='Challenger has enough evidence but has not beaten every promotion guardrail.';
   else reason='Challenger passed the statistical gate for a bounded integration review. Live production still requires an explicit code release; the court cannot self-promote.';
-  return{generatedAt:iso(Date.now()),mode:'sealed-prospective-champion-vs-challenger',approvedForBoundedIntegrationReview:passed,autoPromotes:false,reason,checks,minimums:{historicalEvidencePerSupportedModelLead:500,historicallySupportedModels:3,unsupportedModels:'must remain at champion weight',prospectiveSamples:300,wetTruths:45,perLeadSamples:60,brierImprovement:'>=2%',csiDelta:'>=-0.5 percentage points',missRateDelta:'<=+1.5 percentage points',farDelta:'<=+2 percentage points',badLeadBrier:'no lead >3% worse'},observed:{historicalEvidenceMinimum:history.minimumSupportedEvidence,historicallySupportedModels:history.supportedModels,frozenUnsupportedModels:history.unsupportedModels,champion:champ,challenger:cand,brierRelativeImprovement:brierGain,csiDelta:csiGain,missRateDelta:missDelta,farDelta,perLead},candidate:{generatedAt:challenger?.generatedAt||null,currentRegime:challenger?.currentRegime||null,weightsByLead:cWeights}};
+  return{generatedAt:iso(Date.now()),mode:'sealed-prospective-champion-vs-challenger',approvedForBoundedIntegrationReview:passed,autoPromotes:false,reason,checks,minimums:{historicalEvidencePerSupportedModelLead:500,historicallySupportedModels:3,unsupportedModels:'must remain at champion weight',prospectiveSamples:300,wetTruths:45,perLeadSamples:60,brierImprovement:'>=2%',csiDelta:'>=-0.5 percentage points',missRateDelta:'<=+1.5 percentage points',farDelta:'<=+2 percentage points',badLeadBrier:'no lead >3% worse'},observed:{historicalEvidenceMinimum:history.minimumSupportedEvidence,historicallySupportedModels:history.supportedModels,frozenUnsupportedModels:history.unsupportedModels,champion:champ,challenger:cand,brierRelativeImprovement:brierGain,csiDelta:csiGain,missRateDelta:missDelta,farDelta,perLead},candidate:{generatedAt:challenger?.generatedAt||null,currentRegime:challenger?.currentRegime||null,weightsByLead:cWeights},evidencePolicy:{current:POLICY,effectiveAt:POLICY_EFFECTIVE_AT,stateCreatedAt:state.createdAt||null,hoursOfEvidenceBeforePolicy:state.policyGrandfathered?.hoursBeforePolicy??0}};
 }
 function publicPayload(state,verdict){return{schema:1,generatedAt:state.updatedAt,runs:state.runs,pending:state.pending.length,locations:LOCATIONS.map(({id,name})=>({id,name})),leads:LEADS,championWeights:BASE,verdict,note:'The court stores champion and challenger forecasts before observations exist, then scores both against the same ECCC truth. It cannot change live production by itself.'};}
 async function selfTest(){
@@ -91,6 +110,11 @@ async function selfTest(){
   const proposedByLead=Object.fromEntries(LEADS.map(lead=>[lead,{gem:{weight:.40,samples:800},ifs:{weight:.25,samples:800},gfs:{weight:.19,samples:800},aifs:{weight:.16,samples:0}}]));
   const coverage=historicalCoverage({proposedByLead});if(!coverage.ready||coverage.supportedModels.length!==3||coverage.unsupportedModels[0]!=='aifs')throw new Error('supported-model history gate failed');
   proposedByLead[24].aifs.weight=.17;if(historicalCoverage({proposedByLead}).ready)throw new Error('unsupported model was allowed to move');
+  const stamped=migrateState({schema:VERSION,createdAt:'2026-08-12T23:21:08.966Z',runs:207,pending:[],metrics:{champion:{},challenger:{}}});
+  if(!stamped||stamped.policy!==POLICY||Math.abs(stamped.policyGrandfathered.hoursBeforePolicy-22)>.1)throw new Error('legacy state was not grandfathered with its pre-policy window');
+  if(migrateState({schema:VERSION,policy:POLICY-1,runs:5})!==null)throw new Error('state from another evidence policy was kept');
+  if(migrateState({schema:VERSION+1,policy:POLICY})!==null)throw new Error('state from another schema was kept');
+  if(migrateState({schema:VERSION,policy:POLICY,runs:5})?.runs!==5)throw new Error('current-policy state was discarded');
   console.log('✓ Forecast Court self-test passed');
 }
 async function main(){if(process.argv.includes('--self-test'))return selfTest();await fs.mkdir('verification-court',{recursive:true});const now=Date.now(),state=await loadState(),challenger=await loadChallenger(),verified=await verify(state,now);let records=[];try{records=collectCases(await fetchRawModels(),challenger,now);}catch(e){console.warn(`⚠ court collection: ${e.message}`);}const existing=new Set(state.pending.map(r=>r.id));let added=0;for(const r of records)if(!existing.has(r.id)){state.pending.push(r);existing.add(r.id);added++;}state.pending=state.pending.slice(-MAX_PENDING);state.runs++;state.updatedAt=iso(now);const verdict=courtVerdict(state,challenger);state.lastRun={at:state.updatedAt,verified,added,verdict:verdict.reason};await fs.writeFile(STATE_PATH,JSON.stringify(state));await fs.writeFile(PUBLIC_PATH,JSON.stringify(publicPayload(state,verdict),null,2));console.log(`✓ Forecast Court: ${verified} outcomes scored · ${added} sealed cases added · ${state.pending.length} pending`);console.log(`✓ verdict: ${verdict.approvedForBoundedIntegrationReview?'PASS FOR REVIEW':'HOLD'} · ${verdict.reason}`);if(process.argv.includes('--smoke')){if(records.length<LOCATIONS.length*2)throw new Error(`live court smoke produced only ${records.length} cases`);console.log(`✓ live Forecast Court smoke: ${records.length} sealed champion/challenger cases`);}}

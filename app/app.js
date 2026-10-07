@@ -487,7 +487,7 @@
     const directionRows=rows.filter(row=>row.direction!=null),sin=directionRows.reduce((sum,row)=>sum+Math.sin(row.direction*Math.PI/180)*row.weight,0),cos=directionRows.reduce((sum,row)=>sum+Math.cos(row.direction*Math.PI/180)*row.weight,0);
     const direction=directionRows.length?(Math.atan2(sin,cos)*180/Math.PI+360)%360:null;
     const codeWeights=new Map(); rows.forEach(row=>{if(row.code!=null)codeWeights.set(row.code,(codeWeights.get(row.code)||0)+row.weight);}); let code=null,codeWeight=-1; for(const [candidate,weight] of codeWeights)if(weight>codeWeight){code=candidate;codeWeight=weight;}
-    const base={time:new Date(target),rows,wet:wetWeight==null?null:Math.round(wetWeight*100),precip:average('precip'),snow:snowWeight==null?null:Math.round(snowWeight*100),code,wetModels:wetRows.filter(row=>row.wet).length,totalModels:wetRows.length,agreement:wetWeight==null?null:Math.round(Math.max(wetWeight,1-wetWeight)*100),direction,calibration:decision};
+    const base={time:new Date(target),rows,wet:wetWeight==null?null:Math.round(wetWeight*100),precip:average('precip'),snow:snowWeight==null?(rows.some(row=>row.snow!=null||row.code!=null)?0:null):Math.round(snowWeight*100),code,wetModels:wetRows.filter(row=>row.wet).length,totalModels:wetRows.length,agreement:wetWeight==null?null:Math.round(Math.max(wetWeight,1-wetWeight)*100),direction,calibration:decision};
     return window.SkyMapEvidenceRouter?.route(base,{target,place:state.place})||base;
   }
   function buildConsensus() {
@@ -612,7 +612,7 @@
       title=condition?condition.label:'Forecast point'; stateName=condition?.state||'loading'; copy=`${fmtTime(frame.time)} · ${frame.kind==='nowcast'?'near-future':'model guidance'}`;
     } else if(event){
       const lead=Math.round((event.start-Date.now())/60000);
-      if(nowCondition.state==='dry'&&lead>0&&lead<=180){title=`Rain in about ${roundedMinutes(lead)}`;copy=`Most likely ${timeRange(event.start,event.end)}`;stateName=event.snow>=45?'snow':'wet';}
+      if(nowCondition.state==='dry'&&lead>0&&lead<=180){title=`${event.snow==null?'Precipitation':'Rain'} in about ${roundedMinutes(lead)}`;copy=`Most likely ${timeRange(event.start,event.end)}`;stateName=event.snow>=45?'snow':'wet';}
       else if(nowCondition.state==='dry'){copy=`Next event ${fmtDay(event.start)} · ${timeRange(event.start,event.end)}`;}
       else copy=`Likely easing around ${fmtTime(event.end)}`;
     } else if(nowCondition.state==='dry'){copy='No strong rain signal in the near window';}
@@ -645,12 +645,12 @@
       text('#event-name',hasEvidence?'No declared rain or snow event':'Forecast evidence unavailable'); text('#event-state',hasEvidence?'DRY SIGNAL':'UNKNOWN'); text('#event-story',hasEvidence?'No precipitation event currently clears SkyMap’s declaration threshold across the available independent guidance.':'The truth firewall withheld a dry declaration because the forecast fields are missing.');
       renderEventFlow(null); renderEvidence(null,current,memory); text('#forecast-stage','No declared event'); renderPointReadout(); renderEventWindow(); return;
     }
-    const leadHours=(event.start-now)/3600000; const type=event.snow>=45?'snow':event.snow>=20?'mixed precipitation':'rain'; const starts=event.modelWindows.filter(w=>w.wet&&w.start).map(w=>w.start); const early=starts.length?new Date(Math.min(...starts.map(d=>d.getTime()))):event.start;
+    const leadHours=(event.start-now)/3600000; const type=event.snow==null?'precipitation':event.snow>=45?'snow':event.snow>=20?'mixed precipitation':'rain'; const noun=type==='snow'?'Snow':type==='rain'?'Rain':type==='mixed precipitation'?'Mixed precipitation':'Precipitation'; const starts=event.modelWindows.filter(w=>w.wet&&w.start).map(w=>w.start); const early=starts.length?new Date(Math.min(...starts.map(d=>d.getTime()))):event.start;
     rail.dataset.state=confidence.state;
     text('#answer-eyebrow',leadHours<=3?'TRACKING THIS POINT':'NEXT EVENT AT THIS POINT');
-    if(leadHours<=0&&event.end>now){text('#answer-title',`${type==='snow'?'Snow':'Rain'} is in the current window`);text('#answer-copy',`The selected point is inside the active event window. Follow the map and ending time rather than a generic hourly icon.`);}
-    else if(leadHours<=3){text('#answer-title',`${type==='snow'?'Snow':'Rain'} is approaching`);text('#answer-copy',`The event is entering the near-term handoff where radar movement matters more than broad model timing.`);}
-    else if(leadHours<=48){text('#answer-title',`${type==='snow'?'Snow':'Rain'} is ${confidence.label.toLowerCase()}`);text('#answer-copy',`${event.modelWindows.filter(w=>w.wet).length} of ${MODELS.length} independent forecast families carry this event across the pinpoint.`);}
+    if(leadHours<=0&&event.end>now){text('#answer-title',`${noun} is in the current window`);text('#answer-copy',`The selected point is inside the active event window. Follow the map and ending time rather than a generic hourly icon.`);}
+    else if(leadHours<=3){text('#answer-title',`${noun} is approaching`);text('#answer-copy',`The event is entering the near-term handoff where radar movement matters more than broad model timing.`);}
+    else if(leadHours<=48){text('#answer-title',`${noun} is ${confidence.label.toLowerCase()}`);text('#answer-copy',`${event.modelWindows.filter(w=>w.wet).length} of ${MODELS.length} independent forecast families carry this event across the pinpoint.`);}
     else{text('#answer-title',`A ${type} event is developing`);text('#answer-copy','The signal persists days ahead, but exact timing remains intentionally broad until the guidance converges.');}
     text('#first-possible',fmtTime(early)); text('#main-window',timeRange(event.start,event.end)); text('#likely-end',fmtTime(event.end)); text('#event-confidence',confidence.label); text('#timing-confidence',confidence.timing);
     text('#event-name',`${fmtDay(event.start)} ${type} · ${timeRange(event.start,event.end)}`); text('#event-state',leadHours<=3?'TRACKED':confidence.label.toUpperCase());
@@ -714,6 +714,7 @@
     const health=$('#feed-health'); let stateName='ready',title=ready>=2?'Core forecast ready':'Connecting forecast families',detail=`${ready}/${MODELS.length} forecast families${speed}${cacheNote} · ${frames} time frames · ${evidence}/3 evidence layers`;
     if(tileError||ready<2){stateName='partial';title='Some forecast sources are delayed';detail=`${ready}/${MODELS.length} forecast families · ${state.metadataErrors.length} map issue${state.metadataErrors.length===1?'':'s'}`;}
     else if(!frames){detail=`${ready}/${MODELS.length} forecast families${speed}${cacheNote} · radar timeline loading · ${evidence}/3 evidence layers`;}
+    if(!ready&&state.modelErrors.size>=MODELS.length){stateName='error';title='Forecast sources are not responding';}
     health.dataset.state=stateName; text('#feed-title',title); text('#feed-detail',detail);
   }
 
@@ -722,12 +723,27 @@
     buildConsensus(); renderAnswer(); renderRainLine(); renderConstellation(); setFeedHealth();
     emit('forecast',{placeKey:placeKey(),events:state.events.length});
   }
+  // Every forecast family failed and nothing usable is cached: say so everywhere
+  // instead of leaving "Checking…" placeholders. Skips renderAnswer on purpose so the
+  // previous saved reading is not overwritten with an empty one.
+  function renderForecastUnavailable() {
+    state.consensus=[]; state.events=[]; state.personalDecision=null;
+    $('#rail-status').dataset.state='loading';
+    text('#place-name',state.place.name); text('#answer-eyebrow','AT THIS EXACT POINT'); text('#answer-title','Forecast sources are not responding');
+    text('#answer-copy','SkyMap will not show missing guidance as a dry forecast. It retries when you are back online and at the next refresh.');
+    text('#first-possible','—'); text('#main-window','Awaiting evidence'); text('#likely-end','—'); text('#event-confidence','Unknown'); text('#timing-confidence','No window'); text('#forecast-stability','No reading');
+    text('#event-name','Forecast evidence unavailable'); text('#event-state','UNKNOWN'); text('#forecast-stage','Sources unavailable');
+    text('#event-story','No forecast family answered, so SkyMap cannot say whether rain is coming. Radar and the time slider still work.');
+    renderEventFlow(null); renderRainLine(); renderConstellation();
+    renderEvidence(null,null,{stability:'No reading',change:'No forecast could be loaded, so nothing was compared with the previous reading.'});
+    renderPointReadout(); renderEventWindow(); setFeedHealth();
+  }
   function placeKey() { return `${state.place.lat.toFixed(2)},${state.place.lon.toFixed(2)}`; }
   function emit(name,detail={}) { window.dispatchEvent(new CustomEvent(`skymap:${name}`,{detail})); }
 
-  function scheduleForecastRender(delay=80) {
+  function scheduleForecastRender(delay=80,options) {
     clearTimeout(scheduleForecastRender.timer);
-    scheduleForecastRender.timer=setTimeout(renderForecastProducts,delay);
+    scheduleForecastRender.timer=setTimeout(()=>renderForecastProducts(options),delay);
   }
 
   function warmEvidence() {
@@ -755,7 +771,7 @@
       if(requestId!==state.requestId)return;
       warmEvidence();
       void warmPublicCourt();
-      void buildFrames().then(()=>{if(requestId===state.requestId)setFeedHealth();}).catch(error=>{state.metadataErrors.push(String(error));showToast('Radar metadata is delayed; forecast guidance can still load.');});
+      void buildFrames().then(()=>{if(requestId!==state.requestId)return;setFeedHealth();if(state.models.size)scheduleForecastRender(80,{allowPartial:true});else if(state.modelErrors.size>=MODELS.length)renderForecastUnavailable();}).catch(error=>{state.metadataErrors.push(String(error));showToast('Radar metadata is delayed; forecast guidance can still load.');});
     },delay);
   }
 
@@ -769,7 +785,9 @@
       if(requests.has(model.id))return requests.get(model.id);
       const task=fetchModel(model,id,{forceLive}).then(result=>{
         if(id!==state.requestId)return result;
+        const revealed=deferredStarted;
         if(state.models.size>=2)revealCore();
+        if(revealed){if(result)scheduleForecastRender(80);else setFeedHealth();}
         return result;
       });
       requests.set(model.id,task); return task;
@@ -796,8 +814,8 @@
     clearTimeout(hedge); clearTimeout(expansion); if(id!==state.requestId)return;
     if(state.models.size>=2)revealCore();
     else {
-      renderForecastProducts({allowPartial:true});startMapLayers();startEnrichment(id,0);
-      if(!state.models.size){$('#rail-status').dataset.state='loading';text('#answer-title','Forecast sources are not responding');text('#answer-copy','SkyMap retries automatically and will not show missing guidance as a dry forecast.');}
+      if(state.models.size)renderForecastProducts({allowPartial:true}); else renderForecastUnavailable();
+      startMapLayers();startEnrichment(id,0);
     }
   }
   async function setPlace(place,fromMap=false) {
@@ -856,6 +874,7 @@
       return false;
     }; document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();});
     window.addEventListener('resize',requestPointReadoutPosition);
+    window.addEventListener('online',()=>{if(!state.models.size)void refreshAll({forceLive:true});});
     window.addEventListener('skymap:evidence-ready',event=>{
       if(event.detail?.placeKey!==placeKey())return;
       state.evidenceReady.add(event.detail.source); scheduleForecastRender(120);

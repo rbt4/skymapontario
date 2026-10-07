@@ -49,13 +49,36 @@
   function resetLegacyModelCache() {
     try {
       const schemaKey = 'skymap.accuracy.model-cache-schema';
-      if (localStorage.getItem(schemaKey) !== MODEL_CACHE_SCHEMA && !localStorage.getItem('skymap.accuracy.version')) {
+      if (localStorage.getItem(schemaKey) !== MODEL_CACHE_SCHEMA) {
         Object.keys(localStorage).forEach(key => {
           if (key.startsWith('skymap.lab.model.')) localStorage.removeItem(key);
         });
       }
       localStorage.setItem(schemaKey, MODEL_CACHE_SCHEMA);
       localStorage.setItem('skymap.accuracy.version', VERSION);
+    } catch (_) {}
+  }
+
+  // Before Forecast Lab 32, missing precipitation was scored as dry. Learning that
+  // came from those snapshots is contaminated, so it is namespaced away (the old
+  // skill scores are deleted, never read) and unversioned snapshots are dropped.
+  const TRUTH_CONTRACT_MIN = 32;
+  const TRUTH_MARKER = 'skymap.accuracy.truth-contract';
+  const SKILL_PREFIX = 'skymap.accuracy.skill.v34.';
+  const contractOk = row => Number.parseInt(String(row?.contractVersion ?? '0'), 10) >= TRUTH_CONTRACT_MIN;
+
+  function migrateTruthContract() {
+    try {
+      if (localStorage.getItem(TRUTH_MARKER) === String(TRUTH_CONTRACT_MIN)) return;
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('skymap.accuracy.skill.') && !key.startsWith(SKILL_PREFIX)) {
+          localStorage.removeItem(key);
+        } else if (key.startsWith('skymap.accuracy.snapshots.')) {
+          const rows = JSON.parse(localStorage.getItem(key) || '[]');
+          localStorage.setItem(key, JSON.stringify(Array.isArray(rows) ? rows.filter(contractOk) : []));
+        }
+      });
+      localStorage.setItem(TRUTH_MARKER, String(TRUTH_CONTRACT_MIN));
     } catch (_) {}
   }
 
@@ -354,7 +377,7 @@
   }
 
   function skillStorageKey(bucket) {
-    return `skymap.accuracy.skill.v21.${bucket}`;
+    return `${SKILL_PREFIX}${bucket}`;
   }
 
   function readSkill(bucket, modelId, leadHours) {
@@ -364,9 +387,7 @@
       const overall = finite(all?.[modelId]?.score);
       if (specific != null) return clamp(specific, 0.35, 0.98);
       if (overall != null) return clamp(overall, 0.35, 0.98);
-      const legacy = JSON.parse(localStorage.getItem(`skymap.accuracy.skill.${bucket}`) || '{}');
-      const legacyScore = finite(legacy?.[modelId]?.score);
-      return legacyScore == null ? 0.72 : clamp(legacyScore, 0.35, 0.98);
+      return 0.72;
     } catch (_) {
       return 0.72;
     }
@@ -746,7 +767,7 @@
       });
       const prospective = new Map();
       [...existing, ...rows]
-        .filter(item => item?.madeAt && now - item.madeAt < 9 * 86400000)
+        .filter(item => item?.madeAt && contractOk(item) && now - item.madeAt < 9 * 86400000)
         .sort((a, b) => a.madeAt - b.madeAt)
         .forEach(item => {
           const itemKey = `${item.modelId}|${roundHour(item.validAt)}|${item.leadBucket || leadBucket((item.validAt - item.madeAt) / 3600000)}`;
@@ -777,7 +798,7 @@
       const key = `skymap.accuracy.snapshots.${bucket}`;
       const rows = JSON.parse(localStorage.getItem(key) || '[]');
       let changed = false;
-      const candidates = rows.filter(row => !row.verified && Math.abs(row.validAt - validAt) <= 75 * 60000 && validAt - row.madeAt >= 25 * 60000);
+      const candidates = rows.filter(row => !row.verified && contractOk(row) && Math.abs(row.validAt - validAt) <= 75 * 60000 && validAt - row.madeAt >= 25 * 60000);
       const groups = new Map();
       candidates.forEach(row => {
         const issue = Math.floor(row.madeAt / 1800000);
@@ -811,7 +832,7 @@
 
   function accuracyStats() {
     try {
-      const keys = Object.keys(localStorage).filter(key => key.startsWith('skymap.accuracy.skill.v21.'));
+      const keys = Object.keys(localStorage).filter(key => key.startsWith(SKILL_PREFIX));
       let samples = 0, weighted = 0;
       keys.forEach(key => {
         const all = JSON.parse(localStorage.getItem(key) || '{}');
@@ -909,6 +930,7 @@
   }
 
   resetLegacyModelCache();
+  migrateTruthContract();
   window.SkyMapAccuracy = Object.freeze({
     version: VERSION,
     mode: 'truth-firewall+single-pass-sidecar+radar-first+official+reps+personal-shadow-evidence',

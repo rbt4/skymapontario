@@ -83,7 +83,7 @@ public final class MainActivity extends Activity {
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setMediaPlaybackRequiresUserGesture(true);
-        settings.setUserAgentString(settings.getUserAgentString() + " SkyMapOntario/40.0.1");
+        settings.setUserAgentString(settings.getUserAgentString() + " SkyMapOntario/40.0.2");
 
         WebViewCompat.addWebMessageListener(
                 webView,
