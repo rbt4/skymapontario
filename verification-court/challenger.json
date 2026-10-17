@@ -1,0 +1,120 @@
+{
+  "schema": 1,
+  "generatedAt": "2026-10-17T11:11:21.810Z",
+  "mode": "shadow-only",
+  "approved": false,
+  "reason": "Historical evidence is ready for the sealed champion-vs-challenger Court; no production weight change is allowed without a passing prospective verdict and explicit code release.",
+  "currentRegime": {
+    "asOf": "2026-10-14",
+    "pna": "neutral",
+    "nao": "positive",
+    "ao": "positive",
+    "enso": "el-nino",
+    "mjo": "zone-9"
+  },
+  "baselineWeights": {
+    "gem": 0.38,
+    "ifs": 0.27,
+    "gfs": 0.19,
+    "aifs": 0.16
+  },
+  "proposedByLead": {
+    "24": {
+      "gem": {
+        "weight": 0.3853,
+        "samples": 43095,
+        "skill": 0.4286,
+        "supported": true,
+        "frozen": false
+      },
+      "ifs": {
+        "weight": 0.269,
+        "samples": 42319,
+        "skill": 0.3976,
+        "supported": true,
+        "frozen": false
+      },
+      "gfs": {
+        "weight": 0.1856,
+        "samples": 42999,
+        "skill": 0.3633,
+        "supported": true,
+        "frozen": false
+      },
+      "aifs": {
+        "weight": 0.1602,
+        "samples": 25475,
+        "skill": 0.4063,
+        "supported": true,
+        "frozen": false
+      }
+    },
+    "48": {
+      "gem": {
+        "weight": 0.383,
+        "samples": 43048,
+        "skill": 0.3885,
+        "supported": true,
+        "frozen": false
+      },
+      "ifs": {
+        "weight": 0.2665,
+        "samples": 42275,
+        "skill": 0.348,
+        "supported": true,
+        "frozen": false
+      },
+      "gfs": {
+        "weight": 0.1906,
+        "samples": 42952,
+        "skill": 0.3794,
+        "supported": true,
+        "frozen": false
+      },
+      "aifs": {
+        "weight": 0.1599,
+        "samples": 25428,
+        "skill": 0.3722,
+        "supported": true,
+        "frozen": false
+      }
+    },
+    "72": {
+      "gem": {
+        "weight": 0.3837,
+        "samples": 42773,
+        "skill": 0.3623,
+        "supported": true,
+        "frozen": false
+      },
+      "ifs": {
+        "weight": 0.2669,
+        "samples": 42231,
+        "skill": 0.3181,
+        "supported": true,
+        "frozen": false
+      },
+      "gfs": {
+        "weight": 0.1895,
+        "samples": 42905,
+        "skill": 0.3368,
+        "supported": true,
+        "frozen": false
+      },
+      "aifs": {
+        "weight": 0.1599,
+        "samples": 25381,
+        "skill": 0.3406,
+        "supported": true,
+        "frozen": false
+      }
+    }
+  },
+  "guardrails": {
+    "maxRelativeWeightShift": "18%",
+    "minimumEvidenceBeforeReview": 500,
+    "minimumSupportedModels": 3,
+    "unsupportedSources": "frozen at champion weight",
+    "activationRequires": "passing sealed out-of-sample Court plus explicit code release"
+  }
+}
