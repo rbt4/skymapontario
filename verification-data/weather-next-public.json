@@ -1,0 +1,147 @@
+{
+  "schema": 1,
+  "generatedAt": "2026-10-24T11:05:24.715Z",
+  "runs": 262,
+  "pending": 296,
+  "source": "Google DeepMind WeatherNext 2 via Open-Meteo Ensemble API",
+  "model": "google_weathernext2_ensemble",
+  "locations": [
+    {
+      "id": "toronto",
+      "name": "Toronto"
+    },
+    {
+      "id": "ottawa",
+      "name": "Ottawa"
+    },
+    {
+      "id": "hamilton",
+      "name": "Hamilton"
+    },
+    {
+      "id": "london",
+      "name": "London"
+    },
+    {
+      "id": "windsor",
+      "name": "Windsor"
+    },
+    {
+      "id": "kingston",
+      "name": "Kingston"
+    },
+    {
+      "id": "sudbury",
+      "name": "Greater Sudbury"
+    },
+    {
+      "id": "thunder-bay",
+      "name": "Thunder Bay"
+    }
+  ],
+  "leads": [
+    6,
+    12,
+    24,
+    48,
+    72
+  ],
+  "note": "Prospective out-of-sample verification. Ensemble precipitation probability is the fraction of usable members at or above 0.10 mm/h. Missing forecast or observation values are excluded, never coerced to dry weather.",
+  "byLead": [
+    {
+      "source": "weathernext2",
+      "lead": 6,
+      "samples": 2072,
+      "hits": 103,
+      "misses": 60,
+      "falseAlarms": 269,
+      "correctDry": 1640,
+      "brierSum": 249.9239587500006,
+      "brierN": 2072,
+      "amountAbsSum": 267.78199999999975,
+      "amountN": 1689,
+      "accuracy": 0.8412162162162162,
+      "pod": 0.6319018404907976,
+      "far": 0.7231182795698925,
+      "csi": 0.23842592592592593,
+      "brier": 0.12061967121139025,
+      "amountMAE": 0.15854470100651258
+    },
+    {
+      "source": "weathernext2",
+      "lead": 12,
+      "samples": 2064,
+      "hits": 88,
+      "misses": 49,
+      "falseAlarms": 275,
+      "correctDry": 1652,
+      "brierSum": 243.05510209000082,
+      "brierN": 2064,
+      "amountAbsSum": 232.8160000000001,
+      "amountN": 1692,
+      "accuracy": 0.8430232558139535,
+      "pod": 0.6423357664233577,
+      "far": 0.7575757575757576,
+      "csi": 0.21359223300970873,
+      "brier": 0.11775925488856628,
+      "amountMAE": 0.13759810874704498
+    },
+    {
+      "source": "weathernext2",
+      "lead": 24,
+      "samples": 2048,
+      "hits": 117,
+      "misses": 57,
+      "falseAlarms": 250,
+      "correctDry": 1624,
+      "brierSum": 228.8058825900006,
+      "brierN": 2048,
+      "amountAbsSum": 202.36599999999962,
+      "amountN": 1667,
+      "accuracy": 0.85009765625,
+      "pod": 0.6724137931034483,
+      "far": 0.6811989100817438,
+      "csi": 0.2759433962264151,
+      "brier": 0.11172162235839873,
+      "amountMAE": 0.12139532093581261
+    },
+    {
+      "source": "weathernext2",
+      "lead": 48,
+      "samples": 2016,
+      "hits": 100,
+      "misses": 55,
+      "falseAlarms": 245,
+      "correctDry": 1616,
+      "brierSum": 226.78290844000048,
+      "brierN": 2016,
+      "amountAbsSum": 224.16299999999984,
+      "amountN": 1637,
+      "accuracy": 0.8511904761904762,
+      "pod": 0.6451612903225806,
+      "far": 0.7101449275362319,
+      "csi": 0.25,
+      "brier": 0.11249152204365104,
+      "amountMAE": 0.13693524740378732
+    },
+    {
+      "source": "weathernext2",
+      "lead": 72,
+      "samples": 1984,
+      "hits": 85,
+      "misses": 80,
+      "falseAlarms": 215,
+      "correctDry": 1604,
+      "brierSum": 204.44937187000065,
+      "brierN": 1984,
+      "amountAbsSum": 170.1379999999998,
+      "amountN": 1622,
+      "accuracy": 0.8513104838709677,
+      "pod": 0.5151515151515151,
+      "far": 0.7166666666666667,
+      "csi": 0.2236842105263158,
+      "brier": 0.1030490785635084,
+      "amountMAE": 0.1048939580764487
+    }
+  ]
+}
