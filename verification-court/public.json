@@ -1,0 +1,303 @@
+{
+  "schema": 1,
+  "generatedAt": "2026-11-07T13:28:25.242Z",
+  "runs": 307,
+  "pending": 144,
+  "locations": [
+    {
+      "id": "toronto",
+      "name": "Toronto"
+    },
+    {
+      "id": "ottawa",
+      "name": "Ottawa"
+    },
+    {
+      "id": "hamilton",
+      "name": "Hamilton"
+    },
+    {
+      "id": "london",
+      "name": "London"
+    },
+    {
+      "id": "windsor",
+      "name": "Windsor"
+    },
+    {
+      "id": "kingston",
+      "name": "Kingston"
+    },
+    {
+      "id": "sudbury",
+      "name": "Greater Sudbury"
+    },
+    {
+      "id": "thunder-bay",
+      "name": "Thunder Bay"
+    }
+  ],
+  "leads": [
+    24,
+    48,
+    72
+  ],
+  "championWeights": {
+    "gem": 0.38,
+    "ifs": 0.27,
+    "gfs": 0.19,
+    "aifs": 0.16
+  },
+  "verdict": {
+    "generatedAt": "2026-11-07T13:28:31.365Z",
+    "mode": "sealed-prospective-champion-vs-challenger",
+    "approvedForBoundedIntegrationReview": false,
+    "autoPromotes": false,
+    "reason": "Challenger has enough evidence but has not beaten every promotion guardrail.",
+    "checks": {
+      "candidateDistinct": true,
+      "historicalEvidence": true,
+      "unsupportedModelsFrozen": true,
+      "challengerFresh": true,
+      "prospectiveSample": true,
+      "brierImprovement": false,
+      "csiNonDegradation": true,
+      "missRateNonDegradation": true,
+      "falseAlarmNonDegradation": true,
+      "noBadLead": true
+    },
+    "minimums": {
+      "historicalEvidencePerSupportedModelLead": 500,
+      "historicallySupportedModels": 3,
+      "unsupportedModels": "must remain at champion weight",
+      "prospectiveSamples": 300,
+      "wetTruths": 45,
+      "perLeadSamples": 60,
+      "brierImprovement": ">=2%",
+      "csiDelta": ">=-0.5 percentage points",
+      "missRateDelta": "<=+1.5 percentage points",
+      "farDelta": "<=+2 percentage points",
+      "badLeadBrier": "no lead >3% worse"
+    },
+    "observed": {
+      "historicalEvidenceMinimum": 25907,
+      "historicallySupportedModels": [
+        "gem",
+        "ifs",
+        "gfs",
+        "aifs"
+      ],
+      "frozenUnsupportedModels": [],
+      "champion": {
+        "lead": "all",
+        "samples": 7200,
+        "truthWet": 576,
+        "hits": 204,
+        "misses": 372,
+        "falseAlarms": 527,
+        "correctDry": 6097,
+        "brierSum": 683.8686999999996,
+        "brierN": 7200,
+        "amountAbsSum": 692.4819999999984,
+        "amountN": 5960,
+        "accuracy": 0.8751388888888889,
+        "pod": 0.3541666666666667,
+        "missRate": 0.6458333333333334,
+        "far": 0.7209302325581395,
+        "csi": 0.18495013599274707,
+        "brier": 0.09498176388888883,
+        "amountMAE": 0.11618825503355677
+      },
+      "challenger": {
+        "lead": "all",
+        "samples": 7200,
+        "truthWet": 576,
+        "hits": 204,
+        "misses": 372,
+        "falseAlarms": 527,
+        "correctDry": 6097,
+        "brierSum": 684.3381766600004,
+        "brierN": 7200,
+        "amountAbsSum": 692.6369999999981,
+        "amountN": 5960,
+        "accuracy": 0.8751388888888889,
+        "pod": 0.3541666666666667,
+        "missRate": 0.6458333333333334,
+        "far": 0.7209302325581395,
+        "csi": 0.18495013599274707,
+        "brier": 0.0950469689805556,
+        "amountMAE": 0.11621426174496613
+      },
+      "brierRelativeImprovement": -0.0006865011660875036,
+      "csiDelta": 0,
+      "missRateDelta": 0,
+      "farDelta": 0,
+      "perLead": {
+        "24": {
+          "champion": {
+            "lead": 24,
+            "samples": 2416,
+            "truthWet": 198,
+            "hits": 60,
+            "misses": 138,
+            "falseAlarms": 121,
+            "correctDry": 2097,
+            "brierSum": 200.68399999999966,
+            "brierN": 2416,
+            "amountAbsSum": 232.6209999999995,
+            "amountN": 2002,
+            "accuracy": 0.8927980132450332,
+            "pod": 0.30303030303030304,
+            "missRate": 0.696969696969697,
+            "far": 0.6685082872928176,
+            "csi": 0.18808777429467086,
+            "brier": 0.0830645695364237,
+            "amountMAE": 0.11619430569430544
+          },
+          "challenger": {
+            "lead": 24,
+            "samples": 2416,
+            "truthWet": 198,
+            "hits": 60,
+            "misses": 138,
+            "falseAlarms": 121,
+            "correctDry": 2097,
+            "brierSum": 201.07395362000025,
+            "brierN": 2416,
+            "amountAbsSum": 232.72699999999932,
+            "amountN": 2002,
+            "accuracy": 0.8927980132450332,
+            "pod": 0.30303030303030304,
+            "missRate": 0.696969696969697,
+            "far": 0.6685082872928176,
+            "csi": 0.18808777429467086,
+            "brier": 0.08322597418046368,
+            "amountMAE": 0.11624725274725241
+          }
+        },
+        "48": {
+          "champion": {
+            "lead": 48,
+            "samples": 2400,
+            "truthWet": 187,
+            "hits": 79,
+            "misses": 108,
+            "falseAlarms": 207,
+            "correctDry": 2006,
+            "brierSum": 243.17090000000007,
+            "brierN": 2400,
+            "amountAbsSum": 245.18099999999936,
+            "amountN": 1982,
+            "accuracy": 0.86875,
+            "pod": 0.42245989304812837,
+            "missRate": 0.5775401069518716,
+            "far": 0.7237762237762237,
+            "csi": 0.20050761421319796,
+            "brier": 0.10132120833333337,
+            "amountMAE": 0.12370383451059504
+          },
+          "challenger": {
+            "lead": 48,
+            "samples": 2400,
+            "truthWet": 187,
+            "hits": 79,
+            "misses": 108,
+            "falseAlarms": 207,
+            "correctDry": 2006,
+            "brierSum": 242.97835478000002,
+            "brierN": 2400,
+            "amountAbsSum": 245.12899999999922,
+            "amountN": 1982,
+            "accuracy": 0.86875,
+            "pod": 0.42245989304812837,
+            "missRate": 0.5775401069518716,
+            "far": 0.7237762237762237,
+            "csi": 0.20050761421319796,
+            "brier": 0.10124098115833334,
+            "amountMAE": 0.12367759838546884
+          }
+        },
+        "72": {
+          "champion": {
+            "lead": 72,
+            "samples": 2384,
+            "truthWet": 191,
+            "hits": 65,
+            "misses": 126,
+            "falseAlarms": 199,
+            "correctDry": 1994,
+            "brierSum": 240.01379999999995,
+            "brierN": 2384,
+            "amountAbsSum": 214.67999999999947,
+            "amountN": 1976,
+            "accuracy": 0.8636744966442953,
+            "pod": 0.3403141361256545,
+            "missRate": 0.6596858638743456,
+            "far": 0.7537878787878788,
+            "csi": 0.16666666666666666,
+            "brier": 0.10067692953020133,
+            "amountMAE": 0.10864372469635601
+          },
+          "challenger": {
+            "lead": 72,
+            "samples": 2384,
+            "truthWet": 191,
+            "hits": 65,
+            "misses": 126,
+            "falseAlarms": 199,
+            "correctDry": 1994,
+            "brierSum": 240.28586826000011,
+            "brierN": 2384,
+            "amountAbsSum": 214.78099999999958,
+            "amountN": 1976,
+            "accuracy": 0.8636744966442953,
+            "pod": 0.3403141361256545,
+            "missRate": 0.6596858638743456,
+            "far": 0.7537878787878788,
+            "csi": 0.16666666666666666,
+            "brier": 0.10079105212248327,
+            "amountMAE": 0.10869483805667995
+          }
+        }
+      }
+    },
+    "candidate": {
+      "generatedAt": "2026-11-07T06:38:04.016Z",
+      "currentRegime": {
+        "asOf": "2026-11-04",
+        "pna": "positive",
+        "nao": "neutral",
+        "ao": "neutral",
+        "enso": "el-nino",
+        "mjo": "zone-9"
+      },
+      "weightsByLead": {
+        "24": {
+          "gem": 0.3859,
+          "ifs": 0.2686,
+          "gfs": 0.1858,
+          "aifs": 0.1597
+        },
+        "48": {
+          "gem": 0.38353835383538354,
+          "ifs": 0.26642664266426647,
+          "gfs": 0.19051905190519053,
+          "aifs": 0.15951595159515952
+        },
+        "72": {
+          "gem": 0.3832,
+          "ifs": 0.2676,
+          "gfs": 0.1894,
+          "aifs": 0.1598
+        }
+      }
+    },
+    "evidencePolicy": {
+      "current": 2,
+      "effectiveAt": "2026-08-13T21:22:00Z",
+      "stateCreatedAt": "2026-08-12T23:21:08.966Z",
+      "hoursOfEvidenceBeforePolicy": 22
+    }
+  },
+  "note": "The court stores champion and challenger forecasts before observations exist, then scores both against the same ECCC truth. It cannot change live production by itself."
+}
