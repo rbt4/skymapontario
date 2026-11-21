@@ -1,0 +1,1564 @@
+{
+  "schema": 1,
+  "generatedAt": "2026-11-21T07:27:07.751Z",
+  "approved": false,
+  "autoApplies": false,
+  "guardrails": {
+    "minimumSamples": 500,
+    "minimumWetTruths": 50,
+    "minimumSamplesPerAdjustedBin": 25,
+    "priorEquivalentSamplesPerBin": 20,
+    "maxAdjustmentPercentagePoints": 15,
+    "activationRequires": "separate prospective champion-vs-challenger improvement"
+  },
+  "candidates": {
+    "best_match|6": {
+      "readyForReview": true,
+      "reason": "Enough source/lead evidence for shadow reliability review; production use still requires a prospective challenger gate.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 2257,
+          "rawObserved": 0.04652193176783341,
+          "shadowTo": 4.7,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 128,
+          "rawObserved": 0.21875,
+          "shadowTo": 20.9,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 69,
+          "rawObserved": 0.21739130434782608,
+          "shadowTo": 22.5,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 52,
+          "rawObserved": 0.3269230769230769,
+          "shadowTo": 33.3,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 26,
+          "rawObserved": 0.46153846153846156,
+          "shadowTo": 45.7,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 21,
+          "rawObserved": 0.47619047619047616,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 18,
+          "rawObserved": 0.5555555555555556,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 8,
+          "rawObserved": 0.375,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 9,
+          "rawObserved": 0.1111111111111111,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 4,
+          "rawObserved": 0.75,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "weathernext2|6": {
+      "readyForReview": true,
+      "reason": "Enough source/lead evidence for shadow reliability review; production use still requires a prospective challenger gate.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 1758,
+          "rawObserved": 0.02161547212741752,
+          "shadowTo": 2.2,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 138,
+          "rawObserved": 0.043478260869565216,
+          "shadowTo": 5.7,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 87,
+          "rawObserved": 0.11494252873563218,
+          "shadowTo": 14,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 78,
+          "rawObserved": 0.1282051282051282,
+          "shadowTo": 20,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 75,
+          "rawObserved": 0.18666666666666668,
+          "shadowTo": 30,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 53,
+          "rawObserved": 0.1509433962264151,
+          "shadowTo": 40,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 68,
+          "rawObserved": 0.19117647058823528,
+          "shadowTo": 50,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 70,
+          "rawObserved": 0.18571428571428572,
+          "shadowTo": 60,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 61,
+          "rawObserved": 0.26229508196721313,
+          "shadowTo": 70,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 204,
+          "rawObserved": 0.37254901960784315,
+          "shadowTo": 80,
+          "activeForReview": true
+        }
+      ]
+    },
+    "model_consensus|6": {
+      "readyForReview": true,
+      "reason": "Enough source/lead evidence for shadow reliability review; production use still requires a prospective challenger gate.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 1866,
+          "rawObserved": 0.02465166130760986,
+          "shadowTo": 2.5,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 307,
+          "rawObserved": 0.15309446254071662,
+          "shadowTo": 15.1,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 31,
+          "rawObserved": 0.06451612903225806,
+          "shadowTo": 15.1,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 16,
+          "rawObserved": 0.125,
+          "shadowTo": 35,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 169,
+          "rawObserved": 0.23076923076923078,
+          "shadowTo": 30,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 35,
+          "rawObserved": 0.2857142857142857,
+          "shadowTo": 40,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 24,
+          "rawObserved": 0.16666666666666666,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 3,
+          "rawObserved": 0.3333333333333333,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 82,
+          "rawObserved": 0.35365853658536583,
+          "shadowTo": 70,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 59,
+          "rawObserved": 0.4067796610169492,
+          "shadowTo": 80,
+          "activeForReview": true
+        }
+      ]
+    },
+    "eccc_official|6": {
+      "readyForReview": true,
+      "reason": "Enough source/lead evidence for shadow reliability review; production use still requires a prospective challenger gate.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 995,
+          "rawObserved": 0.01407035175879397,
+          "shadowTo": 1.5,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 378,
+          "rawObserved": 0.013227513227513227,
+          "shadowTo": 2,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 482,
+          "rawObserved": 0.07676348547717843,
+          "shadowTo": 10,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 213,
+          "rawObserved": 0.07511737089201878,
+          "shadowTo": 20,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 211,
+          "rawObserved": 0.18009478672985782,
+          "shadowTo": 30,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 93,
+          "rawObserved": 0.10752688172043011,
+          "shadowTo": 50,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 7,
+          "rawObserved": 0,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 175,
+          "rawObserved": 0.41714285714285715,
+          "shadowTo": 70,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 14,
+          "rawObserved": 0.7142857142857143,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "best_match|12": {
+      "readyForReview": true,
+      "reason": "Enough source/lead evidence for shadow reliability review; production use still requires a prospective challenger gate.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 2231,
+          "rawObserved": 0.03451367099955177,
+          "shadowTo": 3.5,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 147,
+          "rawObserved": 0.21768707482993196,
+          "shadowTo": 21,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 77,
+          "rawObserved": 0.3116883116883117,
+          "shadowTo": 29.7,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 41,
+          "rawObserved": 0.2682926829268293,
+          "shadowTo": 29.7,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 37,
+          "rawObserved": 0.43243243243243246,
+          "shadowTo": 42.6,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 24,
+          "rawObserved": 0.2916666666666667,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 13,
+          "rawObserved": 0.23076923076923078,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 7,
+          "rawObserved": 0.5714285714285714,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 12,
+          "rawObserved": 0.4166666666666667,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 3,
+          "rawObserved": 0.6666666666666666,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "weathernext2|12": {
+      "readyForReview": true,
+      "reason": "Enough source/lead evidence for shadow reliability review; production use still requires a prospective challenger gate.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 1760,
+          "rawObserved": 0.013068181818181817,
+          "shadowTo": 1.3,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 140,
+          "rawObserved": 0.04285714285714286,
+          "shadowTo": 5.6,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 112,
+          "rawObserved": 0.08035714285714286,
+          "shadowTo": 10.6,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 81,
+          "rawObserved": 0.1728395061728395,
+          "shadowTo": 20.8,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 72,
+          "rawObserved": 0.16666666666666666,
+          "shadowTo": 30,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 54,
+          "rawObserved": 0.2222222222222222,
+          "shadowTo": 40,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 57,
+          "rawObserved": 0.17543859649122806,
+          "shadowTo": 50,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 72,
+          "rawObserved": 0.20833333333333334,
+          "shadowTo": 60,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 64,
+          "rawObserved": 0.171875,
+          "shadowTo": 70,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 180,
+          "rawObserved": 0.38333333333333336,
+          "shadowTo": 80,
+          "activeForReview": true
+        }
+      ]
+    },
+    "model_consensus|12": {
+      "readyForReview": true,
+      "reason": "Enough source/lead evidence for shadow reliability review; production use still requires a prospective challenger gate.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 1847,
+          "rawObserved": 0.016783974011911208,
+          "shadowTo": 1.7,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 303,
+          "rawObserved": 0.132013201320132,
+          "shadowTo": 12.8,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 33,
+          "rawObserved": 0,
+          "shadowTo": 12.8,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 21,
+          "rawObserved": 0.19047619047619047,
+          "shadowTo": 35,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 189,
+          "rawObserved": 0.21693121693121692,
+          "shadowTo": 30,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 31,
+          "rawObserved": 0.25806451612903225,
+          "shadowTo": 40,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 35,
+          "rawObserved": 0.34285714285714286,
+          "shadowTo": 50,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 7,
+          "rawObserved": 0.42857142857142855,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 78,
+          "rawObserved": 0.2692307692307692,
+          "shadowTo": 70,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 48,
+          "rawObserved": 0.4375,
+          "shadowTo": 80,
+          "activeForReview": true
+        }
+      ]
+    },
+    "eccc_official|12": {
+      "readyForReview": true,
+      "reason": "Enough source/lead evidence for shadow reliability review; production use still requires a prospective challenger gate.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 1026,
+          "rawObserved": 0.010721247563352826,
+          "shadowTo": 1.1,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 374,
+          "rawObserved": 0.01871657754010695,
+          "shadowTo": 2.5,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 462,
+          "rawObserved": 0.06926406926406926,
+          "shadowTo": 10,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 185,
+          "rawObserved": 0.07027027027027027,
+          "shadowTo": 20,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 206,
+          "rawObserved": 0.1407766990291262,
+          "shadowTo": 30,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 104,
+          "rawObserved": 0.11538461538461539,
+          "shadowTo": 50,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 9,
+          "rawObserved": 0.1111111111111111,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 192,
+          "rawObserved": 0.3697916666666667,
+          "shadowTo": 70,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 10,
+          "rawObserved": 0.5,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "best_match|24": {
+      "readyForReview": true,
+      "reason": "Enough source/lead evidence for shadow reliability review; production use still requires a prospective challenger gate.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 2196,
+          "rawObserved": 0.039162112932604735,
+          "shadowTo": 3.9,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 155,
+          "rawObserved": 0.23225806451612904,
+          "shadowTo": 22.3,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 91,
+          "rawObserved": 0.3076923076923077,
+          "shadowTo": 29.7,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 59,
+          "rawObserved": 0.3220338983050847,
+          "shadowTo": 32.9,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 36,
+          "rawObserved": 0.4166666666666667,
+          "shadowTo": 42.9,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 22,
+          "rawObserved": 0.5454545454545454,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 11,
+          "rawObserved": 0.8181818181818182,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 11,
+          "rawObserved": 0.7272727272727273,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 2,
+          "rawObserved": 0.5,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 1,
+          "rawObserved": 0,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "weathernext2|24": {
+      "readyForReview": true,
+      "reason": "Enough source/lead evidence for shadow reliability review; production use still requires a prospective challenger gate.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 1727,
+          "rawObserved": 0.016213086276780544,
+          "shadowTo": 1.7,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 160,
+          "rawObserved": 0.08125,
+          "shadowTo": 8.9,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 115,
+          "rawObserved": 0.12173913043478261,
+          "shadowTo": 14.1,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 78,
+          "rawObserved": 0.10256410256410256,
+          "shadowTo": 20,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 70,
+          "rawObserved": 0.17142857142857143,
+          "shadowTo": 30,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 79,
+          "rawObserved": 0.22784810126582278,
+          "shadowTo": 40,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 44,
+          "rawObserved": 0.29545454545454547,
+          "shadowTo": 50,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 73,
+          "rawObserved": 0.2328767123287671,
+          "shadowTo": 60,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 70,
+          "rawObserved": 0.2,
+          "shadowTo": 70,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 168,
+          "rawObserved": 0.4583333333333333,
+          "shadowTo": 80,
+          "activeForReview": true
+        }
+      ]
+    },
+    "model_consensus|24": {
+      "readyForReview": true,
+      "reason": "Enough source/lead evidence for shadow reliability review; production use still requires a prospective challenger gate.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 1815,
+          "rawObserved": 0.01818181818181818,
+          "shadowTo": 1.9,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 295,
+          "rawObserved": 0.16271186440677965,
+          "shadowTo": 15.9,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 48,
+          "rawObserved": 0.10416666666666667,
+          "shadowTo": 15.9,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 26,
+          "rawObserved": 0.34615384615384615,
+          "shadowTo": 29.7,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 200,
+          "rawObserved": 0.27,
+          "shadowTo": 30,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 35,
+          "rawObserved": 0.17142857142857143,
+          "shadowTo": 40,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 24,
+          "rawObserved": 0.25,
+          "shadowTo": 65,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 7,
+          "rawObserved": 0.2857142857142857,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 86,
+          "rawObserved": 0.29069767441860467,
+          "shadowTo": 70,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 48,
+          "rawObserved": 0.5416666666666666,
+          "shadowTo": 80,
+          "activeForReview": true
+        }
+      ]
+    },
+    "eccc_official|24": {
+      "readyForReview": true,
+      "reason": "Enough source/lead evidence for shadow reliability review; production use still requires a prospective challenger gate.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 992,
+          "rawObserved": 0.009072580645161291,
+          "shadowTo": 1,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 414,
+          "rawObserved": 0.021739130434782608,
+          "shadowTo": 2.8,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 471,
+          "rawObserved": 0.0870488322717622,
+          "shadowTo": 10,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 144,
+          "rawObserved": 0.09027777777777778,
+          "shadowTo": 20,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 224,
+          "rawObserved": 0.17857142857142858,
+          "shadowTo": 30,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 0,
+          "rawObserved": null,
+          "shadowTo": 55,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 116,
+          "rawObserved": 0.20689655172413793,
+          "shadowTo": 50,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 9,
+          "rawObserved": 0.5555555555555556,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 170,
+          "rawObserved": 0.3764705882352941,
+          "shadowTo": 70,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 12,
+          "rawObserved": 0.5833333333333334,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "best_match|48": {
+      "readyForReview": true,
+      "reason": "Enough source/lead evidence for shadow reliability review; production use still requires a prospective challenger gate.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 1939,
+          "rawObserved": 0.03197524497163486,
+          "shadowTo": 3.2,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 178,
+          "rawObserved": 0.15168539325842698,
+          "shadowTo": 15.2,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 113,
+          "rawObserved": 0.1504424778761062,
+          "shadowTo": 16.5,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 85,
+          "rawObserved": 0.23529411764705882,
+          "shadowTo": 25.7,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 62,
+          "rawObserved": 0.1935483870967742,
+          "shadowTo": 30,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 51,
+          "rawObserved": 0.2549019607843137,
+          "shadowTo": 40,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 36,
+          "rawObserved": 0.3888888888888889,
+          "shadowTo": 50,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 48,
+          "rawObserved": 0.4375,
+          "shadowTo": 60,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 38,
+          "rawObserved": 0.3684210526315789,
+          "shadowTo": 70,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 18,
+          "rawObserved": 0.3333333333333333,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "weathernext2|48": {
+      "readyForReview": true,
+      "reason": "Enough source/lead evidence for shadow reliability review; production use still requires a prospective challenger gate.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 1665,
+          "rawObserved": 0.01921921921921922,
+          "shadowTo": 2,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 196,
+          "rawObserved": 0.07142857142857142,
+          "shadowTo": 7.9,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 125,
+          "rawObserved": 0.112,
+          "shadowTo": 13.1,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 100,
+          "rawObserved": 0.16,
+          "shadowTo": 20,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 74,
+          "rawObserved": 0.13513513513513514,
+          "shadowTo": 30,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 70,
+          "rawObserved": 0.2714285714285714,
+          "shadowTo": 40,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 74,
+          "rawObserved": 0.16216216216216217,
+          "shadowTo": 50,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 64,
+          "rawObserved": 0.28125,
+          "shadowTo": 60,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 70,
+          "rawObserved": 0.2571428571428571,
+          "shadowTo": 70,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 130,
+          "rawObserved": 0.4076923076923077,
+          "shadowTo": 80,
+          "activeForReview": true
+        }
+      ]
+    },
+    "model_consensus|48": {
+      "readyForReview": true,
+      "reason": "Enough source/lead evidence for shadow reliability review; production use still requires a prospective challenger gate.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 1753,
+          "rawObserved": 0.022247575584711923,
+          "shadowTo": 2.3,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 267,
+          "rawObserved": 0.14606741573033707,
+          "shadowTo": 13.9,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 46,
+          "rawObserved": 0.043478260869565216,
+          "shadowTo": 13.9,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 74,
+          "rawObserved": 0.16216216216216217,
+          "shadowTo": 20.2,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 123,
+          "rawObserved": 0.18699186991869918,
+          "shadowTo": 30,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 54,
+          "rawObserved": 0.2037037037037037,
+          "shadowTo": 40,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 61,
+          "rawObserved": 0.2459016393442623,
+          "shadowTo": 50,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 26,
+          "rawObserved": 0.2692307692307692,
+          "shadowTo": 60,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 70,
+          "rawObserved": 0.3142857142857143,
+          "shadowTo": 70,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 94,
+          "rawObserved": 0.3829787234042553,
+          "shadowTo": 80,
+          "activeForReview": true
+        }
+      ]
+    },
+    "best_match|72": {
+      "readyForReview": true,
+      "reason": "Enough source/lead evidence for shadow reliability review; production use still requires a prospective challenger gate.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 1918,
+          "rawObserved": 0.035453597497393116,
+          "shadowTo": 3.6,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 224,
+          "rawObserved": 0.11607142857142858,
+          "shadowTo": 11.9,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 100,
+          "rawObserved": 0.22,
+          "shadowTo": 22.5,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 97,
+          "rawObserved": 0.28865979381443296,
+          "shadowTo": 29.9,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 78,
+          "rawObserved": 0.2948717948717949,
+          "shadowTo": 32.7,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 60,
+          "rawObserved": 0.26666666666666666,
+          "shadowTo": 40,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 32,
+          "rawObserved": 0.34375,
+          "shadowTo": 50,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 31,
+          "rawObserved": 0.3548387096774194,
+          "shadowTo": 60,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 10,
+          "rawObserved": 0.4,
+          "shadowTo": 85,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 2,
+          "rawObserved": 0.5,
+          "shadowTo": 95,
+          "activeForReview": false
+        }
+      ]
+    },
+    "weathernext2|72": {
+      "readyForReview": true,
+      "reason": "Enough source/lead evidence for shadow reliability review; production use still requires a prospective challenger gate.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 1622,
+          "rawObserved": 0.01972872996300863,
+          "shadowTo": 2,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 210,
+          "rawObserved": 0.10952380952380952,
+          "shadowTo": 11.3,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 167,
+          "rawObserved": 0.16167664670658682,
+          "shadowTo": 16.5,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 103,
+          "rawObserved": 0.11650485436893204,
+          "shadowTo": 20,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 73,
+          "rawObserved": 0.1917808219178082,
+          "shadowTo": 30,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 90,
+          "rawObserved": 0.16666666666666666,
+          "shadowTo": 40,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 67,
+          "rawObserved": 0.16417910447761194,
+          "shadowTo": 50,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 89,
+          "rawObserved": 0.30337078651685395,
+          "shadowTo": 60,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 59,
+          "rawObserved": 0.3050847457627119,
+          "shadowTo": 70,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 72,
+          "rawObserved": 0.4305555555555556,
+          "shadowTo": 80,
+          "activeForReview": true
+        }
+      ]
+    },
+    "model_consensus|72": {
+      "readyForReview": true,
+      "reason": "Enough source/lead evidence for shadow reliability review; production use still requires a prospective challenger gate.",
+      "mapping": [
+        {
+          "fromLo": 0,
+          "fromHi": 10,
+          "samples": 1704,
+          "rawObserved": 0.029342723004694836,
+          "shadowTo": 3,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 10,
+          "fromHi": 20,
+          "samples": 290,
+          "rawObserved": 0.13448275862068965,
+          "shadowTo": 12.8,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 20,
+          "fromHi": 30,
+          "samples": 52,
+          "rawObserved": 0.038461538461538464,
+          "shadowTo": 12.8,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 30,
+          "fromHi": 40,
+          "samples": 89,
+          "rawObserved": 0.1348314606741573,
+          "shadowTo": 20,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 40,
+          "fromHi": 50,
+          "samples": 138,
+          "rawObserved": 0.26811594202898553,
+          "shadowTo": 30,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 50,
+          "fromHi": 60,
+          "samples": 57,
+          "rawObserved": 0.07017543859649122,
+          "shadowTo": 40,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 60,
+          "fromHi": 70,
+          "samples": 76,
+          "rawObserved": 0.3026315789473684,
+          "shadowTo": 50,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 70,
+          "fromHi": 80,
+          "samples": 21,
+          "rawObserved": 0.09523809523809523,
+          "shadowTo": 75,
+          "activeForReview": false
+        },
+        {
+          "fromLo": 80,
+          "fromHi": 90,
+          "samples": 59,
+          "rawObserved": 0.2033898305084746,
+          "shadowTo": 70,
+          "activeForReview": true
+        },
+        {
+          "fromLo": 90,
+          "fromHi": 100,
+          "samples": 66,
+          "rawObserved": 0.4393939393939394,
+          "shadowTo": 80,
+          "activeForReview": true
+        }
+      ]
+    }
+  }
+}
